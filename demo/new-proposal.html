@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create New Proposal - BCOS Chain DAO</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #1a237e 0%, #0d47a1 100%);
+        }
+        .card-gradient {
+            background: linear-gradient(135deg, #ffffff 0%, #f5f7fa 100%);
+        }
+    </style>
+</head>
+<body class="bg-slate-50">
+    <!-- Top Banner -->
+    <nav class="gradient-bg text-white p-4">
+        <div class="container mx-auto flex justify-between items-center">
+            <div class="text-xl font-bold">BCOS Chain DAO</div>
+            <button onclick="alert('Connecting wallet...')" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition duration-300">
+                Connect Wallet
+            </button>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 py-8">
+        <div class="max-w-4xl mx-auto">
+            <div class="bg-white rounded-xl shadow-lg p-8">
+                <h1 class="text-2xl font-bold text-gray-800 mb-8">Create New Proposal</h1>
+
+                <form id="proposalForm" class="space-y-8">
+                    <!-- Proposal Type Selection -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-4">Proposal Type</label>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="relative">
+                                <input type="radio" name="proposalType" id="committee" class="peer hidden" checked>
+                                <label for="committee" class="block p-4 bg-white border rounded-lg cursor-pointer hover:border-blue-500 peer-checked:border-blue-500 peer-checked:ring-2 peer-checked:ring-blue-500">
+                                    <div class="font-semibold">Committee</div>
+                                    <div class="text-sm text-gray-500">DAO Parameter Changes</div>
+                                </label>
+                            </div>
+                            <div class="relative">
+                                <input type="radio" name="proposalType" id="architecture" class="peer hidden">
+                                <label for="architecture" class="block p-4 bg-white border rounded-lg cursor-pointer hover:border-blue-500 peer-checked:border-blue-500 peer-checked:ring-2 peer-checked:ring-blue-500">
+                                    <div class="font-semibold">Architecture</div>
+                                    <div class="text-sm text-gray-500">System Configuration, Node Management, Contract Management</div>
+                                </label>
+                            </div>
+                            <div class="relative">
+                                <input type="radio" name="proposalType" id="treasury" class="peer hidden">
+                                <label for="treasury" class="block p-4 bg-white border rounded-lg cursor-pointer hover:border-blue-500 peer-checked:border-blue-500 peer-checked:ring-2 peer-checked:ring-blue-500">
+                                    <div class="font-semibold">Treasury</div>
+                                    <div class="text-sm text-gray-500">Account Permissions & Asset Control</div>
+                                </label>
+                            </div>
+                            <div class="relative">
+                                <input type="radio" name="proposalType" id="custom" class="peer hidden">
+                                <label for="custom" class="block p-4 bg-white border rounded-lg cursor-pointer hover:border-blue-500 peer-checked:border-blue-500 peer-checked:ring-2 peer-checked:ring-blue-500">
+                                    <div class="font-semibold">Custom</div>
+                                    <div class="text-sm text-gray-500">Direct Calldata Input</div>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Architecture Type Selection (Initially Hidden) -->
+                    <div id="architectureSubtype" class="hidden">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Architecture Action Type</label>
+                        <select class="w-full border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                            <option value="system-config">System Configuration Changes</option>
+                            <option value="node">Node Join/Exit</option>
+                            <option value="admin">Contract Admin Changes</option>
+                            <option value="status">Contract Status Changes</option>
+                            <option value="acl">Contract ACL Changes</option>
+                        </select>
+                    </div>
+
+                    <!-- Contract Address -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Target Contract Address</label>
+                        <input type="text" class="w-full border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-blue-500" 
+                               placeholder="0x...">
+                    </div>
+
+                    <!-- Function Parameters -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Function Parameters</label>
+                        <div class="space-y-4">
+                            <div class="flex gap-4">
+                                <input type="text" class="flex-1 border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-blue-500" 
+                                       placeholder="Parameter name">
+                                <input type="text" class="flex-1 border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-blue-500" 
+                                       placeholder="Parameter value">
+                                <button type="button" class="px-4 py-2 text-sm text-blue-600 hover:text-blue-800">
+                                    + Add Parameter
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Transfer Option -->
+                    <div>
+                        <div class="flex items-center mb-4">
+                            <input type="checkbox" id="includeTransfer" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                            <label for="includeTransfer" class="ml-2 text-sm font-medium text-gray-700">Include Token Transfer</label>
+                        </div>
+                        <div id="transferDetails" class="hidden space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Transfer Amount</label>
+                                <div class="flex gap-4">
+                                    <input type="number" class="flex-1 border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-blue-500" 
+                                           placeholder="Amount">
+                                    <select class="w-40 border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                        <option value="native">Native Token</option>
+                                        <option value="erc20">ERC20</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Proposal Description -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Proposal Description</label>
+                        <textarea rows="4" class="w-full border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                                  placeholder="Describe your proposal..."></textarea>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="flex gap-4">
+                        <button type="submit" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg transition duration-300">
+                            Create Proposal
+                        </button>
+                        <button type="submit" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg transition duration-300">
+                            Preview
+                        </button>
+                        <button type="button" onclick="window.location.href='index.html'" 
+                                class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 px-6 py-3 rounded-lg transition duration-300">
+                            Cancel
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Show/Hide Architecture Subtypes
+        document.querySelectorAll('input[name="proposalType"]').forEach(radio => {
+            radio.addEventListener('change', function() {
+                const architectureSubtype = document.getElementById('architectureSubtype');
+                architectureSubtype.style.display = this.id === 'architecture' ? 'block' : 'none';
+            });
+        });
+
+        // Show/Hide Transfer Details
+        document.getElementById('includeTransfer').addEventListener('change', function() {
+            const transferDetails = document.getElementById('transferDetails');
+            transferDetails.style.display = this.checked ? 'block' : 'none';
+        });
+
+        // Form Submit Handler
+        document.getElementById('proposalForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            alert('Proposal creation will be processed...');
+        });
+    </script>
+<script>window.parent.postMessage({ action: "ready" }, "*"); 
+ 
+window.console = new Proxy(console, {
+  get(target, prop) {
+    if (['log', 'warn', 'error'].includes(prop)) {
+      return new Proxy(target[prop], {
+        apply(fn, thisArg, args) {
+          fn.apply(thisArg, args);
+          window.parent.postMessage({ action: 'console', 
+            type: prop, 
+            args: args.map((arg) => {
+              try {
+                return JSON.stringify(arg).replace(/^["']|["']$/g, '');
+              } catch (e) {
+                return arg;
+              }
+            }) 
+          }, '*');
+        }
+      });
+    }
+    return target[prop];
+  }
+});
+</script></body>
+</html>
