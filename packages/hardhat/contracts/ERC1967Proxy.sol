@@ -27,6 +27,10 @@ contract ERC1967Proxy is Proxy {
         ERC1967Utils.upgradeToAndCall(implementation, _data);
     }
 
+    function implementation() external view returns (address) {
+        return _implementation();
+    }
+
     /**
      * @dev Returns the current implementation address.
      *
