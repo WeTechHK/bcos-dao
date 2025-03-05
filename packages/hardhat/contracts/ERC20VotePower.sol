@@ -19,6 +19,14 @@ contract ERC20VotePower is ERC20, ERC20Votes, ERC20Permit, Pausable, Ownable {
         super._update(from, to, amount);
     }
 
+    function mint(address to, uint256 amount) public onlyOwner {
+        _mint(to, amount);
+    }
+
+    function burn(address from, uint256 amount) public onlyOwner {
+        _burn(from, amount);
+    }
+
     function nonces(address owner) public view virtual override(ERC20Permit, Nonces) returns (uint256) {
         return super.nonces(owner);
     }
