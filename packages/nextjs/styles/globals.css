@@ -30,3 +30,22 @@ p {
 .btn.btn-ghost {
   @apply shadow-none;
 }
+
+
+.full-demo-mdxeditor [role=toolbar] {
+  top: 74px;
+  h1 {
+    font-size: 2em;
+    font-weight: normal;
+  }
+}
+
+@media (max-width: 768px) {
+  .full-demo-mdxeditor [role=toolbar] {
+    top: 196px;
+  }
+}
+
+.full-demo-mdxeditor[class*=popupContainer] {
+  z-index: 20;
+}

@@ -79,7 +79,7 @@ contract BCOSGovernor is
         uint256[] memory values,
         bytes[] memory calldatas,
         bytes32 descriptionHash
-    ) public view virtual override returns (uint256) {
+    ) public view returns (uint256) {
         uint256 proposalHash = hashProposal(targets, values, calldatas, descriptionHash);
         uint256 storedProposalId = _proposalIds[proposalHash];
         if (storedProposalId == 0) {
@@ -89,7 +89,7 @@ contract BCOSGovernor is
     }
 
     /**
- * @dev Returns the latest proposal id. A return value of 0 means no proposals have been created yet.
+     * @dev Returns the latest proposal id. A return value of 0 means no proposals have been created yet.
      */
     function latestProposalId() public view virtual returns (uint256) {
         return _latestProposalId;
@@ -206,9 +206,14 @@ contract BCOSGovernor is
         uint256 proposalHash = hashProposal(targets, values, calldatas, keccak256(bytes(description)));
         uint256 storedProposalId = _proposalIds[proposalHash];
         if (storedProposalId == 0) {
-            _proposalIds[proposalHash] = ++_latestProposalId;
+            _latestProposalId++;
+            _proposalIds[proposalHash] = _latestProposalId;
         }
         return super._propose(targets, values, calldatas, description, proposer);
+    }
+
+    function queue(uint256 proposalId) public override {
+        super.queue(proposalId);
     }
 
     function _queueOperations(
@@ -219,6 +224,10 @@ contract BCOSGovernor is
         bytes32 descriptionHash
     ) internal override(Governor, GovernorTimelockControl) returns (uint48) {
         return super._queueOperations(proposalId, targets, values, calldatas, descriptionHash);
+    }
+
+    function execute(uint256 proposalId) public payable override onlyMaintainer {
+        super.execute(proposalId);
     }
 
     function execute(
@@ -240,12 +249,20 @@ contract BCOSGovernor is
         super._executeOperations(proposalId, targets, values, calldatas, descriptionHash);
     }
 
+    // 入口参数可以都改成id
+    // 包装的时候分别调用
+    function cancel(uint256 proposalId) public override {
+        super.cancel(proposalId);
+    }
+
     function cancel(
         address[] memory targets,
         uint256[] memory values,
         bytes[] memory calldatas,
         bytes32 descriptionHash
     ) public virtual override(Governor) returns (uint256) {
+        // 角色权限检查在前面
+
         // The proposalId will be recomputed in the `_cancel` call further down. However we need the value before we
         // do the internal call, because we need to check the proposal state BEFORE the internal `_cancel` call
         // changes it. The `hashProposal` duplication has a cost that is limited, and that we accept.
@@ -287,10 +304,12 @@ contract BCOSGovernor is
         super.revokeRole(role, account);
     }
 
+    // FIXME)): remove this
     function renounceRole(bytes32 role, address account) public override onlyGovernance {
         super.renounceRole(role, account);
     }
 
+    // 确保_governanceCall没有用，理解_governanceCall
     function proposalNeedsQueuing(
         uint256 /*proposalId*/
     ) public view virtual override(Governor, GovernorTimelockControl) returns (bool) {
