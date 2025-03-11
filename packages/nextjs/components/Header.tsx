@@ -6,9 +6,9 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { hardhat } from "viem/chains";
 import { Bars3Icon, BugAntIcon } from "@heroicons/react/24/outline";
-import { CalculatorIcon } from "@heroicons/react/24/outline";
+import { BoltIcon } from "@heroicons/react/24/solid";
 import { FaucetButton, RainbowKitCustomConnectButton } from "~~/components/scaffold-eth";
-import { useOutsideClick, useTargetNetwork } from "~~/hooks/scaffold-eth";
+import { useOutsideClick, useTargetNetwork, useVotingPower } from "~~/hooks/scaffold-eth";
 
 type HeaderMenuLink = {
   label: string;
@@ -59,6 +59,7 @@ export const HeaderMenuLinks = () => {
  */
 export const Header = () => {
   const { targetNetwork } = useTargetNetwork();
+  const { votingPower } = useVotingPower();
   const isLocalNetwork = targetNetwork.id === hardhat.id;
 
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -107,6 +108,12 @@ export const Header = () => {
         </ul>
       </div>
       <div className="navbar-end flex-grow mr-4">
+        <div className="flex items-center mr-4 px-4 py-2 bg-primary/10 rounded-lg">
+          <BoltIcon className="h-4 w-4 mr-2 text-yellow-500" />
+          <span className="font-semibold">
+            Voting Power: {votingPower > 1000 ? `${(votingPower / 1000).toFixed(1)}k` : votingPower}
+          </span>
+        </div>
         <RainbowKitCustomConnectButton />
         {isLocalNetwork && <FaucetButton />}
       </div>

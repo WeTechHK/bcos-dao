@@ -1,10 +1,11 @@
 "use client";
 
 import React from "react";
+import Link from "next/link";
 import { Button } from "antd";
 import type { NextPage } from "next";
 import { ProposalCard } from "~~/components/ProposalCard";
-import Link from "next/link";
+import { mockProposals } from "~~/mock";
 
 type ProposalStatus = {
   key: number;
@@ -100,9 +101,9 @@ const Home: NextPage = () => {
 
           <div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              <ProposalCard></ProposalCard>
-              <ProposalCard></ProposalCard>
-              <ProposalCard></ProposalCard>
+              {mockProposals.map(proposal => (
+                <ProposalCard key={proposal.id} {...proposal} />
+              ))}
             </div>
           </div>
 
