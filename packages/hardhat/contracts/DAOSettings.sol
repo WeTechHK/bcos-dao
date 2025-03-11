@@ -9,6 +9,7 @@ import "./VoteSuccessLogic.sol";
 abstract contract DAOSettings is GovernorSettings, GovernorVotesQuorumFraction {
     IVoteSuccessLogic private voteSuccessLogic;
     uint256 private voteSuccessThreshold = 50;
+    uint256 private approveThreshold = 0;
 
     constructor(
         uint256 quorumNumeratorValue,
@@ -26,9 +27,17 @@ abstract contract DAOSettings is GovernorSettings, GovernorVotesQuorumFraction {
         return super.proposalThreshold();
     }
 
+    function proposalApproveThreshold() public view virtual returns (uint256) {
+        return approveThreshold;
+    }
+
     function setVoteSuccessThreshold(uint256 threshold) public onlyGovernance {
         require(threshold > 0 && threshold <= 100, "Invalid threshold");
         voteSuccessThreshold = threshold;
+    }
+
+    function setApproveThreshold(uint256 threshold) public onlyGovernance {
+        approveThreshold = threshold;
     }
 
     function updateVoteSuccessLogic(IVoteSuccessLogic newVoteSuccessLogic) public onlyGovernance {
