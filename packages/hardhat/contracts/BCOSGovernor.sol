@@ -10,7 +10,24 @@ import { TimelockController } from "@openzeppelin/contracts/governance/TimelockC
 import { IVotes } from "@openzeppelin/contracts/governance/utils/IVotes.sol";
 import { UUPSUpgradeable } from "@openzeppelin/contracts/proxy/utils/UUPSUpgradeable.sol";
 import { IAccessControl, AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol";
+import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "./DAOSettings.sol";
+using EnumerableSet for EnumerableSet.AddressSet;
+
+struct ProposalVoteCore {
+    uint256 againstVotes;
+    uint256 forVotes;
+    uint256 abstainVotes;
+}
+
+struct ProposalVote {
+    uint256 againstVotes;
+    uint256 forVotes;
+    uint256 abstainVotes;
+    EnumerableSet.AddressSet voters;
+    mapping(address voter => uint256) hasVoted;
+    mapping(address voter => uint256) voteBlock;
+}
 
 contract BCOSGovernor is
     GovernorVotes,
@@ -25,19 +42,13 @@ contract BCOSGovernor is
         For,
         Abstain
     }
-
     bytes32 public constant MAINTAINER_ROLE = keccak256("MAINTAINER_ROLE");
     bytes32 public constant EXECUTOR_ROLE = keccak256("EXECUTOR_ROLE");
 
     constructor(
         IVotes _token,
         TimelockController _timelock
-    )
-        Governor("BCOSGovernor")
-        GovernorVotes(_token)
-        DAOSettings(30, 1000, 1000, 1000)
-        GovernorTimelockControl(_timelock)
-    {
+    ) Governor("BCOSGovernor") GovernorVotes(_token) DAOSettings(30, 1, 1, 1000) GovernorTimelockControl(_timelock) {
         _grantRole(MAINTAINER_ROLE, msg.sender);
         _grantRole(EXECUTOR_ROLE, msg.sender);
     }
@@ -53,8 +64,11 @@ contract BCOSGovernor is
     }
 
     mapping(uint256 proposalHash => uint256 proposalId) private _proposalIds;
+    mapping(uint256 proposalId => uint256 proposalHash) private _proposalHashes;
     uint256 private _latestProposalId;
+    // proposalId => vote
     mapping(uint256 proposalId => ProposalVote) private _proposalVotes;
+    // proposalId => vote
     mapping(uint256 proposalId => ProposalApprovalFlow) private _proposalApprovalFlow;
 
     /**
@@ -72,6 +86,48 @@ contract BCOSGovernor is
             interfaceId == type(IAccessControl).interfaceId ||
             interfaceId == type(IGovernor).interfaceId ||
             super.supportsInterface(interfaceId);
+    }
+
+    function getProposalHashById(uint256 proposalId) public view returns (uint256) {
+        uint256 storedProposalHash = _proposalHashes[proposalId];
+        if (storedProposalHash == 0) {
+            revert GovernorNonexistentProposal(0);
+        }
+        return storedProposalHash;
+    }
+
+    function getProposalApprovalFlow(uint256 proposalId) public view returns (ProposalApprovalFlow memory) {
+        return _proposalApprovalFlow[proposalId];
+    }
+
+    function getProposalAllInfo(
+        uint256 proposalId
+    )
+        public
+        view
+        returns (
+            ProposalDetails memory proposalDetail,
+            ProposalState proposalState,
+            ProposalVoteCore memory proposalVote,
+            address proposer,
+            uint256 startBlock,
+            uint256 endBlock,
+            uint256 eta
+        )
+    {
+        uint256 proposalHash = _proposalHashes[proposalId];
+        (
+            proposalDetail.targets,
+            proposalDetail.values,
+            proposalDetail.calldatas,
+            proposalDetail.descriptionHash
+        ) = proposalDetails(proposalHash);
+        proposalState = state(proposalHash);
+        (proposalVote.forVotes, proposalVote.againstVotes, proposalVote.abstainVotes) = proposalVotes(proposalHash);
+        startBlock = proposalSnapshot(proposalHash);
+        endBlock = proposalDeadline(proposalHash);
+        eta = proposalEta(proposalHash);
+        proposer = proposalProposer(proposalHash);
     }
 
     function getProposalId(
@@ -99,7 +155,7 @@ contract BCOSGovernor is
      * @dev See {IGovernor-hasVoted}.
      */
     function hasVoted(uint256 proposalId, address account) public view virtual override returns (bool) {
-        return _proposalVotes[proposalId].hasVoted[account];
+        return _proposalVotes[proposalId].hasVoted[account] > 0;
     }
 
     /**
@@ -112,6 +168,21 @@ contract BCOSGovernor is
         return (proposalVote.againstVotes, proposalVote.forVotes, proposalVote.abstainVotes);
     }
 
+    function proposalVoters(uint256 proposalId) public view returns (address[] memory) {
+        ProposalVote storage proposalVote = _proposalVotes[proposalId];
+        return proposalVote.voters.values();
+    }
+
+    function proposalVoterWeight(uint256 proposalId, address voter) public view returns (uint256) {
+        ProposalVote storage proposalVote = _proposalVotes[proposalId];
+        return proposalVote.hasVoted[voter];
+    }
+
+    function proposalVoterBlock(uint256 proposalId, address voter) public view returns (uint256) {
+        ProposalVote storage proposalVote = _proposalVotes[proposalId];
+        return proposalVote.voteBlock[voter];
+    }
+
     function proposalThreshold() public view override(DAOSettings, Governor) returns (uint256) {
         return super.proposalThreshold();
     }
@@ -119,18 +190,20 @@ contract BCOSGovernor is
     /**
      * @dev See {Governor-_quorumReached}.
      */
-    function _quorumReached(uint256 proposalId) internal view virtual override returns (bool) {
+    function _quorumReached(uint256 proposalHash) internal view virtual override returns (bool) {
+        uint256 proposalId = _proposalIds[proposalHash];
         ProposalVote storage proposalVote = _proposalVotes[proposalId];
 
         return
-            quorum(proposalSnapshot(proposalId)) <=
+            quorum(proposalSnapshot(proposalHash)) <=
             (proposalVote.forVotes + proposalVote.againstVotes + proposalVote.abstainVotes);
     }
 
     /**
      * @dev See {Governor-_voteSucceeded}. In this module, the forVotes must be strictly over the againstVotes.
      */
-    function _voteSucceeded(uint256 proposalId) internal view virtual override returns (bool) {
+    function _voteSucceeded(uint256 proposalHash) internal view virtual override returns (bool) {
+        uint256 proposalId = _proposalIds[proposalHash];
         ProposalVote storage proposalVote = _proposalVotes[proposalId];
         return isVoteSuccessful(proposalVote.forVotes, proposalVote.againstVotes, proposalVote.abstainVotes);
     }
@@ -139,18 +212,21 @@ contract BCOSGovernor is
      * @dev See {Governor-_countVote}. In this module, the support follows the `VoteType` enum (from Governor Bravo).
      */
     function _countVote(
-        uint256 proposalId,
+        uint256 proposalHash,
         address account,
         uint8 support,
         uint256 weight,
         bytes memory // params
     ) internal virtual override {
+        uint256 proposalId = _proposalIds[proposalHash];
         ProposalVote storage proposalVote = _proposalVotes[proposalId];
 
-        if (proposalVote.hasVoted[account]) {
+        if (proposalVote.hasVoted[account] > 0) {
             revert GovernorAlreadyCastVote(account);
         }
-        proposalVote.hasVoted[account] = true;
+        proposalVote.hasVoted[account] = weight;
+        proposalVote.voters.add(account);
+        proposalVote.voteBlock[account] = block.number;
 
         if (support == uint8(VoteType.Against)) {
             proposalVote.againstVotes += weight;
@@ -164,7 +240,8 @@ contract BCOSGovernor is
     }
 
     function approveProposal(uint256 proposalId) public onlyMaintainer {
-        ProposalState proposalState = state(proposalId);
+        uint256 proposalHash = _proposalHashes[proposalId];
+        ProposalState proposalState = state(proposalHash);
         if (proposalState != ProposalState.Pending) {
             revert GovernorUnexpectedProposalState(
                 proposalId,
@@ -174,15 +251,21 @@ contract BCOSGovernor is
         }
         ProposalApprovalFlow storage approvalFlow = _proposalApprovalFlow[proposalId];
         approvalFlow.approvers.push(_msgSender());
-        if (approvalFlow.approvers.length >= proposalThreshold()) {
+        if (approvalFlow.approvers.length >= proposalApproveThreshold()) {
             approvalFlow.approved = true;
         }
     }
 
+    function stateById(uint256 proposalId) public view virtual returns (ProposalState) {
+        uint256 proposalHash = _proposalHashes[proposalId];
+        return state(proposalHash);
+    }
+
     function state(
-        uint256 proposalId
+        uint256 proposalHash
     ) public view virtual override(Governor, GovernorTimelockControl) returns (ProposalState) {
-        ProposalState proposalState = super.state(proposalId);
+        uint256 proposalId = _proposalIds[proposalHash];
+        ProposalState proposalState = super.state(proposalHash);
         if (proposalState == ProposalState.Active) {
             ProposalApprovalFlow storage approvalFlow = _proposalApprovalFlow[proposalId];
             if (!approvalFlow.approved) {
@@ -208,12 +291,14 @@ contract BCOSGovernor is
         if (storedProposalId == 0) {
             _latestProposalId++;
             _proposalIds[proposalHash] = _latestProposalId;
+            _proposalHashes[_latestProposalId] = proposalHash;
         }
         return super._propose(targets, values, calldatas, description, proposer);
     }
 
-    function queue(uint256 proposalId) public override {
-        super.queue(proposalId);
+    function queueById(uint256 proposalId) public {
+        uint256 proposalHash = _proposalHashes[proposalId];
+        super.queue(proposalHash);
     }
 
     function _queueOperations(
@@ -226,17 +311,9 @@ contract BCOSGovernor is
         return super._queueOperations(proposalId, targets, values, calldatas, descriptionHash);
     }
 
-    function execute(uint256 proposalId) public payable override onlyMaintainer {
-        super.execute(proposalId);
-    }
-
-    function execute(
-        address[] memory targets,
-        uint256[] memory values,
-        bytes[] memory calldatas,
-        bytes32 descriptionHash
-    ) public payable override onlyMaintainer returns (uint256) {
-        return super.execute(targets, values, calldatas, descriptionHash);
+    function executeById(uint256 proposalId) public payable onlyMaintainer {
+        uint256 proposalHash = _proposalHashes[proposalId];
+        super.execute(proposalHash);
     }
 
     function _executeOperations(
@@ -249,42 +326,28 @@ contract BCOSGovernor is
         super._executeOperations(proposalId, targets, values, calldatas, descriptionHash);
     }
 
-    // 入口参数可以都改成id
-    // 包装的时候分别调用
-    function cancel(uint256 proposalId) public override {
-        super.cancel(proposalId);
+    function emergencyShutdownProposal(uint256 proposalId) public onlyMaintainer {
+        uint256 proposalHash = _proposalHashes[proposalId];
+        ProposalState proposalState = state(proposalHash);
+        if (proposalState != ProposalState.Active) {
+            revert GovernorUnexpectedProposalState(
+                proposalHash,
+                proposalState,
+                _encodeStateBitmap(ProposalState.Active)
+            );
+        }
+        (
+            address[] memory targets,
+            uint256[] memory values,
+            bytes[] memory calldatas,
+            bytes32 descriptionHash
+        ) = proposalDetails(proposalHash);
+        _cancel(targets, values, calldatas, descriptionHash);
     }
 
-    function cancel(
-        address[] memory targets,
-        uint256[] memory values,
-        bytes[] memory calldatas,
-        bytes32 descriptionHash
-    ) public virtual override(Governor) returns (uint256) {
-        // 角色权限检查在前面
-
-        // The proposalId will be recomputed in the `_cancel` call further down. However we need the value before we
-        // do the internal call, because we need to check the proposal state BEFORE the internal `_cancel` call
-        // changes it. The `hashProposal` duplication has a cost that is limited, and that we accept.
-        uint256 proposalId = hashProposal(targets, values, calldatas, descriptionHash);
-
-        // public cancel restrictions (on top of existing _cancel restrictions).
-        ProposalState currentState = state(proposalId);
-        if (currentState == ProposalState.Pending) {
-            if (_msgSender() != proposalProposer(proposalId) && !hasRole(MAINTAINER_ROLE, _msgSender())) {
-                revert GovernorOnlyProposer(_msgSender());
-            }
-        } else if (currentState == ProposalState.Active) {
-            if (!hasRole(MAINTAINER_ROLE, _msgSender())) {
-                revert GovernorOnlyExecutor(_msgSender());
-            }
-        } else {
-            bytes32 allowedStates = _encodeStateBitmap(ProposalState.Pending) |
-                _encodeStateBitmap(ProposalState.Active);
-            revert GovernorUnexpectedProposalState(proposalId, currentState, allowedStates);
-        }
-
-        return _cancel(targets, values, calldatas, descriptionHash);
+    function cancelById(uint256 proposalId) public onlyMaintainer {
+        uint256 proposalHash = _proposalHashes[proposalId];
+        super.cancel(proposalHash);
     }
 
     function _cancel(
@@ -294,6 +357,10 @@ contract BCOSGovernor is
         bytes32 descriptionHash
     ) internal override(Governor, GovernorTimelockControl) returns (uint256) {
         return super._cancel(targets, values, calldatas, descriptionHash);
+    }
+
+    function grantMaintainer(address account) public onlyGovernance {
+        grantRole(MAINTAINER_ROLE, account);
     }
 
     function grantRole(bytes32 role, address account) public override onlyGovernance {
