@@ -1,43 +1,54 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.26;
 
-import { GovernorVotesQuorumFraction } from "@openzeppelin/contracts/governance/extensions/GovernorVotesQuorumFraction.sol";
-import { GovernorSettings } from "@openzeppelin/contracts/governance/extensions/GovernorSettings.sol";
-import { IGovernor, Governor } from "@openzeppelin/contracts/governance/Governor.sol";
+import { GovernorVotesQuorumFractionUpgradeable } from "@openzeppelin/contracts-upgradeable/governance/extensions/GovernorVotesQuorumFractionUpgradeable.sol";
+import { GovernorSettingsUpgradeable } from "@openzeppelin/contracts-upgradeable/governance/extensions/GovernorSettingsUpgradeable.sol";
+import { GovernorUpgradeable } from "@openzeppelin/contracts-upgradeable/governance/GovernorUpgradeable.sol";
+import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "./VoteSuccessLogic.sol";
 
-abstract contract DAOSettings is GovernorSettings, GovernorVotesQuorumFraction {
-    IVoteSuccessLogic private voteSuccessLogic;
-    uint256 private voteSuccessThreshold = 50;
-    uint256 private approveThreshold = 0;
+abstract contract DAOSettings is Initializable, GovernorSettingsUpgradeable, GovernorVotesQuorumFractionUpgradeable {
+    IVoteSuccessLogic private _voteSuccessLogic;
+    uint256 private _voteSuccessThreshold;
+    uint256 private _approveThreshold = 0;
 
-    constructor(
+    function __DAOSettings_init(
         uint256 quorumNumeratorValue,
         uint48 initialVotingDelay,
         uint32 initialVotingPeriod,
         uint256 initialProposalThreshold
-    )
-        GovernorSettings(initialVotingDelay, initialVotingPeriod, initialProposalThreshold)
-        GovernorVotesQuorumFraction(quorumNumeratorValue)
-    {
-        voteSuccessLogic = new VoteSuccessLogic();
+    ) internal onlyInitializing {
+        __GovernorSettings_init(initialVotingDelay, initialVotingPeriod, initialProposalThreshold);
+        __GovernorVotesQuorumFraction_init(quorumNumeratorValue);
+        _voteSuccessLogic = new VoteSuccessLogic();
+        _voteSuccessThreshold = 50;
     }
 
-    function proposalThreshold() public view virtual override(Governor, GovernorSettings) returns (uint256) {
+    function proposalThreshold()
+        public
+        view
+        virtual
+        override(GovernorSettingsUpgradeable, GovernorUpgradeable)
+        returns (uint256)
+    {
         return super.proposalThreshold();
     }
 
-    function proposalApproveThreshold() public view virtual returns (uint256) {
-        return approveThreshold;
+    function approveThreshold() public view virtual returns (uint256) {
+        return _approveThreshold;
+    }
+
+    function voteSuccessThreshold() public view returns (uint256) {
+        return _voteSuccessThreshold;
     }
 
     function setVoteSuccessThreshold(uint256 threshold) public onlyGovernance {
         require(threshold > 0 && threshold <= 100, "Invalid threshold");
-        voteSuccessThreshold = threshold;
+        _voteSuccessThreshold = threshold;
     }
 
     function setApproveThreshold(uint256 threshold) public onlyGovernance {
-        approveThreshold = threshold;
+        _approveThreshold = threshold;
     }
 
     function updateVoteSuccessLogic(IVoteSuccessLogic newVoteSuccessLogic) public onlyGovernance {
@@ -45,10 +56,10 @@ abstract contract DAOSettings is GovernorSettings, GovernorVotesQuorumFraction {
             newVoteSuccessLogic.supportsInterface(type(IVoteSuccessLogic).interfaceId),
             "Invalid IVoteSuccessLogic implementation"
         );
-        voteSuccessLogic = newVoteSuccessLogic;
+        _voteSuccessLogic = newVoteSuccessLogic;
     }
 
     function isVoteSuccessful(uint256 forVotes, uint256 againstVotes, uint256 abstainVotes) public view returns (bool) {
-        return voteSuccessLogic.isVoteSuccessful(forVotes, againstVotes, abstainVotes, voteSuccessThreshold);
+        return _voteSuccessLogic.isVoteSuccessful(forVotes, againstVotes, abstainVotes, _voteSuccessThreshold);
     }
 }

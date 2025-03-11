@@ -32,7 +32,7 @@ const config: HardhatUserConfig = {
           optimizer: {
             enabled: true,
             // https://docs.soliditylang.org/en/latest/using-the-compiler.html#optimizer-options
-            runs: 200,
+            runs: 9999,
           },
           evmVersion: "cancun",
         },
@@ -53,10 +53,6 @@ const config: HardhatUserConfig = {
       allowUnlimitedContractSize: true,
       gas: 30000000,
       blockGasLimit: 30000000,
-      forking: {
-        url: `https://eth-mainnet.alchemyapi.io/v2/${providerApiKey}`,
-        enabled: process.env.MAINNET_FORKING_ENABLED === "true",
-      },
     },
     dev_net: {
       url: `http://140.210.218.31:8545`,
