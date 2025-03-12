@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import { Button } from "antd";
 import type { NextPage } from "next";
@@ -39,6 +39,11 @@ const proposalStatuses: ProposalStatus[] = [
 
 const Home: NextPage = () => {
   const proposalFilterKey = 0;
+
+  const [mockProposalsList, setMockProposalsList] = useState(mockProposals);
+  const loadMore = () => {
+    setMockProposalsList(mockProposalsList.concat(mockProposals));
+  };
   return (
     <>
       <div className="container mx-auto px-4 py-6">
@@ -101,14 +106,17 @@ const Home: NextPage = () => {
 
           <div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {mockProposals.map(proposal => (
+              {mockProposalsList.map(proposal => (
                 <ProposalCard key={proposal.id} {...proposal} />
               ))}
             </div>
           </div>
 
           <div className="text-center mt-8">
-            <button className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition duration-300">
+            <button
+              onClick={loadMore}
+              className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition duration-300"
+            >
               Load More Proposals
             </button>
           </div>
