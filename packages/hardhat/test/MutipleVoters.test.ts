@@ -180,9 +180,21 @@ describe("Multiple Voters Test", function () {
       console.log(proposal.proposalState, "proposal.proposalState");
       expect(proposal.proposalState).to.equal(ProposalState.Succeeded);
 
+      // 添加队列操作
       await governorTemplate.connect(owner).queueById(proposalId);
       proposal = await governorTemplate.getProposalAllInfo(proposalId);
+      expect(proposal.proposalState).to.equal(ProposalState.Queued);
 
+      // 等待时间锁延迟
+      await time.increase(31);
+      await mine(1);
+
+      // 执行提案 - 只执行一次
+      await governorTemplate.connect(owner).executeById(proposalId);
+      expect(await governorTemplate.hasRole(await governorTemplate.MAINTAINER_ROLE(), newMaintainer)).to.eq(true);
+      expect(await governorTemplate.stateById(proposalId)).to.equal(ProposalState.Executed);
+
+      // 验证投票结果
       expect(await governorTemplate.hasVoted(proposalId, owner.address)).to.eq(true);
       expect(await governorTemplate.hasVoted(proposalId, voters[0].address)).to.eq(true);
       expect(await governorTemplate.hasVoted(proposalId, voters[1].address)).to.eq(true);
@@ -209,12 +221,6 @@ describe("Multiple Voters Test", function () {
       expect(proposal.proposalState).to.equal(ProposalState.Queued);
 
       expect(await governorTemplate.proposalVoterBlock(proposalId, owner.address)).to.equal(receipt.blockNumber);
-      await mine(30);
-      await governorTemplate.connect(owner).executeById(proposalId);
-
-      expect(await governorTemplate.hasRole(await governorTemplate.MAINTAINER_ROLE(), newMaintainer)).to.eq(true);
-
-      expect(await governorTemplate.stateById(proposalId)).to.equal(ProposalState.Executed);
     });
     it("more voters against", async function () {
       const { proposalId, governorTemplate, owner, voters } = this;
