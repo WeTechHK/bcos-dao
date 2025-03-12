@@ -3,6 +3,7 @@ import * as dotenv from "dotenv";
 dotenv.config();
 import "../deploy/00_deploy_BCOSGovernor";
 import { ethers } from "hardhat";
+import { BCOSGovernor__factory } from "../typechain-types";
 
 async function main() {
   console.log("Deploying BCOSGovernor...");
@@ -20,29 +21,28 @@ async function main() {
   console.log("ERC20VotePower deployed to:", await evp.getAddress());
   console.log("TimelockController deployed to:", await tc.getAddress());
   console.log("ERC1967Proxy deployed to:", await proxy.getAddress());
+  const proxyGovernor = BCOSGovernor__factory.connect(await proxy.getAddress(), owner);
 
   // empty data
-  await ERC1967Proxy.deploy(governor, "0x");
   await evp.mint(owner.address, 2000n);
   await evp.connect(owner).delegate(owner.address);
   const calldata = governor.interface.encodeFunctionData("grantMaintainer", [newMaintainer.address]);
-  await governor.connect(owner).propose([governor], [0n], [calldata], "");
+  await proxyGovernor.connect(owner).propose([governor], [0n], [calldata], "");
 
-  console.log(await governor.proposalCount());
+  console.log(await proxyGovernor.proposalCount());
 
-  const pId = await governor.latestProposalId();
+  const pId = await proxyGovernor.latestProposalId();
 
-  let state = await governor.stateById(pId);
+  let state = await proxyGovernor.stateById(pId);
   console.log(state);
 
-  await governor.approveProposal(pId);
+  await proxyGovernor.approveProposal(pId);
 
-
-  console.log(await governor.proposalSnapshot(await governor.getProposalHashById(pId)));
+  console.log(await proxyGovernor.proposalSnapshot(await governor.getProposalHashById(pId)));
   await evp.mint(owner.address, 2000n);
 
-  console.log(await governor.getProposalAllInfo(pId));
-  state = await governor.stateById(pId);
+  console.log(await proxyGovernor.getProposalAllInfo(pId));
+  state = await proxyGovernor.stateById(pId);
 
   console.log(state);
 }

@@ -1,21 +1,43 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.26;
-import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import { ERC20Votes } from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Votes.sol";
-import { ERC20Permit } from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol";
-import { Pausable } from "@openzeppelin/contracts/utils/Pausable.sol";
-import { Nonces } from "@openzeppelin/contracts/utils/Nonces.sol";
-import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+import { ERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
+import { ERC20VotesUpgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20VotesUpgradeable.sol";
+import { ERC20PermitUpgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20PermitUpgradeable.sol";
+import { PausableUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
+import { NoncesUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/NoncesUpgradeable.sol";
+import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 /**
  * @title ERC20VotePower
  * @dev Extension of ERC20Votes that adds vote power to the token.
  */
 
-contract ERC20VotePower is ERC20, ERC20Votes, ERC20Permit, Pausable, Ownable {
-    constructor(string memory name, string memory symbol) ERC20(name, symbol) ERC20Permit(name) Ownable(msg.sender) {}
+contract ERC20VotePower is
+    Initializable,
+    ERC20Upgradeable,
+    ERC20VotesUpgradeable,
+    ERC20PermitUpgradeable,
+    PausableUpgradeable,
+    OwnableUpgradeable
+{
+    function initialize(string memory name, string memory symbol) public initializer {
+        __ERC20VotePower_init(name, symbol);
+    }
 
-    function _update(address from, address to, uint256 amount) internal override(ERC20Votes, ERC20) whenNotPaused {
+    function __ERC20VotePower_init(string memory name, string memory symbol) internal initializer {
+        __ERC20Permit_init(name);
+        __ERC20Votes_init();
+        __ERC20_init(name, symbol);
+        __Ownable_init(msg.sender);
+        __Pausable_init();
+    }
+
+    function _update(
+        address from,
+        address to,
+        uint256 amount
+    ) internal override(ERC20VotesUpgradeable, ERC20Upgradeable) whenNotPaused {
         super._update(from, to, amount);
     }
 
@@ -27,7 +49,9 @@ contract ERC20VotePower is ERC20, ERC20Votes, ERC20Permit, Pausable, Ownable {
         _burn(from, amount);
     }
 
-    function nonces(address owner) public view virtual override(ERC20Permit, Nonces) returns (uint256) {
+    function nonces(
+        address owner
+    ) public view virtual override(ERC20PermitUpgradeable, NoncesUpgradeable) returns (uint256) {
         return super.nonces(owner);
     }
 
