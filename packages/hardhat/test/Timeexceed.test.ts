@@ -8,7 +8,7 @@ import {
   TimelockControllerUpgradeable__factory,
 } from "../typechain-types";
 
-describe("Permission Test", function () {
+describe("Timeout Test", function () {
   async function deployGovernor() {
     const [owner, newMaintainer, ...restVoters] = await ethers.getSigners();
     const BCOSGovernor = await ethers.getContractFactory("BCOSGovernor");
@@ -131,107 +131,83 @@ describe("Permission Test", function () {
 
       Object.assign(this, { calldata, proposalId });
     });
-    // 跨权限铸币
-    it("should reject minting from non-owner", async function () {
-      const [, nonOwner] = await ethers.getSigners();
 
-      await expect(this.erc20VotePowerTemplate.connect(nonOwner).mint(nonOwner.address, 1000n))
-        .to.be.revertedWithCustomError(this.erc20VotePowerTemplate, "OwnableUnauthorizedAccount")
-        .withArgs(nonOwner.address);
-    });
-    // 验证 Proposer 权限要求 1000代币
-    it("should verify proposer requirements", async function () {
-      const { governorTemplate, owner, voters, erc20VotePowerTemplate } = this;
+    it("should expire after approval timeout", async function () {
+      const { governorTemplate, proposalId } = this;
 
-      // 检查默认提案阈值
-      expect(await governorTemplate.proposalThreshold()).to.equal(1000n);
-
-      // 检查持有足够代币的账户可以提案
-      const hasEnoughTokens = voters[0]; // 持有 2000 代币
-      const proposalData = {
-        targets: [await governorTemplate.getAddress()],
-        values: [0n],
-        calldatas: ["0x"],
-        description: "Test Proposal",
-      };
-
-      // 应该可以成功提案
-      await expect(
-        governorTemplate
-          .connect(hasEnoughTokens)
-          .propose(proposalData.targets, proposalData.values, proposalData.calldatas, proposalData.description),
-      ).to.not.be.reverted;
-
-      // 检查持有不足代币的账户不能提案
-      const notEnoughTokens = voters[1];
-      await erc20VotePowerTemplate.connect(notEnoughTokens).transfer(owner.address, 1500n); // 转走部分代币，剩余不足阈值
-
-      // 应该提案失败
-      await expect(
-        governorTemplate
-          .connect(notEnoughTokens)
-          .propose(proposalData.targets, proposalData.values, proposalData.calldatas, proposalData.description),
-      ).to.be.revertedWithCustomError(governorTemplate, "GovernorInsufficientProposerVotes");
-    });
-    // 跨权限approve提案
-    it("should reject approve from non-owner", async function () {
-      const { governorTemplate, proposalId, voters } = this;
-      const nonOwner = voters[0]; // 使用第一个voter作为非owner用户
-
-      await mine(2); // 等待提案进入可审批状态
-
-      // 非owner尝试审批提案应该失败
-      await expect(governorTemplate.connect(nonOwner).approveProposal(proposalId)).to.be.revertedWith(
-        "BCOSGovernor: caller is not a maintainer",
+      // 获取提案哈希
+      const proposalHash = await governorTemplate.hashProposal(
+        [await governorTemplate.getAddress()],
+        [0n],
+        [this.calldata],
+        ethers.keccak256(ethers.toUtf8Bytes("# setMaintainer")),
       );
 
-      // 验证提案状态仍然是Pending
-      const proposal = await governorTemplate.getProposalAllInfo(proposalId);
+      // 检查初始状态
+      let proposal = await governorTemplate.getProposalAllInfo(proposalId);
       expect(proposal.proposalState).to.equal(ProposalState.Pending);
 
-      // 验证审批列表为空
-      const [approvers, approved] = await governorTemplate.getProposalApprovalFlow(proposalId);
-      expect(approvers.length).to.eq(0);
-      expect(approved).to.eq(false);
+      // 等待超过审批时间
+      await mine(15); // 增加等待区块数，确保超过审批时间
+
+      // 检查提案是否过期
+      proposal = await governorTemplate.getProposalAllInfo(proposalId);
+      console.log("Current Block:", await time.latestBlock());
+      console.log("Proposal Start Block:", proposal.startBlock);
+      console.log("Proposal End Block:", proposal.endBlock);
+      console.log("Proposal State:", proposal.proposalState);
+      expect(proposal.proposalState).to.equal(ProposalState.Defeated);
+
+      // 验证过期后不能审批
+      await expect(governorTemplate.connect(this.owner).approveProposal(proposalId))
+        .to.be.revertedWithCustomError(governorTemplate, "GovernorUnexpectedProposalState")
+        .withArgs(
+          proposalId,
+          ProposalState.Defeated,
+          "0x0000000000000000000000000000000000000000000000000000000000000001",
+        );
+
+      // 验证过期后不能取消
+      await expect(governorTemplate.connect(this.owner).cancelById(proposalId))
+        .to.be.revertedWithCustomError(governorTemplate, "GovernorUnexpectedProposalState")
+        .withArgs(
+          proposalHash,
+          ProposalState.Defeated,
+          "0x0000000000000000000000000000000000000000000000000000000000000001",
+        );
     });
 
-    // 跨权限取消提案
-    it("should reject cancel from non-owner", async function () {
-      const { governorTemplate, proposalId, voters } = this;
-      const nonOwner = voters[0]; // 使用第一个voter作为非owner用户
-
-      await mine(2); // 等待提案进入可审批状态
-
-      // 非owner尝试取消提案应该失败
-      await expect(governorTemplate.connect(nonOwner).cancelById(proposalId)).to.be.revertedWith(
-        "BCOSGovernor: caller is not a maintainer",
-      );
-
-      // 验证提案状态仍然是Pending
-      const proposal = await governorTemplate.getProposalAllInfo(proposalId);
-      expect(proposal.proposalState).to.equal(ProposalState.Pending);
-
-      // 验证审批列表为空
-      const [approvers, approved] = await governorTemplate.getProposalApprovalFlow(proposalId);
-      expect(approvers.length).to.eq(0);
-      expect(approved).to.eq(false);
-    });
-
-    it("approve", async function () {
+    it("should expire after voting timeout", async function () {
       const { governorTemplate, owner, proposalId } = this;
-      let [approvers, approved] = await governorTemplate.getProposalApprovalFlow(proposalId);
-      expect(approvers.length).to.eq(0);
-      expect(approved).to.eq(false);
+      // 获取提案哈希
+      const proposalHash = await governorTemplate.hashProposal(
+        [await governorTemplate.getAddress()],
+        [0n],
+        [this.calldata],
+        ethers.keccak256(ethers.toUtf8Bytes("# setMaintainer")),
+      );
+      // 先审批提案
       await mine(2);
-      expect(await governorTemplate.state(await governorTemplate.getProposalHashById(proposalId))).to.equal(0n);
       await governorTemplate.connect(owner).approveProposal(proposalId);
-      expect(await governorTemplate.state(await governorTemplate.getProposalHashById(proposalId))).to.equal(1n);
-      [approvers, approved] = await governorTemplate.getProposalApprovalFlow(proposalId);
-      expect(approvers.length).to.eq(1);
-      expect(approved).to.eq(true);
-      const proposal = await governorTemplate.getProposalAllInfo(proposalId);
-      console.log(proposal);
+
+      let proposal = await governorTemplate.getProposalAllInfo(proposalId);
       expect(proposal.proposalState).to.equal(ProposalState.Active);
+
+      // 等待超过投票时间
+      await mine(15); // 投票期是10个区块
+
+      // 检查提案是否过期
+      proposal = await governorTemplate.getProposalAllInfo(proposalId);
+      expect(proposal.proposalState).to.equal(ProposalState.Defeated);
+
+      // 验证过期后不能投票
+      await expect(governorTemplate.connect(owner).vote(proposalId, 1n, ""))
+        .to.be.revertedWithCustomError(governorTemplate, "GovernorUnexpectedProposalState")
+        .withArgs(
+          proposalHash,
+          ProposalState.Defeated,
+          "0x0000000000000000000000000000000000000000000000000000000000000002", // Active state bitmap
+        );
     });
   });
 });
