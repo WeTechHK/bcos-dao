@@ -58,7 +58,7 @@ const config: HardhatUserConfig = {
       url: `http://140.210.218.31:8545`,
       accounts: [deployerPrivateKey],
     },
-    eightart: {
+    potos_testnet: {
       url: `https://rpc.eightart.hk/`,
       accounts: [deployerPrivateKey],
     },
@@ -74,15 +74,6 @@ const config: HardhatUserConfig = {
   // configuration for harhdat-verify plugin
   etherscan: {
     apiKey: `${etherscanApiKey}`,
-  },
-  // configuration for etherscan-verify from hardhat-deploy plugin
-  verify: {
-    etherscan: {
-      apiKey: `${etherscanApiKey}`,
-    },
-  },
-  sourcify: {
-    enabled: false,
   },
 };
 

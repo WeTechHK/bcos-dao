@@ -1,50 +1,45 @@
 import * as dotenv from "dotenv";
 
 dotenv.config();
-import "../deploy/00_deploy_BCOSGovernor";
-import { ethers } from "hardhat";
-import { BCOSGovernor__factory } from "../typechain-types";
+import "../deploy/02_deploy_BCOSGovernor";
+import { deployments, ethers, getNamedAccounts } from "hardhat";
+import {
+  BCOSGovernor__factory,
+  ERC20VotePower__factory,
+  TimelockControllerUpgradeable__factory,
+} from "../typechain-types";
 
 async function main() {
-  console.log("Deploying BCOSGovernor...");
-  const [owner, newMaintainer] = await ethers.getSigners();
-  const BCOSGovernor = await ethers.getContractFactory("BCOSGovernor");
-  const ERC20VotePower = await ethers.getContractFactory("ERC20VotePower");
-  const TimelockController = await ethers.getContractFactory("TimelockController");
-  const ERC1967Proxy = await ethers.getContractFactory("ERC1967Proxy");
-  const evp = await ERC20VotePower.deploy("ERC20Vote", "EVP");
-  const tc = await TimelockController.deploy(100n, [owner], [owner], owner);
-  const governor = await BCOSGovernor.deploy(evp, tc);
-  const proxy = await ERC1967Proxy.deploy(governor, "0x");
+  const { deployer } = await getNamedAccounts();
+  const [owner] = await ethers.getSigners();
+  const tc = await deployments.get("TimelockControllerUpgradeable");
+  const erc20 = await deployments.get("ERC20VotePower");
+  const governor = await deployments.get("BCOSGovernor");
+  console.log("deployer: ", deployer);
+  console.log("tc.address: ", tc.address);
+  console.log("erc20.address: ", erc20.address);
+  console.log("governor.address: ", governor.address);
 
-  console.log("BCOSGovernor deployed to:", await governor.getAddress());
-  console.log("ERC20VotePower deployed to:", await evp.getAddress());
-  console.log("TimelockController deployed to:", await tc.getAddress());
-  console.log("ERC1967Proxy deployed to:", await proxy.getAddress());
-  const proxyGovernor = BCOSGovernor__factory.connect(await proxy.getAddress(), owner);
+  const governorTemplate = BCOSGovernor__factory.connect(governor.address, owner);
+  const erc20VotePowerTemplate = ERC20VotePower__factory.connect(erc20.address, owner);
+  TimelockControllerUpgradeable__factory.connect(tc.address, owner);
 
-  // empty data
-  await evp.mint(owner.address, 2000n);
-  await evp.connect(owner).delegate(owner.address);
-  const calldata = governor.interface.encodeFunctionData("grantMaintainer", [newMaintainer.address]);
-  await proxyGovernor.connect(owner).propose([governor], [0n], [calldata], "");
+  await erc20VotePowerTemplate.connect(owner).mint(owner.address, 2000n);
+  await erc20VotePowerTemplate.connect(owner).delegate(owner.address);
 
-  console.log(await proxyGovernor.proposalCount());
+  const calldata = (await ethers.getContractFactory("BCOSGovernor")).interface.encodeFunctionData("grantMaintainer", [
+    deployer,
+  ]);
 
-  const pId = await proxyGovernor.latestProposalId();
+  await governorTemplate
+    .connect(owner)
+    .propose([await governorTemplate.getAddress()], [0n], [calldata], "# setMaintainer");
+  const proposalId = await governorTemplate.latestProposalId();
 
-  let state = await proxyGovernor.stateById(pId);
-  console.log(state);
+  await governorTemplate.connect(owner).approveProposal(proposalId);
+  const proposal = await governorTemplate.getProposalAllInfo(proposalId);
 
-  await proxyGovernor.approveProposal(pId);
-
-  console.log(await proxyGovernor.proposalSnapshot(await governor.getProposalHashById(pId)));
-  await evp.mint(owner.address, 2000n);
-
-  console.log(await proxyGovernor.getProposalAllInfo(pId));
-  state = await proxyGovernor.stateById(pId);
-
-  console.log(state);
+  console.log("proposal: ", proposal);
 }
 
 main().catch(console.error);
