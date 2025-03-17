@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { Button } from "antd";
 import type { NextPage } from "next";
+import { useLatestProposalId } from "~~/blockchain/BCOSGovernor";
 import { ProposalCard } from "~~/components/ProposalCard";
 import { mockProposals } from "~~/mock";
 
@@ -44,6 +45,9 @@ const Home: NextPage = () => {
   const loadMore = () => {
     setMockProposalsList(mockProposalsList.concat(mockProposals));
   };
+
+  const latestProposal = useLatestProposalId();
+  console.log("latestProposal: ", latestProposal);
   return (
     <>
       <div className="container mx-auto px-4 py-6">

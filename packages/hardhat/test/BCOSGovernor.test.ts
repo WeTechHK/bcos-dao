@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { ethers } from "hardhat";
+import { deployments, ethers } from "hardhat";
 import { mine, time } from "@nomicfoundation/hardhat-network-helpers";
 import { ProposalState } from "./helpers/enums";
 import { proposalStatesToBitMap } from "./helpers/governance";
@@ -54,6 +54,16 @@ describe("BCOSGovernor", function () {
       governorTemplate,
       erc20VotePowerTemplate,
       tcTemplate,
+    };
+  }
+
+  async function deployScript() {
+    const [owner] = await ethers.getSigners();
+    await deployments.fixture(["BCOSGovernor"]);
+    const g = await deployments.get("BCOSGovernor");
+    const governorTemplate = BCOSGovernor__factory.connect(g.address, owner);
+    return {
+      governorTemplate,
     };
   }
 
@@ -237,6 +247,25 @@ describe("BCOSGovernor", function () {
       );
 
       expect(await governorTemplate.stateById(proposalId)).to.eq(ProposalState.Canceled);
+    });
+  });
+
+  describe("deployment script", function () {
+    beforeEach(async function () {
+      Object.assign(this, await deployScript());
+    });
+    it("check config", async function () {
+      expect(await this.governorTemplate.proposalCount()).to.equal(0n);
+      expect(await this.governorTemplate.latestProposalId()).to.equal(0n);
+      expect(await this.governorTemplate.approveThreshold()).to.equal(0n);
+      expect(await this.governorTemplate.proposalThreshold()).to.equal(1000n);
+      expect(await this.governorTemplate.votingDelay()).to.equal(1n);
+      expect(await this.governorTemplate.votingPeriod()).to.equal(10n);
+      expect(await this.governorTemplate.quorumDenominator()).to.equal(100n);
+      expect(await this.governorTemplate.quorumNumerator()).to.equal(30n);
+      expect(await this.governorTemplate.voteSuccessThreshold()).to.equal(50n);
+      expect(await this.governorTemplate.isVoteSuccessful(51n, 30n, 19n)).to.equal(true);
+      expect(await this.governorTemplate.isVoteSuccessful(50n, 30n, 20n)).to.equal(false);
     });
   });
 });

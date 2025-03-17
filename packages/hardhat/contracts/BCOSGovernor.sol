@@ -53,6 +53,7 @@ contract BCOSGovernor is
         address [] memory self = new address[](1);
         self[0] = address(this);
         _timelock.initialize(30, self, self, _msgSender());
+        // FIXME)): add token initialize() here
         __GovernorTimelockControl_init(_timelock);
         _grantRole(MAINTAINER_ROLE, msg.sender);
         _grantRole(EXECUTOR_ROLE, msg.sender);
@@ -168,6 +169,7 @@ contract BCOSGovernor is
         return proposalVote.voters.values();
     }
 
+    // TODO)): 返回更多字段
     function proposalVoterWeight(uint256 proposalId, address voter) public view returns (uint256) {
         ProposalVote storage proposalVote = _proposalVotes[proposalId];
         return proposalVote.hasVoted[voter];
