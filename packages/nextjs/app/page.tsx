@@ -1,12 +1,11 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import Link from "next/link";
 import { Button } from "antd";
 import type { NextPage } from "next";
 import { ProposalCard } from "~~/components/ProposalCard";
-import { useLatestProposalId } from "~~/hooks/blockchain/BCOSGovernor";
-import { mockProposals } from "~~/mock";
+import { useLatestProposalId, useProposalList } from "~~/hooks/blockchain/BCOSGovernor";
 
 type ProposalStatus = {
   key: number;
@@ -17,9 +16,14 @@ type ProposalStatus = {
 
 const proposalStatuses: ProposalStatus[] = [
   {
-    key: 0,
+    key: -1,
     label: "All Proposals",
     color: "bg-blue-400",
+  },
+  {
+    key: 0,
+    label: "Pending",
+    color: "bg-yellow-400",
   },
   {
     key: 1,
@@ -28,26 +32,18 @@ const proposalStatuses: ProposalStatus[] = [
   },
   {
     key: 2,
-    label: "Closed",
+    label: "Canceled",
     color: "bg-red-400",
-  },
-  {
-    key: 3,
-    label: "Pending",
-    color: "bg-yellow-400",
   },
 ];
 
 const Home: NextPage = () => {
-  const proposalFilterKey = 0;
-
-  const [mockProposalsList, setMockProposalsList] = useState(mockProposals);
-  const loadMore = () => {
-    setMockProposalsList(mockProposalsList.concat(mockProposals));
-  };
-
+  const proposalFilterKey = -1;
   const latestProposal = useLatestProposalId();
   console.log("latestProposal: ", latestProposal);
+
+  const { data: proposalList, loadMore, hasMoreProposals, switchProposalState } = useProposalList(0, 6, latestProposal);
+
   return (
     <>
       <div className="container mx-auto px-4 py-6">
@@ -101,6 +97,7 @@ const Home: NextPage = () => {
                     isActive ? "bg-secondary shadow-md" : ""
                   } font-medium text-neutral hover:bg-secondary hover:shadow-md focus:!bg-secondary active:!text-neutral py-1.5 px-3 text-sm rounded-full gap-2 grid grid-flow-col`}
                   icon={status.icon}
+                  onClick={() => switchProposalState(status.key)}
                 >
                   {status.label}
                 </Button>
@@ -110,20 +107,22 @@ const Home: NextPage = () => {
 
           <div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {mockProposalsList.map(proposal => (
+              {proposalList.map(proposal => (
                 <ProposalCard key={proposal.id} {...proposal} />
               ))}
             </div>
           </div>
 
-          <div className="text-center mt-8">
-            <button
-              onClick={loadMore}
-              className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition duration-300"
-            >
-              Load More Proposals
-            </button>
-          </div>
+          {hasMoreProposals ? (
+            <div className="text-center mt-8">
+              <button
+                onClick={loadMore}
+                className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition duration-300"
+              >
+                Load More Proposals
+              </button>
+            </div>
+          ) : null}
         </div>
       </div>
     </>

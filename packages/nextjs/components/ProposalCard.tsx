@@ -9,7 +9,7 @@ interface ProposalCardProps {
   startBlock: number;
   endBlock: number;
   eta: number;
-  state: string;
+  state: string | ProposalState;
   targets: string[];
   values: string[] | bigint[];
   calldatas: string[];
@@ -18,7 +18,16 @@ interface ProposalCardProps {
   againstVotes: number;
   abstainVotes: number;
 }
-
+enum ProposalState {
+  Pending = 0,
+  Active = 1,
+  Canceled = 2,
+  Defeated = 3,
+  Succeeded = 4,
+  Queued = 5,
+  Expired = 6,
+  Executed = 7,
+}
 export const ProposalCard = ({
   id,
   proposer,
@@ -33,15 +42,15 @@ export const ProposalCard = ({
   const { userRole } = useGlobalState(state => state);
 
   // 根据状态设置颜色
-  const stateColors = {
-    Pending: "bg-yellow-100 text-yellow-800",
-    Active: "bg-green-100 text-green-800",
-    Canceled: "bg-gray-100 text-gray-800",
-    Defeated: "bg-red-100 text-red-800",
-    Succeeded: "bg-blue-100 text-blue-800",
-    Queued: "bg-purple-100 text-purple-800",
-    Expired: "bg-orange-100 text-orange-800",
-    Executed: "bg-green-100 text-green-800",
+  const stateColors: { [key: number]: string } = {
+    0: "bg-yellow-100 text-yellow-800", // Pending
+    1: "bg-green-100 text-green-800", // Active
+    2: "bg-gray-100 text-gray-800", // Canceled
+    3: "bg-red-100 text-red-800", // Defeated
+    4: "bg-blue-100 text-blue-800", // Succeeded
+    5: "bg-purple-100 text-purple-800", // Queued
+    6: "bg-orange-100 text-orange-800", // Expired
+    7: "bg-green-100 text-green-800", // Executed
   };
 
   const totalVotes = forVotes + againstVotes + abstainVotes;
@@ -84,10 +93,8 @@ export const ProposalCard = ({
     <div className="proposal-card bg-white rounded-xl shadow-lg overflow-hidden hover:-translate-y-1.5 duration-300">
       <div className="p-6">
         <div className="flex justify-between items-start mb-4">
-          <span
-            className={`px-3 py-1 text-sm font-semibold rounded-full ${stateColors[state as keyof typeof stateColors]}`}
-          >
-            {state}
+          <span className={`px-3 py-1 text-sm font-semibold rounded-full ${stateColors[Number(state)]}`}>
+            {ProposalState[Number(state)]}
           </span>
           <div className="flex items-center gap-2">
             <span className="text-sm text-gray-500">
