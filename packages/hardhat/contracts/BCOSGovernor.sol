@@ -156,8 +156,8 @@ contract BCOSGovernor is
             end = latestIndex;
         }
         infoList = new ProposalInfo[](end - offset);
-        for (uint256 i = offset; i < end; i++) {
-            infoList[i - offset] = getProposalAllInfo(i);
+        for (uint256 i = 0; i < (end - offset); i++) {
+            infoList[i] = getProposalAllInfo(i + offset + 1);
         }
     }
 
