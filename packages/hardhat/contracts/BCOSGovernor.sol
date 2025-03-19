@@ -38,6 +38,18 @@ contract BCOSGovernor is
     AccessControlUpgradeable,
     UUPSUpgradeable
 {
+    struct ProposalInfo {
+        uint256 proposalId;
+        address proposer;
+        ProposalState proposalState;
+        ProposalDetails proposalDetail;
+        ProposalVoteCore proposalVote;
+        uint256 startBlock;
+        uint256 endBlock;
+        uint256 eta;
+        string proposalTitle;
+        string proposalDesc;
+    }
     enum VoteType {
         Against,
         For,
@@ -50,7 +62,7 @@ contract BCOSGovernor is
         __Governor_init("BCOSGovernor");
         __GovernorVotes_init(_token);
         __DAOSettings_init(30, 1, 10, 1000);
-        address [] memory self = new address[](1);
+        address[] memory self = new address[](1);
         self[0] = address(this);
         _timelock.initialize(30, self, self, _msgSender());
         // FIXME)): add token initialize() here
@@ -71,6 +83,8 @@ contract BCOSGovernor is
 
     mapping(uint256 proposalHash => uint256 proposalId) private _proposalIds;
     mapping(uint256 proposalId => uint256 proposalHash) private _proposalHashes;
+    mapping(uint256 proposalId => string) private _proposalDesc;
+    mapping(uint256 proposalId => string) private _proposalTitle;
     uint256 private _latestProposalId;
     // proposalId => vote
     mapping(uint256 proposalId => ProposalVote) private _proposalVotes;
@@ -110,34 +124,41 @@ contract BCOSGovernor is
         return _proposalApprovalFlow[proposalId];
     }
 
-    function getProposalAllInfo(
-        uint256 proposalId
-    )
-        public
-        view
-        returns (
-            address proposer,
-            ProposalState proposalState,
-            ProposalDetails memory proposalDetail,
-            ProposalVoteCore memory proposalVote,
-            uint256 startBlock,
-            uint256 endBlock,
-            uint256 eta
-        )
-    {
+    function getProposalAllInfo(uint256 proposalId) public view returns (ProposalInfo memory info) {
         uint256 proposalHash = _proposalHashes[proposalId];
         (
-            proposalDetail.targets,
-            proposalDetail.values,
-            proposalDetail.calldatas,
-            proposalDetail.descriptionHash
+            info.proposalDetail.targets,
+            info.proposalDetail.values,
+            info.proposalDetail.calldatas,
+            info.proposalDetail.descriptionHash
         ) = proposalDetails(proposalHash);
-        proposalState = state(proposalHash);
-        (proposalVote.forVotes, proposalVote.againstVotes, proposalVote.abstainVotes) = proposalVotes(proposalId);
-        startBlock = proposalSnapshot(proposalHash);
-        endBlock = proposalDeadline(proposalHash);
-        eta = proposalEta(proposalHash);
-        proposer = proposalProposer(proposalHash);
+        info.proposalState = state(proposalHash);
+        (info.proposalVote.forVotes, info.proposalVote.againstVotes, info.proposalVote.abstainVotes) = proposalVotes(
+            proposalId
+        );
+        info.startBlock = proposalSnapshot(proposalHash);
+        info.endBlock = proposalDeadline(proposalHash);
+        info.eta = proposalEta(proposalHash);
+        info.proposer = proposalProposer(proposalHash);
+        info.proposalDesc = _proposalDesc[proposalId];
+    }
+
+    function getProposalInfoPage(
+        uint256 offset,
+        uint256 pageSize
+    ) public view returns (ProposalInfo[] memory infoList) {
+        uint256 latestIndex = _latestProposalId;
+        if (offset >= latestIndex) {
+            return infoList;
+        }
+        uint256 end = offset + pageSize;
+        if (end > latestIndex) {
+            end = latestIndex;
+        }
+        infoList = new ProposalInfo[](end - offset);
+        for (uint256 i = offset; i < end; i++) {
+            infoList[i - offset] = getProposalAllInfo(i);
+        }
     }
 
     /**
@@ -288,6 +309,19 @@ contract BCOSGovernor is
         return super._executor();
     }
 
+    function propose(
+        string memory title,
+        address[] memory targets,
+        uint256[] memory values,
+        bytes[] memory calldatas,
+        string memory description
+    ) public returns (uint256) {
+        uint proposalHash = super.propose(targets, values, calldatas, description);
+        _proposalDesc[_latestProposalId] = description;
+        _proposalTitle[_latestProposalId] = title;
+        return proposalHash;
+    }
+
     function _propose(
         address[] memory targets,
         uint256[] memory values,
@@ -380,8 +414,7 @@ contract BCOSGovernor is
         _revokeRole(role, account);
     }
 
-    function renounceRole(bytes32 role, address account) public override onlyGovernance {
-    }
+    function renounceRole(bytes32 role, address account) public override onlyGovernance {}
 
     function proposalNeedsQueuing(
         uint256 /*proposalId*/

@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import * as dotenv from "dotenv";
 import { useScaffoldReadContract, useScaffoldWriteContract } from "~~/hooks/scaffold-eth";
 
@@ -28,7 +29,7 @@ interface ProposalAllInfo {
   startBlock: number;
   endBlock: number;
   eta: number;
-  state: ProposalState;
+  state: ProposalState | string;
   targets: string[];
   values: bigint[];
   calldatas: string[];
@@ -65,8 +66,8 @@ function getProposalInfo(data: any, proposalId: number) {
   };
 }
 
-function useProposalAllInfo(proposalId: number): ProposalAllInfo {
-  if (proposalId < 0) {
+const useProposalAllInfo = (proposalId: number) => {
+  if (proposalId === undefined || Number.isNaN(proposalId) || proposalId < 0) {
     throw new Error("Invalid proposal ID");
   }
   const { data, refetch } = useScaffoldReadContract({
@@ -75,31 +76,52 @@ function useProposalAllInfo(proposalId: number): ProposalAllInfo {
     args: [BigInt(proposalId)],
   });
 
-  if (!data) {
-    refetch()
-      .then(data => {
-        if (data) {
-          return getProposalInfo(data, proposalId);
-        }
-      })
-      .catch(error => {
-        console.error("Error fetching proposal data:", error);
-      });
-  } else {
-    return getProposalInfo(data, proposalId);
-  }
-  throw new Error("Invalid proposal ID");
-}
+  const [info, setInfo] = useState<ProposalAllInfo>();
 
-function useLatestProposalId(): number {
+  useEffect(() => {
+    if (!data) {
+      refetch()
+        .then(data => {
+          if (data) {
+            setInfo(getProposalInfo(data, proposalId));
+          }
+        })
+        .catch(error => {
+          console.error("Error fetching proposal data:", error);
+        });
+    } else {
+      setInfo(getProposalInfo(data, proposalId));
+    }
+  }, [data, proposalId, refetch]);
+  return info;
+};
+
+const useLatestProposalId = () => {
+  const [latestId, setLatestId] = useState<number>(0);
   const { data: latestProposalId } = useScaffoldReadContract({
     contractName: "BCOSGovernor",
     functionName: "latestProposalId",
   });
 
-  console.log("useLatestProposalId useScaffoldReadContract: ", latestProposalId);
-  return Number(latestProposalId);
-}
+  useEffect(() => {
+    console.log("useLatestProposalId useScaffoldReadContract: ", latestProposalId);
+    setLatestId(Number(latestProposalId));
+  }, [latestProposalId]);
+
+  return latestId;
+};
+
+const useProposalInfoPage = (offset: number, page: number) => {
+  const { data: proposalInfos } = useScaffoldReadContract({
+    contractName: "BCOSGovernor",
+    functionName: "getProposalInfoPage",
+    args: [BigInt(offset), BigInt(page)],
+  });
+
+  return proposalInfos?.map(pro => {
+    return getProposalInfo(pro, Number(pro.proposalId));
+  });
+};
 
 function useHasVoted(proposalId: number, voter: string): boolean {
   const { data: hasVoted } = useScaffoldReadContract({
@@ -239,20 +261,6 @@ function useExecuteProposal(proposalId: number) {
   };
 }
 
-function useHasRole(role: string, account: string): boolean {
-  const { data: hasRole } = useScaffoldReadContract({
-    contractName: "BCOSGovernor",
-    functionName: "hasRole",
-    args: [role, account],
-  });
-
-  if (hasRole === undefined) {
-    throw new Error("Invalid role data");
-  }
-  console.log("useHasRole useScaffoldReadContract: ", hasRole);
-  return Boolean(hasRole);
-}
-
 function useIsMaintainer(account: string): boolean {
   const { data: maintainerTag } = useScaffoldReadContract({
     contractName: "BCOSGovernor",
@@ -285,6 +293,8 @@ export {
   useHasVoted,
   useQueueProposal,
   useExecuteProposal,
-  useHasRole,
   useIsMaintainer,
+  useProposalInfoPage,
 };
+
+export type { ProposalAllInfo, ProposalState };
