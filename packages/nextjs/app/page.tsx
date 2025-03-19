@@ -4,8 +4,8 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { Button } from "antd";
 import type { NextPage } from "next";
-import { useLatestProposalId } from "~~/blockchain/BCOSGovernor";
 import { ProposalCard } from "~~/components/ProposalCard";
+import { useLatestProposalId } from "~~/hooks/blockchain/BCOSGovernor";
 import { mockProposals } from "~~/mock";
 
 type ProposalStatus = {
