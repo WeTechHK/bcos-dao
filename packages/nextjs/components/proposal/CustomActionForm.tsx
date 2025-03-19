@@ -120,7 +120,7 @@ const CustomActionForm = ({}) => {
             <Input className="h-12"></Input>
           </FormItem>
           <div className="mb-4 inline-flex gap-2">
-            <div>Also send Ether to the target address? (this is not common)</div>
+            <div>Also send Token to the target address? (this is not common)</div>
             <Switch onChange={() => setValueVisible(!valueVisible)}></Switch>
           </div>
           {valueVisible && (

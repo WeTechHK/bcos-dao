@@ -18,10 +18,10 @@ import "@mdxeditor/editor/style.css";
 import { uuidv4 } from "@walletconnect/utils";
 import { Button, Card, Col, Divider, Flex, Row, Tag, message } from "antd";
 import type { NextPage } from "next";
+import CustomActionForm from "~~/components/proposal/CustomActionForm";
 import GovernorSettingsForm from "~~/components/proposal/GovernorSettingsForm";
 import ProposalTextForm from "~~/components/proposal/ProposalTextForm";
 import TransferTokenForm from "~~/components/proposal/TransferTokenForm";
-import CustomActionForm from "~~/components/proposal/CustomActionForm";
 
 type ProposalAction = {
   key: string;
@@ -56,6 +56,7 @@ const proposalActions: ProposalAction[] = [
     form: <CustomActionForm />,
   },
 ];
+
 const buttonStyle: React.CSSProperties = {
   fontWeight: "bold",
   fontSize: "medium",
