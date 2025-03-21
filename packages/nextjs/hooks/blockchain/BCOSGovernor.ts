@@ -37,6 +37,7 @@ interface ProposalAllInfo {
   forVotes: number;
   againstVotes: number;
   abstainVotes: number;
+  title: string;
 }
 
 interface ProposalApprovalFlow {
@@ -48,7 +49,17 @@ interface ProposalApprovalFlow {
 }
 
 function getProposalInfo(data: any, proposalId: number) {
-  const { proposer, proposalState, proposalDetail, proposalVote, startBlock, endBlock, eta } = data;
+  const {
+    proposer,
+    proposalState,
+    proposalDetail,
+    proposalVote,
+    startBlock,
+    endBlock,
+    eta,
+    proposalTitle,
+    proposalDesc,
+  } = data;
   return {
     eta: Number(eta),
     id: proposalId,
@@ -59,10 +70,11 @@ function getProposalInfo(data: any, proposalId: number) {
     targets: [...proposalDetail.targets],
     values: [...proposalDetail.values],
     calldatas: [...proposalDetail.calldatas],
-    description: proposalDetail.descriptionHash,
+    description: proposalDesc,
     forVotes: Number(proposalVote.forVotes),
     againstVotes: Number(proposalVote.againstVotes),
     abstainVotes: Number(proposalVote.abstainVotes),
+    title: proposalTitle,
   };
 }
 
@@ -164,12 +176,15 @@ const useProposalList = (offset: number, page: number, totalNumber: number) => {
       setCurrentOffset(currentOffset + currentPage);
     }
   }
+
   function switchProposalState(proposalState: number) {
     setFilterState(proposalState);
   }
+
   const hasMoreProposals = totalNumber > currentOffset;
   return { data, loadMore, hasMoreProposals, switchProposalState };
 };
+
 function useHasVoted(proposalId: number, voter: string): boolean {
   const { data: hasVoted } = useScaffoldReadContract({
     contractName: "BCOSGovernor",
@@ -256,6 +271,19 @@ function useApproveProposal(proposalId: number) {
   };
 }
 
+function useProposalThreshold(): number {
+  const { data: proposalThreshold } = useScaffoldReadContract({
+    contractName: "BCOSGovernor",
+    functionName: "proposalThreshold",
+  });
+
+  if (proposalThreshold === undefined) {
+    throw new Error("Invalid proposal threshold data");
+  }
+  console.log("useProposalThreshold useScaffoldReadContract: ", proposalThreshold);
+  return Number(proposalThreshold);
+}
+
 function useCancelProposal(proposalId: number) {
   const { writeContractAsync: cancelProposalAsync } = useScaffoldWriteContract({ contractName: "BCOSGovernor" });
   return async () => {
@@ -339,6 +367,7 @@ export {
   useCastVote,
   useHasVoted,
   useQueueProposal,
+  useProposalThreshold,
   useExecuteProposal,
   useIsMaintainer,
   useProposalInfoPage,

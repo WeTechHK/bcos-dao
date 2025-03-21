@@ -33,7 +33,9 @@ async function main() {
 
   await governorTemplate
     .connect(owner)
-    .propose([await governorTemplate.getAddress()], [0n], [calldata], "# setMaintainer");
+    [
+      "propose(string,address[],uint256[],bytes[],string)"
+    ]("New Title", [await governorTemplate.getAddress()], [0n], [calldata], "# setNewMaintainer");
   const proposalId = await governorTemplate.latestProposalId();
 
   await governorTemplate.connect(owner).approveProposal(proposalId);

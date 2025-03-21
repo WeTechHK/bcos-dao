@@ -56,13 +56,20 @@ const allPlugins = () => [
   markdownShortcutPlugin(),
 ];
 
-const MarkdownInput = ({ markdown }: { markdown: string }) => {
+const MarkdownInput = ({
+  markdown,
+  onChange,
+}: {
+  markdown: string;
+  onChange?: (markdown: string, initialMarkdownNormalize: boolean) => void;
+}) => {
   return (
     <MDXEditor
       markdown={markdown}
-      className="full-demo-mdxeditor"
+      className="full-demo-mdxeditor bordered border-2"
       contentEditableClassName="prose max-w-full font-sans"
       plugins={allPlugins()}
+      onChange={onChange}
     />
   );
 };

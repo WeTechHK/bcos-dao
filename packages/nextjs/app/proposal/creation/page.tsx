@@ -1,6 +1,7 @@
 "use client";
 
-import React, { ReactElement, useState } from "react";
+import React, { ReactElement, createElement, useReducer, useState } from "react";
+import dynamic from "next/dynamic";
 import {
   BankFilled,
   BuildFilled,
@@ -9,6 +10,8 @@ import {
   EditFilled,
   FileMarkdownFilled,
   FormOutlined,
+  InboxOutlined,
+  InfoCircleFilled,
   PayCircleFilled,
   PlusCircleFilled,
   RocketFilled,
@@ -16,59 +19,119 @@ import {
 } from "@ant-design/icons";
 import "@mdxeditor/editor/style.css";
 import { uuidv4 } from "@walletconnect/utils";
-import { Button, Card, Col, Divider, Flex, Row, Tag, message } from "antd";
+import {
+  Button,
+  Card,
+  Col,
+  Divider,
+  Flex,
+  Form,
+  FormInstance,
+  Input,
+  Row,
+  Select,
+  Switch,
+  Tag,
+  Typography,
+  UploadProps,
+  message,
+} from "antd";
+import { default as FormItem } from "antd/es/form/FormItem";
+import { default as FormList } from "antd/es/form/FormList";
+import Dragger from "antd/es/upload/Dragger";
 import type { NextPage } from "next";
+import { erc20Abi } from "viem";
+import CustomActionForm, { actionSelectOptions } from "~~/components/proposal/CustomActionForm";
 import GovernorSettingsForm from "~~/components/proposal/GovernorSettingsForm";
 import ProposalTextForm from "~~/components/proposal/ProposalTextForm";
 import TransferTokenForm from "~~/components/proposal/TransferTokenForm";
-import CustomActionForm from "~~/components/proposal/CustomActionForm";
+import deployedContracts from "~~/contracts/deployedContracts";
 
 type ProposalAction = {
   key: string;
+  name: string;
+  abi: any[];
+  address: string;
+  method: string;
+  args: any[];
+  value: bigint;
+};
+
+type ProposalPresentation = {
+  key: string;
   icon: ReactElement;
   name: string;
-  form: ReactElement;
 };
+
 // const selectActions: ProposalAction[] = [];
-const proposalActions: ProposalAction[] = [
+const proposalPresentations: ProposalPresentation[] = [
   {
     key: "1",
     icon: <BankFilled style={{ fontSize: "x-large" }} />,
     name: "Governor Settings",
-    form: <GovernorSettingsForm />,
   },
   {
     key: "2",
     icon: <ToolFilled style={{ fontSize: "x-large" }} />,
     name: "Chain System Change",
-    form: <GovernorSettingsForm />,
   },
   {
     key: "3",
     icon: <PayCircleFilled style={{ fontSize: "x-large" }} />,
     name: "Transfer Token",
-    form: <TransferTokenForm />,
   },
   {
     key: "4",
     icon: <BuildFilled style={{ fontSize: "x-large" }} />,
     name: "Custom Action",
-    form: <CustomActionForm />,
   },
 ];
-const buttonStyle: React.CSSProperties = {
-  fontWeight: "bold",
-  fontSize: "medium",
-  width: "400px",
-  height: "60px",
-  justifyContent: "left",
+
+const findProposalForm = (name: string, args: any) => {
+  switch (name) {
+    case "Governor Settings":
+      return <GovernorSettingsForm {...args} />;
+    case "Chain System Change":
+      return <GovernorSettingsForm {...args} />;
+    case "Transfer Token":
+      return <TransferTokenForm {...args} />;
+    case "Custom Action":
+      return <CustomActionForm {...args} />;
+    default:
+      return null;
+  }
+};
+
+const MDXEditor = dynamic(() => import("~~/components/MarkdownInput"), { ssr: false });
+
+type ProposalStorage = {
+  title: string;
+  description: string;
+  actions: ProposalAction[];
 };
 
 const ProposalCreation: NextPage = () => {
+  const [form] = Form.useForm();
   const [messageApi, contextHolder] = message.useMessage();
-
-  const [selectedValue, setSelectedValue] = useState<{ page: string; key: string }>({ page: "proposal-text", key: "" });
-  const [selectActions, setSelectActions] = useState<ProposalAction[]>([]);
+  const uploadProps: UploadProps = {
+    name: "file",
+    multiple: true,
+    action: "",
+    onChange(info) {
+      const { status } = info.file;
+      if (status !== "uploading") {
+        console.log(info.file, info.fileList);
+      }
+      if (status === "done") {
+        message.success(`${info.file.name} file uploaded successfully.`).then();
+      } else if (status === "error") {
+        message.error(`${info.file.name} file upload failed.`).then();
+      }
+    },
+    onDrop(e) {
+      console.log("Dropped files", e.dataTransfer.files);
+    },
+  };
   return (
     <main className="container mx-auto w-full px-4 py-6">
       <div className="flex justify-between">
@@ -84,115 +147,176 @@ const ProposalCreation: NextPage = () => {
           <Button icon={<FormOutlined />} size="large" color="default" variant="filled">
             Save Draft
           </Button>
-          <Button icon={<RocketFilled />} size="large" color="primary" variant="filled" ghost>
+          <Button
+            icon={<RocketFilled />}
+            size="large"
+            color="primary"
+            variant="filled"
+            ghost
+            htmlType={"submit"}
+            onClick={() => {
+              form.submit();
+            }}
+          >
             Submit
           </Button>
         </div>
       </div>
       <Divider />
-      <Row>
-        <Col span={6}>
-          <div className="w-11/12 grid grid-cols-1 gap-4">
-            <Button
-              block
-              icon={<FileMarkdownFilled style={{ fontSize: "x-large" }} />}
-              color={selectedValue.page === "proposal-text" ? "primary" : "default"}
-              variant={selectedValue.page === "proposal-text" ? "outlined" : "filled"}
-              style={{
-                justifyContent: "flex-start",
-                fontWeight: "bold",
-                fontSize: "medium",
-                height: "60px",
-              }}
-              size="large"
-              key={"proposal-text"}
-              onClick={() => setSelectedValue({ page: "proposal-text", key: "" })}
-            >
-              Proposal Text
-            </Button>
-            {/*Select Actions Buttons*/}
-            {selectActions.map(action => (
-              <Button
-                key={action.key}
-                block
-                icon={action.icon}
-                color={selectedValue.page === action.name && selectedValue.key === action.key ? "primary" : "default"}
-                variant={selectedValue.page === action.name && selectedValue.key === action.key ? "outlined" : "filled"}
-                size="large"
-                style={{
-                  justifyContent: "flex-start",
-                  fontWeight: "bold",
-                  fontSize: "medium",
-                  height: "60px",
-                }}
-                onClick={() => setSelectedValue({ page: action.name, key: action.key })}
-              >
-                {action.name}
-              </Button>
-            ))}
-            <Button
-              block
-              icon={<PlusCircleFilled />}
-              color={selectedValue.page === "add-action" ? "primary" : "default"}
-              variant={selectedValue.page === "add-action" ? "outlined" : "filled"}
-              size="large"
-              key={"add-action"}
-              style={{
-                fontWeight: "bold",
-                fontSize: "medium",
-                height: "60px",
-              }}
-              onClick={() => setSelectedValue({ page: "add-action", key: "" })}
-            >
-              Add action
-            </Button>
-          </div>
-        </Col>
-        {/*Forms Section*/}
-        <Col span={18}>
-          {selectedValue.page === "proposal-text" && <ProposalTextForm></ProposalTextForm>}
-          {selectedValue.page === "add-action" && (
+      <div>{contextHolder}</div>
+      <Form
+        form={form}
+        layout="vertical"
+        size="large"
+        onFinish={async (values: ProposalStorage) => {
+          console.log("onFinish", values);
+          messageApi.open({
+            type: "success",
+            content: "Proposal created successfully",
+          });
+        }}
+      >
+        <Card>
+          <FormItem name="title" label={<h3 className="text-lg font-semibold text-gray-900 mb-2">Title</h3>}>
+            <Input placeholder="Enter the title of your proposal"></Input>
+          </FormItem>
+          <FormItem
+            name="description"
+            label={<h3 className="text-lg font-semibold text-gray-900 mb-2">Description</h3>}
+          >
+            <MDXEditor markdown={""} />
+          </FormItem>
+        </Card>
+
+        <FormList name="actions">
+          {(fields: any, { add, remove }) => (
             <>
-              <div className="flex justify-between mb-4">
-                <div className="inline-grid grid-cols-1 gap-4">
-                  <Tag color="blue" bordered={false} className="text-lg font-bold content-center">
-                    Action #{selectActions.length + 1}
-                  </Tag>
-                </div>
-                <div className="inline-grid grid-cols-1 gap-4">
-                  <Button
-                    size="large"
-                    icon={<CloseSquareFilled />}
-                    color="default"
-                    variant="filled"
-                    onClick={() => {
-                      setSelectedValue({ page: "proposal-text", key: "" });
-                    }}
-                  >
-                    Remove action
-                  </Button>
-                </div>
-              </div>
-              <div className="">
-                <Card variant="borderless" type="inner" className="mb-3">
-                  <Flex vertical gap="large">
-                    {proposalActions.map(action => (
+              {fields.map((field: any, index: number) => {
+                console.log(field);
+                return (
+                  <Card key={field.key} className="mb-3 mt-3">
+                    {/*actions and remove*/}
+                    <div className="flex justify-between mb-4">
+                      <div className="inline-grid grid-cols-1 gap-4">
+                        <Tag color="blue" bordered={false} className="text-lg font-bold content-center">
+                          Action #{index + 1}
+                        </Tag>
+                      </div>
+                      <div className="inline-grid grid-cols-1 gap-4">
+                        <Button
+                          size="large"
+                          icon={<CloseSquareFilled />}
+                          color="default"
+                          variant="filled"
+                          onClick={() => {
+                            remove(field.name);
+                          }}
+                        >
+                          Remove action
+                        </Button>
+                      </div>
+                    </div>
+                    <FormItem noStyle shouldUpdate>
+                      {({ getFieldValue }) => {
+                        const actionName = getFieldValue(["actions", index, "name"]);
+                        const action = proposalPresentations.find(action => action.name === actionName);
+                        if (!action) return null;
+                        const onChange = (value: any) => {
+                          console.log("onChange", value);
+                          const actions = form.getFieldValue(["actions", index]);
+                          form.setFieldValue(["actions", index], { ...actions, ...value });
+                        };
+                        return findProposalForm(actionName, { form, field, index, onChange });
+                      }}
+                    </FormItem>
+
+                    {/*<FormItem*/}
+                    {/*  name={[field.name, "abi"]}*/}
+                    {/*  label={<div className="text-lg font-bold mb-1">Use the imported ABI or upload yours</div>}*/}
+                    {/*>*/}
+                    {/*  <Select*/}
+                    {/*    options={actionSelectOptions}*/}
+                    {/*    className="h-12"*/}
+                    {/*    defaultActiveFirstOption={true}*/}
+                    {/*    placeholder={"Use the imported ABI"}*/}
+                    {/*  ></Select>*/}
+                    {/*</FormItem>*/}
+                    {/*<FormItem noStyle className="mb-4" shouldUpdate>*/}
+                    {/*  {({ getFieldValue }) => {*/}
+                    {/*    return getFieldValue(["actions", index, "abi"]) === "uploadABI" ? (*/}
+                    {/*      <Dragger {...uploadProps}>*/}
+                    {/*        <p className="ant-upload-drag-icon">*/}
+                    {/*          <InboxOutlined />*/}
+                    {/*        </p>*/}
+                    {/*        <p className="ant-upload-text">Click or drag file to this area to upload your ABI file</p>*/}
+                    {/*        <p className="ant-upload-hint">*/}
+                    {/*          Support for a single or bulk upload. Strictly prohibited from uploading company data or*/}
+                    {/*          other banned files.*/}
+                    {/*        </p>*/}
+                    {/*      </Dragger>*/}
+                    {/*    ) : null;*/}
+                    {/*  }}*/}
+                    {/*</FormItem>*/}
+                    {/*<FormItem name="method" label={<div className="text-lg font-bold mb-1">Contract Method</div>}>*/}
+                    {/*  <Select className="h-12"></Select>*/}
+                    {/*  <div className="inline-flex gap-2">*/}
+                    {/*    <InfoCircleFilled style={{ color: "orange" }}></InfoCircleFilled>*/}
+                    {/*    <div>*/}
+                    {/*      This ABI is a standard. Please, be sure the smart contract implements the method you selected.*/}
+                    {/*    </div>*/}
+                    {/*  </div>*/}
+                    {/*</FormItem>*/}
+                    {/*<FormItem name="isValue">*/}
+                    {/*  <div className="mb-4 inline-flex gap-2">*/}
+                    {/*    <div>Also send Token to the target address? (this is not common)</div>*/}
+                    {/*    <Switch*/}
+                    {/*      onChange={checked => {*/}
+                    {/*        if (checked) {*/}
+                    {/*          form.setFieldValue(["actions", index, "isValue"], true);*/}
+                    {/*        } else {*/}
+                    {/*          form.setFieldValue(["actions", index, "isValue"], false);*/}
+                    {/*        }*/}
+                    {/*      }}*/}
+                    {/*    ></Switch>*/}
+                    {/*  </div>*/}
+                    {/*</FormItem>*/}
+
+                    {/*<FormItem noStyle shouldUpdate>*/}
+                    {/*  {({ getFieldValue }: { getFieldValue: any }) => {*/}
+                    {/*    return getFieldValue(["actions", index, "isValue"]) === true ? (*/}
+                    {/*      <FormItem name="value" label={<div className="text-lg font-bold mb-1">Value</div>}>*/}
+                    {/*        <div className="mb-3">*/}
+                    {/*          The amount of Balance you wish to send the target address (External Account or Smart*/}
+                    {/*          Contract)*/}
+                    {/*        </div>*/}
+                    {/*        <Input prefix="ETH" className="h-12"></Input>*/}
+                    {/*      </FormItem>*/}
+                    {/*    ) : null;*/}
+                    {/*  }}*/}
+                    {/*</FormItem>*/}
+                  </Card>
+                );
+              })}
+
+              {/*add actions*/}
+              <FormItem noStyle>
+                <Card variant="borderless" type="inner" className="mb-3 mt-3">
+                  <Flex gap="large">
+                    {proposalPresentations.map(action => (
                       <Button
                         key={action.key}
                         icon={action.icon}
                         color="default"
-                        style={buttonStyle}
+                        style={{
+                          fontWeight: "bold",
+                          fontSize: "medium",
+                          width: "400px",
+                          height: "60px",
+                          justifyContent: "left",
+                        }}
                         size="large"
                         onClick={() => {
-                          if (selectActions.length >= 10) {
-                            messageApi.warning("You can only add up to 10 actions");
-                            return;
-                          }
-                          const newAction = {
-                            ...action,
-                            key: uuidv4(),
-                          };
-                          setSelectActions([...selectActions, newAction]);
+                          add({ name: action.name });
                         }}
                       >
                         {action.name}
@@ -200,50 +324,18 @@ const ProposalCreation: NextPage = () => {
                     ))}
                   </Flex>
                 </Card>
-              </div>
+              </FormItem>
             </>
           )}
-          {contextHolder}
-          {selectActions.map((action, index) => {
-            if (selectedValue.page === action.name && selectedValue.key === action.key) {
-              return (
-                <div key={selectedValue.key}>
-                  <div className="flex justify-between mb-4">
-                    <div className="inline-grid grid-cols-1 gap-4">
-                      <Tag color="blue" bordered={false} className="text-lg font-bold content-center">
-                        Action #{index + 1}
-                      </Tag>
-                    </div>
-                    <div className="inline-grid grid-cols-1 gap-4">
-                      <Button
-                        size="large"
-                        icon={<CloseSquareFilled />}
-                        color="default"
-                        variant="filled"
-                        onClick={() => {
-                          const newActions = selectActions.filter(a => a.key !== action.key);
-                          setSelectActions(newActions);
-                          if (index === 0) {
-                            setSelectedValue({ page: "proposal-text", key: "" });
-                          } else {
-                            setSelectedValue({
-                              page: selectActions[index - 1].name,
-                              key: selectActions[index - 1].key,
-                            });
-                          }
-                        }}
-                      >
-                        Remove action
-                      </Button>
-                    </div>
-                  </div>
-                  {action.form}
-                </div>
-              );
-            }
-          })}
-        </Col>
-      </Row>
+        </FormList>
+        <Form.Item noStyle shouldUpdate>
+          {() => (
+            <Typography>
+              <pre>{JSON.stringify(form.getFieldsValue(), null, 2)}</pre>
+            </Typography>
+          )}
+        </Form.Item>
+      </Form>
     </main>
   );
 };

@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { InboxOutlined, InfoCircleFilled } from "@ant-design/icons";
 import { Card, Form, Input, Select, Switch, Upload, UploadProps, message } from "antd";
 
-const actionSelectOptions = [
+export const actionSelectOptions = [
   {
     label: <div>ERC-20</div>,
     value: "erc20",
@@ -60,10 +60,21 @@ const props: UploadProps = {
   },
 };
 
-const CustomActionForm = ({}) => {
+const CustomActionForm = ({
+  form,
+  field,
+  index,
+  onChange,
+}: {
+  form?: any;
+  field?: any;
+  index?: any;
+  onChange: any;
+}) => {
   const FormItem = Form.Item;
   const { Dragger } = Upload;
 
+  const [customActionForm] = Form.useForm();
   const onChangeSelect = (value: string) => {
     if (value === "uploadABI") {
       setDraggerVisible(true);
@@ -77,8 +88,15 @@ const CustomActionForm = ({}) => {
   return (
     <>
       <Card variant="borderless" type="inner" className="mb-3">
-        <Form layout={"vertical"}>
-          <FormItem name="targetAddress" label={<div className="text-lg font-bold mb-1">Target Contract Address</div>}>
+        <Form
+          layout={"vertical"}
+          form={customActionForm}
+          onValuesChange={e => {
+            console.log("onChange", e);
+            onChange(customActionForm.getFieldsValue());
+          }}
+        >
+          <FormItem name="address" label={<div className="text-lg font-bold mb-1">Target Contract Address</div>}>
             <Input className="h-12"></Input>
           </FormItem>
           <FormItem
@@ -120,7 +138,7 @@ const CustomActionForm = ({}) => {
             <Input className="h-12"></Input>
           </FormItem>
           <div className="mb-4 inline-flex gap-2">
-            <div>Also send Ether to the target address? (this is not common)</div>
+            <div>Also send Token to the target address? (this is not common)</div>
             <Switch onChange={() => setValueVisible(!valueVisible)}></Switch>
           </div>
           {valueVisible && (
