@@ -135,6 +135,8 @@ const useProposalInfoPage = (offset: number, page: number) => {
   });
 };
 const useProposalList = (offset: number, page: number, totalNumber: number) => {
+  const latestProposal = useLatestProposalId();
+  console.log("latestProposal: ", latestProposal);
   // 状态管理
   const [data, setData] = useState<ProposalAllInfo[]>([]); // 存储接口返回的数据
   const [filterState, setFilterState] = useState(-1); // 存储接口返回的数据
@@ -149,7 +151,7 @@ const useProposalList = (offset: number, page: number, totalNumber: number) => {
 
   useEffect(() => {
     console.log("proposalInfosData: ", proposalInfosData);
-    if (proposalInfosData) {
+    if (proposalInfosData && totalNumber) {
       const handledData = proposalInfosData.map(pro => {
         return getProposalInfo(pro, Number(pro.proposalId));
       });
@@ -162,13 +164,19 @@ const useProposalList = (offset: number, page: number, totalNumber: number) => {
         }),
       );
     }
-  }, [proposalInfosData, filterState]); // 保持这个依赖
+  }, [proposalInfosData, filterState, totalNumber]); // 保持这个依赖
 
   // 添加新的 useEffect 来监听 currentOffset 变化
   useEffect(() => {
     // 当 offset 变化时，重新获取数据
     refetch();
   }, [currentOffset, refetch]);
+
+  // 切换新的 filterState 来监听 currentOffset 变化
+  useEffect(() => {
+    // 当 offset 变化时，重新获取数据
+    setCurrentOffset(0);
+  }, [filterState]);
 
   function loadMore() {
     if (totalNumber > currentOffset) {
@@ -193,7 +201,8 @@ function useHasVoted(proposalId: number, voter: string): boolean {
   });
 
   if (hasVoted === undefined) {
-    throw new Error("Invalid proposal has voted data");
+    return false;
+    // throw new Error("Invalid proposal has voted data");
   }
   console.log("useHasVoted useScaffoldReadContract: ", hasVoted);
   return Boolean(hasVoted);
@@ -348,7 +357,8 @@ function useIsMaintainer(account: string): boolean {
   });
 
   if (isMaintainer === undefined) {
-    throw new Error("Invalid maintainer data");
+    return false;
+    // throw new Error("Invalid maintainer data");
   }
   console.log("useIsMaintainer useScaffoldReadContract: ", isMaintainer);
   return Boolean(isMaintainer);

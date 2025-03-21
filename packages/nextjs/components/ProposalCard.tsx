@@ -1,7 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { UserRole, useGlobalState } from "~~/services/store/store";
+import { message } from "antd";
+import { useAccount } from "wagmi";
+import { useApproveProposal, useCancelProposal, useIsMaintainer } from "~~/hooks/blockchain/BCOSGovernor";
+import { ProposalState, stateColors } from "~~/services/store/store";
 
 interface ProposalCardProps {
   id: number;
@@ -18,16 +21,7 @@ interface ProposalCardProps {
   againstVotes: number;
   abstainVotes: number;
 }
-enum ProposalState {
-  Pending = 0,
-  Active = 1,
-  Canceled = 2,
-  Defeated = 3,
-  Succeeded = 4,
-  Queued = 5,
-  Expired = 6,
-  Executed = 7,
-}
+
 export const ProposalCard = ({
   id,
   proposer,
@@ -39,79 +33,84 @@ export const ProposalCard = ({
   againstVotes,
   abstainVotes,
 }: ProposalCardProps) => {
-  const { userRole } = useGlobalState(state => state);
-
-  // 根据状态设置颜色
-  const stateColors: { [key: number]: string } = {
-    0: "bg-yellow-100 text-yellow-800", // Pending
-    1: "bg-green-100 text-green-800", // Active
-    2: "bg-gray-100 text-gray-800", // Canceled
-    3: "bg-red-100 text-red-800", // Defeated
-    4: "bg-blue-100 text-blue-800", // Succeeded
-    5: "bg-purple-100 text-purple-800", // Queued
-    6: "bg-orange-100 text-orange-800", // Expired
-    7: "bg-green-100 text-green-800", // Executed
-  };
+  const { address } = useAccount();
+  const isMaintainer = useIsMaintainer(address || "");
+  const approveProposal = useApproveProposal(id);
+  const cancelProposal = useCancelProposal(id);
 
   const totalVotes = forVotes + againstVotes + abstainVotes;
   const progress = totalVotes > 0 ? (forVotes / totalVotes) * 100 : 0;
 
+  const handleApprove = async () => {
+    try {
+      await approveProposal();
+      message.success("Proposal approved");
+    } catch (error) {
+      console.error("Error approving proposal:", error);
+      message.error("Failed to approve proposal");
+    }
+  };
+
+  const handleReject = async () => {
+    try {
+      await cancelProposal();
+      message.success("Proposal rejected");
+    } catch (error) {
+      console.error("Error rejecting proposal:", error);
+      message.error("Failed to reject proposal");
+    }
+  };
+
   const renderActionButtons = () => {
-    if (state === "Pending" && userRole === UserRole.MAINTAINER) {
+    if (state === ProposalState.Pending && isMaintainer) {
       return (
-        <div className="flex gap-3 mt-4">
-          <button className="flex-1 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors">
+        <div className="flex gap-3">
+          <button
+            onClick={handleApprove}
+            className="flex-1 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
+          >
             Approve
           </button>
-          <button className="flex-1 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors">
+          <button
+            onClick={handleReject}
+            className="flex-1 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+          >
             Reject
           </button>
         </div>
       );
     }
-
-    if (state === "Active" && userRole === UserRole.VOTER) {
-      return (
-        <div className="flex gap-3 mt-4">
-          <button className="flex-1 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors">
-            For
-          </button>
-          <button className="flex-1 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors">
-            Against
-          </button>
-          <button className="flex-1 px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors">
-            Abstain
-          </button>
-        </div>
-      );
-    }
-
     return null;
   };
 
   return (
-    <div className="proposal-card bg-white rounded-xl shadow-lg overflow-hidden hover:-translate-y-1.5 duration-300">
-      <div className="p-6">
-        <div className="flex justify-between items-start mb-4">
+    <div className="proposal-card bg-white rounded-xl shadow-lg overflow-hidden hover:-translate-y-1.5 duration-300 flex flex-col">
+      <div className="p-6 flex flex-col h-full">
+        {/* Header */}
+        <div className="flex justify-between items-start mb-3">
           <span className={`px-3 py-1 text-sm font-semibold rounded-full ${stateColors[Number(state)]}`}>
             {ProposalState[Number(state)]}
           </span>
+          <span className="text-sm text-gray-500">
+            Block: {startBlock} - {endBlock}
+          </span>
+        </div>
+
+        {/* Content */}
+        <div className="mb-3">
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">Proposal #{id}</h3>
+          <p className="text-sm text-gray-600 mb-2 line-clamp-2 break-all">{description}</p>
           <div className="flex items-center gap-2">
-            <span className="text-sm text-gray-500">
-              Block: {startBlock} - {endBlock}
+            <span className="bg-purple-50 text-purple-700 px-2 py-1 rounded text-sm">
+              By: {proposer.slice(0, 6)}...{proposer.slice(-4)}
             </span>
           </div>
         </div>
-        <h3 className="text-lg font-semibold text-gray-900 mb-2">Proposal #{id}</h3>
-        <p className="text-sm text-gray-600 mb-4">{description}</p>
-        <div className="flex items-center gap-2 mb-4">
-          <span className="bg-purple-50 text-purple-700 px-2 py-1 rounded text-sm">
-            By: {proposer.slice(0, 6)}...{proposer.slice(-4)}
-          </span>
-        </div>
-        <div className="space-y-3">
-          {state === "Active" && (
-            <>
+
+        {/* Footer */}
+        <div className="mt-auto">
+          {state === ProposalState.Active && (
+            <div className="space-y-2 mb-3">
               <div className="flex justify-between items-center text-sm">
                 <span className="text-gray-500">For Votes</span>
                 <span className="text-gray-900 font-medium">{progress.toFixed(1)}%</span>
@@ -119,7 +118,7 @@ export const ProposalCard = ({
               <div className="w-full bg-gray-200 rounded-full h-2">
                 <div className="bg-blue-600 h-2 rounded-full" style={{ width: `${progress}%` }}></div>
               </div>
-            </>
+            </div>
           )}
           <div className="flex justify-between text-sm">
             <span className="text-gray-500">Total Votes: {totalVotes}</span>
@@ -127,9 +126,11 @@ export const ProposalCard = ({
               View Details →
             </Link>
           </div>
-          {renderActionButtons()}
         </div>
       </div>
+
+      {/* Action Buttons */}
+      <div className="bg-gray-50 border-t border-gray-100 p-4">{renderActionButtons() || <div className="h-10" />}</div>
     </div>
   );
 };
