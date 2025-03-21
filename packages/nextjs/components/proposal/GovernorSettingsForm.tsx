@@ -43,7 +43,17 @@ const governorSettings = [
   },
 ];
 
-const GovernorSettingsForm = ({}) => {
+const GovernorSettingsForm = ({
+  form,
+  field,
+  index,
+  onChange,
+}: {
+  form?: any;
+  field?: any;
+  index?: any;
+  onChange: any;
+}) => {
   const FormItem = Form.Item;
   const [valueVisible, setValueVisible] = useState<boolean>(false);
   const [method, setMethod] = useState<{ fn: AbiFunction; inherited: string }>();
@@ -51,28 +61,7 @@ const GovernorSettingsForm = ({}) => {
     contractName: "BCOSGovernor",
   });
 
-  useEffect(() => {
-    if (deployedContractData) {
-      const functionsToDisplay = (
-        (deployedContractData.abi as Abi).filter(part => part.type === "function") as AbiFunction[]
-      )
-        .filter(fn => {
-          return fn.stateMutability !== "view" && fn.stateMutability !== "pure";
-        })
-        .map(fn => {
-          return {
-            fn,
-            inheritedFrom: ((deployedContractData as GenericContract)?.inheritedFunctions as InheritedFunctions)?.[
-              fn.name
-            ],
-          };
-        })
-        .sort((a, b) => (b.inheritedFrom ? b.inheritedFrom.localeCompare(a.inheritedFrom) : 1));
-      if (functionsToDisplay.length > 0) {
-        setMethod({ fn: functionsToDisplay[0].fn, inherited: functionsToDisplay[0].inheritedFrom });
-      }
-    }
-  }, [deployedContractData]);
+  const [govForm] = Form.useForm();
 
   if (deployedContractLoading) {
     return (
@@ -111,52 +100,62 @@ const GovernorSettingsForm = ({}) => {
   };
   return (
     <>
-      <Card variant="borderless" type="inner" className="mb-3">
-        <Form layout={"vertical"}>
-          <FormItem name="targetAddress" label={<div className="text-lg font-bold mb-1">Target Contract Address</div>}>
-            <Input className="h-12"></Input>
+      <div className="mb-3">
+        <Form
+          layout={"vertical"}
+          initialValues={{ address: deployedContractData.address }}
+          form={govForm}
+          onValuesChange={(e: any) => {
+            console.log("onChange", e);
+            onChange(govForm.getFieldsValue());
+          }}
+        >
+          <FormItem name="address" label={<div className="text-lg font-bold mb-1">Target Contract Address</div>}>
+            <Input className="h-12" disabled></Input>
           </FormItem>
           <FormItem name="method" label={<div className="text-lg font-bold mb-1">Contract Method</div>}>
-            <div>
-              <Select options={governorSettings} onSelect={handleChange} className="h-12"></Select>
-              <div className="inline-flex gap-2">
-                <InfoCircleFilled style={{ color: "orange" }}></InfoCircleFilled>
-                <div>
-                  {" "}
-                  This ABI is a standard. Please, be sure the smart contract implements the method you selected.
-                </div>
+            <Select options={governorSettings} onSelect={handleChange} className="h-12"></Select>
+          </FormItem>
+
+          {method && (
+            <FormItem name="args" label={<div className="text-lg font-bold mb-1">Method arguments</div>}>
+              <div>
+                {deployedContractData && method && (
+                  <ABIFunctionForm
+                    abi={deployedContractData.abi as Abi}
+                    abiFunction={method.fn as AbiFunction}
+                    onChange={(encodeData: string) => {
+                      console.log(encodeData);
+                    }}
+                    inheritedFrom={method.inherited}
+                  />
+                )}
               </div>
+            </FormItem>
+          )}
+
+          {method && (
+            <div className="mb-4 inline-flex gap-2">
+              <div>Also send TOKEN to the target address? (this is not common)</div>
+              <Switch onChange={() => setValueVisible(!valueVisible)}></Switch>
             </div>
-          </FormItem>
-          <FormItem name="calldata" label={<div className="text-lg font-bold mb-1">Calldatas</div>}>
-            <div>
-              <div className="mb-3">The data for the function arguments you wish to send when the action executes</div>
-              {deployedContractData && method && (
-                <ABIFunctionForm
-                  abi={deployedContractData.abi as Abi}
-                  abiFunction={method.fn as AbiFunction}
-                  onChange={(encodeData: string) => {
-                    console.log(encodeData);
-                  }}
-                  inheritedFrom={method.inherited}
-                />
-              )}
-            </div>
-          </FormItem>
-          <div className="mb-4 inline-flex gap-2">
-            <div>Also send TOKEN to the target address? (this is not common)</div>
-            <Switch onChange={() => setValueVisible(!valueVisible)}></Switch>
-          </div>
+          )}
+
           {valueVisible && (
             <FormItem name="value" label={<div className="text-lg font-bold mb-1">Value</div>}>
               <div className="mb-3">
                 The amount of Balance you wish to send the target address (External Account or Smart Contract)
               </div>
-              <Input prefix="ETH" className="h-12"></Input>
+              <Input
+                className="h-12"
+                placeholder={
+                  "The amount of Balance you wish to send the target address (External Account or Smart Contract)"
+                }
+              ></Input>
             </FormItem>
           )}
         </Form>
-      </Card>
+      </div>
     </>
   );
 };

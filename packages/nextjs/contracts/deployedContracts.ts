@@ -6246,78 +6246,100 @@ const deployedContracts = {
           name: "getProposalAllInfo",
           outputs: [
             {
-              internalType: "address",
-              name: "proposer",
-              type: "address",
-            },
-            {
-              internalType: "enum IGovernor.ProposalState",
-              name: "proposalState",
-              type: "uint8",
-            },
-            {
-              components: [
-                {
-                  internalType: "address[]",
-                  name: "targets",
-                  type: "address[]",
-                },
-                {
-                  internalType: "uint256[]",
-                  name: "values",
-                  type: "uint256[]",
-                },
-                {
-                  internalType: "bytes[]",
-                  name: "calldatas",
-                  type: "bytes[]",
-                },
-                {
-                  internalType: "bytes32",
-                  name: "descriptionHash",
-                  type: "bytes32",
-                },
-              ],
-              internalType: "struct GovernorStorageUpgradeable.ProposalDetails",
-              name: "proposalDetail",
-              type: "tuple",
-            },
-            {
               components: [
                 {
                   internalType: "uint256",
-                  name: "forVotes",
+                  name: "proposalId",
+                  type: "uint256",
+                },
+                {
+                  internalType: "address",
+                  name: "proposer",
+                  type: "address",
+                },
+                {
+                  internalType: "enum IGovernor.ProposalState",
+                  name: "proposalState",
+                  type: "uint8",
+                },
+                {
+                  components: [
+                    {
+                      internalType: "address[]",
+                      name: "targets",
+                      type: "address[]",
+                    },
+                    {
+                      internalType: "uint256[]",
+                      name: "values",
+                      type: "uint256[]",
+                    },
+                    {
+                      internalType: "bytes[]",
+                      name: "calldatas",
+                      type: "bytes[]",
+                    },
+                    {
+                      internalType: "bytes32",
+                      name: "descriptionHash",
+                      type: "bytes32",
+                    },
+                  ],
+                  internalType: "struct GovernorStorageUpgradeable.ProposalDetails",
+                  name: "proposalDetail",
+                  type: "tuple",
+                },
+                {
+                  components: [
+                    {
+                      internalType: "uint256",
+                      name: "forVotes",
+                      type: "uint256",
+                    },
+                    {
+                      internalType: "uint256",
+                      name: "againstVotes",
+                      type: "uint256",
+                    },
+                    {
+                      internalType: "uint256",
+                      name: "abstainVotes",
+                      type: "uint256",
+                    },
+                  ],
+                  internalType: "struct ProposalVoteCore",
+                  name: "proposalVote",
+                  type: "tuple",
+                },
+                {
+                  internalType: "uint256",
+                  name: "startBlock",
                   type: "uint256",
                 },
                 {
                   internalType: "uint256",
-                  name: "againstVotes",
+                  name: "endBlock",
                   type: "uint256",
                 },
                 {
                   internalType: "uint256",
-                  name: "abstainVotes",
+                  name: "eta",
                   type: "uint256",
+                },
+                {
+                  internalType: "string",
+                  name: "proposalTitle",
+                  type: "string",
+                },
+                {
+                  internalType: "string",
+                  name: "proposalDesc",
+                  type: "string",
                 },
               ],
-              internalType: "struct ProposalVoteCore",
-              name: "proposalVote",
+              internalType: "struct BCOSGovernor.ProposalInfo",
+              name: "info",
               type: "tuple",
-            },
-            {
-              internalType: "uint256",
-              name: "startBlock",
-              type: "uint256",
-            },
-            {
-              internalType: "uint256",
-              name: "endBlock",
-              type: "uint256",
-            },
-            {
-              internalType: "uint256",
-              name: "eta",
-              type: "uint256",
             },
           ],
           stateMutability: "view",
@@ -6368,6 +6390,121 @@ const deployedContracts = {
               internalType: "uint256",
               name: "",
               type: "uint256",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "uint256",
+              name: "offset",
+              type: "uint256",
+            },
+            {
+              internalType: "uint256",
+              name: "pageSize",
+              type: "uint256",
+            },
+          ],
+          name: "getProposalInfoPage",
+          outputs: [
+            {
+              components: [
+                {
+                  internalType: "uint256",
+                  name: "proposalId",
+                  type: "uint256",
+                },
+                {
+                  internalType: "address",
+                  name: "proposer",
+                  type: "address",
+                },
+                {
+                  internalType: "enum IGovernor.ProposalState",
+                  name: "proposalState",
+                  type: "uint8",
+                },
+                {
+                  components: [
+                    {
+                      internalType: "address[]",
+                      name: "targets",
+                      type: "address[]",
+                    },
+                    {
+                      internalType: "uint256[]",
+                      name: "values",
+                      type: "uint256[]",
+                    },
+                    {
+                      internalType: "bytes[]",
+                      name: "calldatas",
+                      type: "bytes[]",
+                    },
+                    {
+                      internalType: "bytes32",
+                      name: "descriptionHash",
+                      type: "bytes32",
+                    },
+                  ],
+                  internalType: "struct GovernorStorageUpgradeable.ProposalDetails",
+                  name: "proposalDetail",
+                  type: "tuple",
+                },
+                {
+                  components: [
+                    {
+                      internalType: "uint256",
+                      name: "forVotes",
+                      type: "uint256",
+                    },
+                    {
+                      internalType: "uint256",
+                      name: "againstVotes",
+                      type: "uint256",
+                    },
+                    {
+                      internalType: "uint256",
+                      name: "abstainVotes",
+                      type: "uint256",
+                    },
+                  ],
+                  internalType: "struct ProposalVoteCore",
+                  name: "proposalVote",
+                  type: "tuple",
+                },
+                {
+                  internalType: "uint256",
+                  name: "startBlock",
+                  type: "uint256",
+                },
+                {
+                  internalType: "uint256",
+                  name: "endBlock",
+                  type: "uint256",
+                },
+                {
+                  internalType: "uint256",
+                  name: "eta",
+                  type: "uint256",
+                },
+                {
+                  internalType: "string",
+                  name: "proposalTitle",
+                  type: "string",
+                },
+                {
+                  internalType: "string",
+                  name: "proposalDesc",
+                  type: "string",
+                },
+              ],
+              internalType: "struct BCOSGovernor.ProposalInfo[]",
+              name: "infoList",
+              type: "tuple[]",
             },
           ],
           stateMutability: "view",
@@ -7050,6 +7187,45 @@ const deployedContracts = {
             },
           ],
           stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "string",
+              name: "title",
+              type: "string",
+            },
+            {
+              internalType: "address[]",
+              name: "targets",
+              type: "address[]",
+            },
+            {
+              internalType: "uint256[]",
+              name: "values",
+              type: "uint256[]",
+            },
+            {
+              internalType: "bytes[]",
+              name: "calldatas",
+              type: "bytes[]",
+            },
+            {
+              internalType: "string",
+              name: "description",
+              type: "string",
+            },
+          ],
+          name: "propose",
+          outputs: [
+            {
+              internalType: "uint256",
+              name: "",
+              type: "uint256",
+            },
+          ],
+          stateMutability: "nonpayable",
           type: "function",
         },
         {

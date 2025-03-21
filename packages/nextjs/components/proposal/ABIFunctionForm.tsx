@@ -10,7 +10,6 @@ import {
   getParsedContractFunctionArgs,
   transformAbiFunction,
 } from "~~/app/debug/_components/contract";
-import { InheritanceTooltip } from "~~/app/debug/_components/contract/InheritanceTooltip";
 
 type ABIFunctionFormProps = {
   abi: Abi;
@@ -75,10 +74,7 @@ export const ABIFunctionForm = ({ abi, abiFunction, onChange, inheritedFrom }: A
   return (
     <div className="py-5 space-y-3 first:pt-0 last:pb-1">
       <div className="flex gap-3 flex-col">
-        <p className="font-medium my-0 break-words">
-          {abiFunction.name}
-          <InheritanceTooltip inheritedFrom={inheritedFrom} />
-        </p>
+        <p className="font-medium my-0 break-words">{abiFunction.name}</p>
         {inputs}
       </div>
     </div>
