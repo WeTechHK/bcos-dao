@@ -20,10 +20,12 @@ interface ProposalCardProps {
   forVotes: number;
   againstVotes: number;
   abstainVotes: number;
+  title: string;
 }
 
 export const ProposalCard = ({
   id,
+  title,
   proposer,
   startBlock,
   endBlock,
@@ -98,7 +100,7 @@ export const ProposalCard = ({
 
         {/* Content */}
         <div className="mb-3">
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">Proposal #{id}</h3>
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">{title}</h3>
           <p className="text-sm text-gray-600 mb-2 line-clamp-2 break-all">{description}</p>
           <div className="flex items-center gap-2">
             <span className="bg-purple-50 text-purple-700 px-2 py-1 rounded text-sm">

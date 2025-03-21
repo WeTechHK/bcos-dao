@@ -133,6 +133,7 @@ contract BCOSGovernor is
             info.proposalDetail.descriptionHash
         ) = proposalDetails(proposalHash);
         info.proposalState = state(proposalHash);
+        info.proposalId = proposalId;
         (info.proposalVote.forVotes, info.proposalVote.againstVotes, info.proposalVote.abstainVotes) = proposalVotes(
             proposalId
         );
@@ -276,6 +277,8 @@ contract BCOSGovernor is
         }
         ProposalApprovalFlow storage approvalFlow = _proposalApprovalFlow[proposalId];
         approvalFlow.approvers.push(_msgSender());
+        console.log("length: ", approveThreshold());
+        console.log("approveThreshold: ", approvalFlow.approvers.length);
         if (approvalFlow.approvers.length >= approveThreshold()) {
             approvalFlow.approved = true;
         }

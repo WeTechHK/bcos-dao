@@ -293,6 +293,19 @@ function useProposalThreshold(): number {
   return Number(proposalThreshold);
 }
 
+function useProposalVotes(proposalId: number) {
+  const { data } = useScaffoldReadContract({
+    contractName: "BCOSGovernor",
+    functionName: "proposalVotes",
+    args: [BigInt(proposalId)],
+  });
+
+  if (!data) return { againstVotes: 0n, forVotes: 0n, abstainVotes: 0n };
+
+  const [against, forVotes, abstain] = data;
+  return { againstVotes: against, forVotes, abstainVotes: abstain };
+}
+
 function useCancelProposal(proposalId: number) {
   const { writeContractAsync: cancelProposalAsync } = useScaffoldWriteContract({ contractName: "BCOSGovernor" });
   return async () => {
@@ -382,6 +395,7 @@ export {
   useIsMaintainer,
   useProposalInfoPage,
   useProposalList,
+  useProposalVotes,
 };
 
 export type { ProposalAllInfo, ProposalState };

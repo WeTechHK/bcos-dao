@@ -7,7 +7,7 @@ import { GenericContractsDeclaration } from "~~/utils/scaffold-eth/contract";
 const deployedContracts = {
   20200: {
     BCOSGovernor: {
-      address: "0xdF628E32cBc5abc540630b52695b06d622BD9ccf",
+      address: "0xBD515aE6fd8655289038839585E7635dbA15AfbA",
       abi: [
         {
           anonymous: false,
@@ -2777,7 +2777,7 @@ const deployedContracts = {
       inheritedFunctions: {},
     },
     ERC20VotePower: {
-      address: "0xA4A605902Ac49d3aACcE48012a75650C0cf3A370",
+      address: "0xEfb055512e4C1a7A518A11feC406f98C1CC7a2E6",
       abi: [
         {
           anonymous: false,
@@ -3900,7 +3900,7 @@ const deployedContracts = {
       inheritedFunctions: {},
     },
     TimelockControllerUpgradeable: {
-      address: "0x3947eE8e73b6b5C90fA93AE0392ed2097FD4Bf0F",
+      address: "0x3f07046AfA5aEf4b5f9b3f930f124Ad6403fd05B",
       abi: [
         {
           anonymous: false,

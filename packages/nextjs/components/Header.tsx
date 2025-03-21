@@ -171,23 +171,13 @@ export const Header = () => {
           <div className="flex flex-col gap-3">
             <button
               onClick={handleDelegateToSelf}
-              disabled={currentDelegate === address}
-              className={`w-full py-2 text-center text-lg rounded-xl transition-colors ${
-                currentDelegate === address
-                  ? "bg-gray-400 text-gray-200 cursor-not-allowed"
-                  : "bg-blue-500 text-white hover:bg-blue-600"
-              }`}
+              className="w-full py-2 text-center text-lg rounded-xl transition-colors bg-blue-500 text-white hover:bg-blue-600"
             >
               Myself
             </button>
             <button
               onClick={handleDelegateToOther}
-              disabled={currentDelegate !== address}
-              className={`w-full py-2 text-center text-lg border border-black rounded-xl transition-colors ${
-                currentDelegate !== address
-                  ? "bg-gray-400 border-gray-500 text-gray-200 cursor-not-allowed"
-                  : "bg-gray-200 text-gray-800 hover:bg-gray-300"
-              }`}
+              className="w-full py-2 text-center text-lg border border-black rounded-xl transition-colors bg-gray-200 text-gray-800 hover:bg-gray-300"
             >
               Someone else
             </button>
