@@ -22,12 +22,12 @@ export const useDelegates = (address: string) => {
   return delegatesData;
 };
 
-export const useDelegate = (address: string) => {
+export const useDelegate = () => {
   const { writeContractAsync: delegateAsync } = useScaffoldWriteContract({
     contractName: "ERC20VotePower",
   });
 
-  return async () => {
+  return async (address: string) => {
     await delegateAsync({
       functionName: "delegate",
       args: [address],

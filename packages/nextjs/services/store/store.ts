@@ -11,10 +11,27 @@ import { ChainWithAttributes } from "~~/utils/scaffold-eth";
  * Think about it as a global useState.
  */
 
-export enum UserRole {
-  MAINTAINER = "maintainer",
-  VOTER = "voter",
+export enum ProposalState {
+  Pending = 0,
+  Active = 1,
+  Canceled = 2,
+  Defeated = 3,
+  Succeeded = 4,
+  Queued = 5,
+  Expired = 6,
+  Executed = 7,
 }
+// 根据状态设置颜色
+export const stateColors: { [key: number]: string } = {
+  0: "bg-yellow-100 text-yellow-800", // Pending
+  1: "bg-green-100 text-green-800", // Active
+  2: "bg-gray-100 text-gray-800", // Canceled
+  3: "bg-red-100 text-red-800", // Defeated
+  4: "bg-blue-100 text-blue-800", // Succeeded
+  5: "bg-purple-100 text-purple-800", // Queued
+  6: "bg-orange-100 text-orange-800", // Expired
+  7: "bg-green-100 text-green-800", // Executed
+};
 
 type GlobalState = {
   nativeCurrency: {
@@ -25,8 +42,6 @@ type GlobalState = {
   setIsNativeCurrencyFetching: (newIsNativeCurrencyFetching: boolean) => void;
   targetNetwork: ChainWithAttributes;
   setTargetNetwork: (newTargetNetwork: ChainWithAttributes) => void;
-  userRole: UserRole;
-  setUserRole: (newUserRole: UserRole) => void;
 };
 
 export const useGlobalState = create<GlobalState>(set => ({
@@ -40,6 +55,4 @@ export const useGlobalState = create<GlobalState>(set => ({
     set(state => ({ nativeCurrency: { ...state.nativeCurrency, isFetching: newValue } })),
   targetNetwork: scaffoldConfig.targetNetworks[0],
   setTargetNetwork: (newTargetNetwork: ChainWithAttributes) => set(() => ({ targetNetwork: newTargetNetwork })),
-  userRole: UserRole.MAINTAINER,
-  setUserRole: (newUserRole: UserRole) => set(() => ({ userRole: newUserRole })),
 }));

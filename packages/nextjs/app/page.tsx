@@ -4,7 +4,10 @@ import React from "react";
 import Link from "next/link";
 import { Button } from "antd";
 import type { NextPage } from "next";
+import { useAccount } from "wagmi";
+// 假设使用wagmi获取当前连接的账户
 import { ProposalCard } from "~~/components/ProposalCard";
+import { useIsMaintainer } from "~~/hooks/blockchain/BCOSGovernor";
 import { useLatestProposalId, useProposalList } from "~~/hooks/blockchain/BCOSGovernor";
 
 type ProposalStatus = {
@@ -38,12 +41,15 @@ const proposalStatuses: ProposalStatus[] = [
 ];
 
 const Home: NextPage = () => {
+  const { address } = useAccount();
+  const isMaintainer = useIsMaintainer(address || "");
+  console.log("isMaintainer: ", isMaintainer);
   const proposalFilterKey = -1;
   const latestProposal = useLatestProposalId();
   console.log("latestProposal: ", latestProposal);
 
   const { data: proposalList, loadMore, hasMoreProposals, switchProposalState } = useProposalList(0, 6, latestProposal);
-
+  console.log("proposalList: ", proposalList);
   return (
     <>
       <div className="container mx-auto px-4 py-6">

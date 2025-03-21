@@ -1,41 +1,20 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import type { NextPage } from "next";
-import { mockProposals } from "~~/mock";
-import { useGlobalState } from "~~/services/store/store";
-import { UserRole } from "~~/services/store/store";
-
-interface ProposalDetail {
-  id: number;
-  proposer: string;
-  startBlock: number;
-  endBlock: number;
-  eta: number;
-  state: string;
-  targets: string[];
-  values: string[] | bigint[];
-  calldatas: string[];
-  description: string;
-  forVotes: number;
-  againstVotes: number;
-  abstainVotes: number;
-}
+import { useAccount } from "wagmi";
+import { useProposalAllInfo } from "~~/hooks/blockchain/BCOSGovernor";
+import { useIsMaintainer } from "~~/hooks/blockchain/BCOSGovernor";
+import { ProposalState, stateColors } from "~~/services/store/store";
 
 const ProposalDetail: NextPage = () => {
   const searchParams = useSearchParams();
-  const [proposal, setProposal] = useState<ProposalDetail | null>(null);
-  const { userRole } = useGlobalState(state => state);
-
-  useEffect(() => {
-    const id = searchParams.get("id");
-    if (id) {
-      // 模拟从合约获取数据
-      const proposalData = mockProposals.find(p => p.id === Number(id));
-      setProposal(proposalData || null);
-    }
-  }, [searchParams]);
+  const id = searchParams.get("id");
+  const proposal = useProposalAllInfo(Number(id));
+  console.log(proposal, "proposal");
+  const { address } = useAccount();
+  const isMaintainer = useIsMaintainer(address || "");
+  console.log("isMaintainer: ", isMaintainer);
 
   if (!proposal) {
     return <div className="container mx-auto px-4 py-8">Loading...</div>;
@@ -46,7 +25,7 @@ const ProposalDetail: NextPage = () => {
   const participationRate = 68.2; // 这里可以从合约获取实际参与率
 
   const renderActionButtons = () => {
-    if (proposal?.state === "Pending" && userRole === UserRole.MAINTAINER) {
+    if (Number(proposal.state) === ProposalState.Pending && isMaintainer) {
       return (
         <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
           <h2 className="text-xl font-bold text-gray-800 mb-6">Proposal Actions</h2>
@@ -62,7 +41,7 @@ const ProposalDetail: NextPage = () => {
       );
     }
 
-    if (proposal?.state === "Active" && userRole === UserRole.VOTER) {
+    if (Number(proposal.state) === ProposalState.Active && isMaintainer) {
       return (
         <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
           <h2 className="text-xl font-bold text-gray-800 mb-6">Cast Your Vote</h2>
@@ -93,8 +72,8 @@ const ProposalDetail: NextPage = () => {
           <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
             <div className="flex justify-between items-center mb-4">
               <h1 className="text-2xl font-bold text-gray-800">Proposal #{proposal.id}</h1>
-              <span className={`px-3 py-1 text-sm font-semibold rounded-full ${getStateColor(proposal.state)}`}>
-                {proposal.state}
+              <span className={`px-3 py-1 text-sm font-semibold rounded-full ${stateColors[Number(proposal.state)]}`}>
+                {ProposalState[Number(proposal.state)]}
               </span>
             </div>
             <div className="grid grid-cols-2 gap-4 mb-6">
@@ -123,7 +102,7 @@ const ProposalDetail: NextPage = () => {
             {/*Proposal Description*/}
             <div className="bg-gray-50 rounded-lg p-4 mb-6">
               <h3 className="text-lg font-semibold mb-2">Description</h3>
-              <div className="prose whitespace-pre-line">{proposal.description}</div>
+              <div className="prose whitespace-pre-line break-all">{proposal.description}</div>
             </div>
           </div>
 
@@ -270,21 +249,6 @@ const ProposalDetail: NextPage = () => {
       </div>
     </main>
   );
-};
-
-// Helper functions
-const getStateColor = (state: string) => {
-  const colors = {
-    Pending: "bg-yellow-100 text-yellow-800",
-    Active: "bg-green-100 text-green-800",
-    Canceled: "bg-gray-100 text-gray-800",
-    Defeated: "bg-red-100 text-red-800",
-    Succeeded: "bg-blue-100 text-blue-800",
-    Queued: "bg-purple-100 text-purple-800",
-    Expired: "bg-orange-100 text-orange-800",
-    Executed: "bg-green-100 text-green-800",
-  };
-  return colors[state as keyof typeof colors] || colors.Pending;
 };
 
 const shortenAddress = (address: string) => {
