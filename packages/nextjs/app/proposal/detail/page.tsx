@@ -1,20 +1,52 @@
 "use client";
 
+import { useState } from "react";
 import { useSearchParams } from "next/navigation";
+import { message } from "antd";
 import type { NextPage } from "next";
 import { useAccount } from "wagmi";
-import { useProposalAllInfo } from "~~/hooks/blockchain/BCOSGovernor";
-import { useIsMaintainer } from "~~/hooks/blockchain/BCOSGovernor";
-import { ProposalState, stateColors } from "~~/services/store/store";
+import {
+  useApproveProposal,
+  useCancelProposal,
+  useCastVote,
+  useEmergencyShutdownProposal,
+  useHasVoted,
+  useIsMaintainer,
+  useProposalAllInfo,
+  useProposalVoterInfo,
+  useProposalVoters,
+  useQueueProposal,
+} from "~~/hooks/blockchain/BCOSGovernor";
+import { useTotalSupply } from "~~/hooks/blockchain/ERC20VotePower";
+import { ProposalState, VoteType, stateColors } from "~~/services/store/store";
 
 const ProposalDetail: NextPage = () => {
   const searchParams = useSearchParams();
   const id = searchParams.get("id");
-  const proposal = useProposalAllInfo(Number(id));
-  console.log(proposal, "proposal");
   const { address } = useAccount();
+  const proposal = useProposalAllInfo(Number(id));
   const isMaintainer = useIsMaintainer(address || "");
-  console.log("isMaintainer: ", isMaintainer);
+  const hasVoted = useHasVoted(Number(id), address || "");
+  const totalSupply = useTotalSupply() || 0;
+  const [voteReason, setVoteReason] = useState("");
+  const [isVoting, setIsVoting] = useState(false);
+
+  const queueProposal = useQueueProposal(Number(id));
+  const approveProposal = useApproveProposal(Number(id));
+  const cancelProposal = useCancelProposal(Number(id));
+  const emergencyShutdown = useEmergencyShutdownProposal(Number(id));
+
+  // Only fetch voters if the proposal state is not Pending, Canceled, or Defeated
+  // const shouldFetchVoters =
+  //   proposal &&
+  //   ![ProposalState.Pending, ProposalState.Canceled, ProposalState.Defeated].includes(Number(proposal.state));
+  const voters = useProposalVoters(Number(id));
+  console.log("voters: ", voters);
+  // const voters = null;
+  // Vote casting functions
+  const castVoteFor = useCastVote(Number(id), VoteType.VoteFor, voteReason);
+  const castVoteAgainst = useCastVote(Number(id), VoteType.Against, voteReason);
+  const castVoteAbstain = useCastVote(Number(id), VoteType.Abstain, voteReason);
 
   if (!proposal) {
     return <div className="container mx-auto px-4 py-8">Loading...</div>;
@@ -22,7 +54,87 @@ const ProposalDetail: NextPage = () => {
 
   const totalVotes = proposal.forVotes + proposal.againstVotes + proposal.abstainVotes;
   const forPercentage = totalVotes > 0 ? (proposal.forVotes / totalVotes) * 100 : 0;
-  const participationRate = 68.2; // 这里可以从合约获取实际参与率
+  const participationRate = totalSupply > 0 ? (totalVotes / Number(totalSupply)) * 100 : 0;
+
+  const handleQueue = async () => {
+    try {
+      await queueProposal();
+      message.success("Proposal queued for execution");
+    } catch (error) {
+      console.error("Error queueing proposal:", error);
+      message.error("Failed to queue proposal");
+    }
+  };
+
+  const handleApprove = async () => {
+    try {
+      await approveProposal();
+      message.success("Proposal approved");
+    } catch (error) {
+      console.error("Error approving proposal:", error);
+      message.error("Failed to approve proposal");
+    }
+  };
+
+  const handleReject = async () => {
+    try {
+      await cancelProposal();
+      message.success("Proposal rejected");
+    } catch (error) {
+      console.error("Error rejecting proposal:", error);
+      message.error("Failed to reject proposal");
+    }
+  };
+
+  const handleEmergencyShutdown = async () => {
+    try {
+      await emergencyShutdown();
+      message.success("Proposal emergency shutdown successful");
+    } catch (error) {
+      console.error("Error in emergency shutdown:", error);
+      message.error("Failed to emergency shutdown proposal");
+    }
+  };
+
+  // Vote handling functions
+  const handleVoteFor = async () => {
+    try {
+      setIsVoting(true);
+      await castVoteFor();
+      message.success("Vote cast: For");
+    } catch (error) {
+      console.error("Error casting vote:", error);
+      message.error("Failed to cast vote");
+    } finally {
+      setIsVoting(false);
+    }
+  };
+
+  const handleVoteAgainst = async () => {
+    try {
+      setIsVoting(true);
+      await castVoteAgainst();
+      message.success("Vote cast: Against");
+    } catch (error) {
+      console.error("Error casting vote:", error);
+      message.error("Failed to cast vote");
+    } finally {
+      setIsVoting(false);
+    }
+  };
+
+  const handleVoteAbstain = async () => {
+    try {
+      setIsVoting(true);
+      await castVoteAbstain();
+      message.success("Vote cast: Abstain");
+    } catch (error) {
+      console.error("Error casting vote:", error);
+      message.error("Failed to cast vote");
+    } finally {
+      setIsVoting(false);
+    }
+  };
 
   const renderActionButtons = () => {
     if (Number(proposal.state) === ProposalState.Pending && isMaintainer) {
@@ -30,10 +142,16 @@ const ProposalDetail: NextPage = () => {
         <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
           <h2 className="text-xl font-bold text-gray-800 mb-6">Proposal Actions</h2>
           <div className="space-y-4">
-            <button className="w-full bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg transition duration-300">
+            <button
+              onClick={handleApprove}
+              className="w-full bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg transition duration-300"
+            >
               Approve
             </button>
-            <button className="w-full bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg transition duration-300">
+            <button
+              onClick={handleReject}
+              className="w-full bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg transition duration-300"
+            >
               Reject
             </button>
           </div>
@@ -44,16 +162,21 @@ const ProposalDetail: NextPage = () => {
     if (Number(proposal.state) === ProposalState.Active && isMaintainer) {
       return (
         <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
-          <h2 className="text-xl font-bold text-gray-800 mb-6">Cast Your Vote</h2>
+          <h2 className="text-xl font-bold text-gray-800 mb-6">Proposal Actions</h2>
           <div className="space-y-4">
-            <button className="w-full bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg transition duration-300">
-              Vote For
-            </button>
-            <button className="w-full bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg transition duration-300">
-              Vote Against
-            </button>
-            <button className="w-full bg-gray-600 hover:bg-gray-700 text-white px-6 py-3 rounded-lg transition duration-300">
-              Abstain
+            {forPercentage >= 50 && (
+              <button
+                onClick={handleQueue}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg transition duration-300"
+              >
+                Put into execution queue
+              </button>
+            )}
+            <button
+              onClick={handleEmergencyShutdown}
+              className="w-full bg-orange-600 hover:bg-orange-700 text-white px-6 py-3 rounded-lg transition duration-300"
+            >
+              Emergency Shutdown
             </button>
           </div>
         </div>
@@ -61,6 +184,92 @@ const ProposalDetail: NextPage = () => {
     }
 
     return null;
+  };
+
+  // Render voting buttons for active proposals
+  const renderVotingButtons = () => {
+    if (Number(proposal.state) !== ProposalState.Active || !address || hasVoted) {
+      return null;
+    }
+
+    return (
+      <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
+        <h2 className="text-xl font-bold text-gray-800 mb-6">Cast Your Vote</h2>
+        <div className="space-y-4">
+          <div className="mb-4">
+            <label htmlFor="voteReason" className="block text-sm font-medium text-gray-700 mb-2">
+              Vote Reason (Optional)
+            </label>
+            <textarea
+              id="voteReason"
+              value={voteReason}
+              onChange={e => setVoteReason(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+              rows={3}
+              placeholder="Enter your reason for voting..."
+            />
+          </div>
+          <button
+            onClick={handleVoteFor}
+            disabled={isVoting}
+            className="w-full bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg transition duration-300 disabled:opacity-50"
+          >
+            {isVoting ? "Voting..." : "Vote For"}
+          </button>
+          <button
+            onClick={handleVoteAgainst}
+            disabled={isVoting}
+            className="w-full bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg transition duration-300 disabled:opacity-50"
+          >
+            {isVoting ? "Voting..." : "Vote Against"}
+          </button>
+          <button
+            onClick={handleVoteAbstain}
+            disabled={isVoting}
+            className="w-full bg-gray-600 hover:bg-gray-700 text-white px-6 py-3 rounded-lg transition duration-300 disabled:opacity-50"
+          >
+            {isVoting ? "Voting..." : "Abstain"}
+          </button>
+        </div>
+        {hasVoted && <p className="mt-4 text-sm text-gray-600">You have already voted on this proposal.</p>}
+      </div>
+    );
+  };
+
+  const VoterRow = ({ voter, proposalId }: { voter: string; proposalId: number }) => {
+    const { weight, support, blockNumber } = useProposalVoterInfo(proposalId, voter);
+
+    return (
+      <tr key={voter}>
+        <td className="px-6 py-4">
+          <div className="text-sm text-gray-900">{shortenAddress(voter)}</div>
+        </td>
+        <td className="px-6 py-4">
+          <span
+            className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+            ${Number(weight) > 0 ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}`}
+          >
+            {Number(weight) > 0 ? "For" : "Against"}
+          </span>
+        </td>
+        <td className="px-6 py-4">
+          <div className="text-sm text-gray-900">{Number(weight)}</div>
+        </td>
+        <td className="px-6 py-4">
+          <div className="text-sm text-gray-900">{Number(blockNumber)}</div>
+        </td>
+      </tr>
+    );
+  };
+
+  const renderVotingDetails = () => {
+    if (!voters) return null;
+    return voters.voters.map((voter: string) => <VoterRow key={voter} voter={voter} proposalId={Number(id)} />);
+  };
+
+  const shouldShowVotingDetails = () => {
+    const state = Number(proposal.state);
+    return ![ProposalState.Pending, ProposalState.Canceled, ProposalState.Defeated].includes(state);
   };
 
   return (
@@ -71,7 +280,7 @@ const ProposalDetail: NextPage = () => {
           {/*Proposal Overview*/}
           <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
             <div className="flex justify-between items-center mb-4">
-              <h1 className="text-2xl font-bold text-gray-800">Proposal #{proposal.id}</h1>
+              <h1 className="text-2xl font-bold text-gray-800">{proposal.title}</h1>
               <span className={`px-3 py-1 text-sm font-semibold rounded-full ${stateColors[Number(proposal.state)]}`}>
                 {ProposalState[Number(proposal.state)]}
               </span>
@@ -82,8 +291,8 @@ const ProposalDetail: NextPage = () => {
                 <p className="text-md font-medium">{shortenAddress(proposal.proposer)}</p>
               </div>
               <div>
-                <p className="text-sm text-gray-500">State</p>
-                <p className="text-md font-medium">{proposal.state}</p>
+                <p className="text-sm text-gray-500">Proposer ID</p>
+                <p className="text-md font-medium">{proposal.id}</p>
               </div>
               <div>
                 <p className="text-sm text-gray-500">Block Range</p>
@@ -102,7 +311,7 @@ const ProposalDetail: NextPage = () => {
             {/*Proposal Description*/}
             <div className="bg-gray-50 rounded-lg p-4 mb-6">
               <h3 className="text-lg font-semibold mb-2">Description</h3>
-              <div className="prose whitespace-pre-line break-all">{proposal.description}</div>
+              <div className="prose whitespace-pre-line break-all line-clamp-3">{proposal.description}</div>
             </div>
           </div>
 
@@ -124,7 +333,7 @@ const ProposalDetail: NextPage = () => {
               <div>
                 <div className="flex justify-between mb-2">
                   <span className="text-sm font-medium text-gray-600">Participation Rate</span>
-                  <span className="text-sm font-medium text-gray-900">{participationRate}% / 40%</span>
+                  <span className="text-sm font-medium text-gray-900">{participationRate}% / 30%</span>
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-2.5">
                   <div className="bg-blue-600 h-2.5 rounded-full" style={{ width: `${participationRate}%` }}></div>
@@ -150,63 +359,31 @@ const ProposalDetail: NextPage = () => {
           </div>
 
           {/* Voting Details */}
-          <div className="bg-white rounded-xl shadow-lg p-6">
-            <h2 className="text-xl font-bold text-gray-800 mb-6">Voting Details</h2>
-            <div className="overflow-x-auto">
-              <table className="min-w-full">
-                <thead>
-                  <tr className="bg-gray-50">
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Voter</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Vote</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Weight</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Transaction</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200">
-                  <tr>
-                    <td className="px-6 py-4">
-                      <div className="text-sm text-gray-900">0x1234...5678</div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                        For
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="text-sm text-gray-900">1,000</div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <a href="#" className="text-blue-600 hover:text-blue-900">
-                        View
-                      </a>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td className="px-6 py-4">
-                      <div className="text-sm text-gray-900">0x9876...4321</div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
-                        Against
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="text-sm text-gray-900">500</div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <a href="#" className="text-blue-600 hover:text-blue-900">
-                        View
-                      </a>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
+          {shouldShowVotingDetails() && (
+            <div className="bg-white rounded-xl shadow-lg p-6">
+              <h2 className="text-xl font-bold text-gray-800 mb-6">Voting Details</h2>
+              <div className="overflow-x-auto">
+                <table className="min-w-full">
+                  <thead>
+                    <tr className="bg-gray-50">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Voter</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Vote</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Weight</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Block</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200">{renderVotingDetails()}</tbody>
+                </table>
+              </div>
             </div>
-          </div>
+          )}
         </div>
 
         {/* Right Column */}
         <div className="w-1/3">
+          {/* Voting Buttons */}
+          {renderVotingButtons()}
+
           {/* Action Buttons */}
           {renderActionButtons()}
 

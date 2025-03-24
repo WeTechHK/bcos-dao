@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { message } from "antd";
 import { useAccount } from "wagmi";
-import { useApproveProposal, useCancelProposal, useIsMaintainer } from "~~/hooks/blockchain/BCOSGovernor";
+import { useIsMaintainer } from "~~/hooks/blockchain/BCOSGovernor";
 import { ProposalState, stateColors } from "~~/services/store/store";
 
 interface ProposalCardProps {
@@ -35,61 +35,14 @@ export const ProposalCard = ({
   againstVotes,
   abstainVotes,
 }: ProposalCardProps) => {
-  const { address } = useAccount();
-  const isMaintainer = useIsMaintainer(address || "");
-  const approveProposal = useApproveProposal(id);
-  const cancelProposal = useCancelProposal(id);
-
   const totalVotes = forVotes + againstVotes + abstainVotes;
   const progress = totalVotes > 0 ? (forVotes / totalVotes) * 100 : 0;
 
-  const handleApprove = async () => {
-    try {
-      await approveProposal();
-      message.success("Proposal approved");
-    } catch (error) {
-      console.error("Error approving proposal:", error);
-      message.error("Failed to approve proposal");
-    }
-  };
-
-  const handleReject = async () => {
-    try {
-      await cancelProposal();
-      message.success("Proposal rejected");
-    } catch (error) {
-      console.error("Error rejecting proposal:", error);
-      message.error("Failed to reject proposal");
-    }
-  };
-
-  const renderActionButtons = () => {
-    if (state === ProposalState.Pending && isMaintainer) {
-      return (
-        <div className="flex gap-3">
-          <button
-            onClick={handleApprove}
-            className="flex-1 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
-          >
-            Approve
-          </button>
-          <button
-            onClick={handleReject}
-            className="flex-1 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
-          >
-            Reject
-          </button>
-        </div>
-      );
-    }
-    return null;
-  };
-
   return (
-    <div className="proposal-card bg-white rounded-xl shadow-lg overflow-hidden hover:-translate-y-1.5 duration-300 flex flex-col">
-      <div className="p-6 flex flex-col h-full">
+    <div className="proposal-card bg-white rounded-xl shadow-lg overflow-hidden hover:-translate-y-1.5 duration-300">
+      <div className="p-6 flex flex-col h-[280px]">
         {/* Header */}
-        <div className="flex justify-between items-start mb-3">
+        <div className="flex justify-between items-start mb-4">
           <span className={`px-3 py-1 text-sm font-semibold rounded-full ${stateColors[Number(state)]}`}>
             {ProposalState[Number(state)]}
           </span>
@@ -99,9 +52,9 @@ export const ProposalCard = ({
         </div>
 
         {/* Content */}
-        <div className="mb-3">
+        <div className="flex-1">
           <h3 className="text-lg font-semibold text-gray-900 mb-2">{title}</h3>
-          <p className="text-sm text-gray-600 mb-2 line-clamp-2 break-all">{description}</p>
+          <p className="text-sm text-gray-600 mb-4 line-clamp-2">{description}</p>
           <div className="flex items-center gap-2">
             <span className="bg-purple-50 text-purple-700 px-2 py-1 rounded text-sm">
               By: {proposer.slice(0, 6)}...{proposer.slice(-4)}
@@ -110,7 +63,7 @@ export const ProposalCard = ({
         </div>
 
         {/* Footer */}
-        <div className="mt-auto">
+        <div className="mt-4">
           {state === ProposalState.Active && (
             <div className="space-y-2 mb-3">
               <div className="flex justify-between items-center text-sm">
@@ -130,9 +83,6 @@ export const ProposalCard = ({
           </div>
         </div>
       </div>
-
-      {/* Action Buttons */}
-      <div className="bg-gray-50 border-t border-gray-100 p-4">{renderActionButtons() || <div className="h-10" />}</div>
     </div>
   );
 };
