@@ -222,32 +222,27 @@ function useProposalVoters(proposalId: number): { voters: string[] } {
   return { voters: [...voters] };
 }
 
-function useProposalVoterWeight(proposalId: number, voter: string): { weight: bigint } {
-  const { data: weight } = useScaffoldReadContract({
+function useProposalVoterInfo(
+  proposalId: number,
+  voter: string,
+): {
+  voter: string;
+  weight: number;
+  support: VoteType;
+  blockNumber: number;
+} {
+  const { data: info } = useScaffoldReadContract({
     contractName: "BCOSGovernor",
-    functionName: "proposalVoterWeight",
+    functionName: "proposalVoterInfo",
     args: [BigInt(proposalId), voter],
   });
 
-  if (weight === undefined) {
+  if (info === undefined) {
     throw new Error("Invalid proposal voter weight data");
   }
-  console.log("useProposalVoterWeight useScaffoldReadContract: ", weight);
-  return { weight: BigInt(weight) };
-}
-
-function useProposalVoterBlock(proposalId: number, voter: string): { blockNumber: number } {
-  const { data: blockNumber } = useScaffoldReadContract({
-    contractName: "BCOSGovernor",
-    functionName: "proposalVoterBlock",
-    args: [BigInt(proposalId), voter],
-  });
-
-  if (blockNumber === undefined) {
-    throw new Error("Invalid proposal voter block number data");
-  }
-  console.log("useProposalVoterBlock useScaffoldReadContract: ", blockNumber);
-  return { blockNumber: Number(blockNumber) };
+  const [weight, support, blockNumber] = info;
+  console.log("useProposalVoterInfo useScaffoldReadContract: ", info);
+  return { voter: voter, weight: Number(weight), support: support, blockNumber: Number(blockNumber) };
 }
 
 function useProposalApprovalFlow(proposalId: number): ProposalApprovalFlow {
@@ -382,8 +377,7 @@ export {
   useLatestProposalId,
   useProposalApprovalFlow,
   useProposalVoters,
-  useProposalVoterWeight,
-  useProposalVoterBlock,
+  useProposalVoterInfo,
   useApproveProposal,
   useCancelProposal,
   useEmergencyShutdownProposal,
