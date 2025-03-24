@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { message } from "antd";
 import { useAccount } from "wagmi";
-import { useIsMaintainer } from "~~/hooks/blockchain/BCOSGovernor";
+import { useIsMaintainer, useProposalVotes } from "~~/hooks/blockchain/BCOSGovernor";
 import { ProposalState, stateColors } from "~~/services/store/store";
 
 interface ProposalCardProps {
@@ -23,20 +23,14 @@ interface ProposalCardProps {
   title: string;
 }
 
-export const ProposalCard = ({
-  id,
-  title,
-  proposer,
-  startBlock,
-  endBlock,
-  state,
-  description,
-  forVotes,
-  againstVotes,
-  abstainVotes,
-}: ProposalCardProps) => {
-  const totalVotes = forVotes + againstVotes + abstainVotes;
-  const progress = totalVotes > 0 ? (forVotes / totalVotes) * 100 : 0;
+export const ProposalCard = ({ id, title, proposer, startBlock, endBlock, state, description }: ProposalCardProps) => {
+  const {
+    forVotes: forVotesFromContract,
+    againstVotes: againstVotesFromContract,
+    abstainVotes: abstainVotesFromContract,
+  } = useProposalVotes(id);
+  const totalVotes = Number(forVotesFromContract) + Number(againstVotesFromContract) + Number(abstainVotesFromContract);
+  const progress = totalVotes > 0 ? (Number(forVotesFromContract) / totalVotes) * 100 : 0;
 
   return (
     <div className="proposal-card bg-white rounded-xl shadow-lg overflow-hidden hover:-translate-y-1.5 duration-300">
