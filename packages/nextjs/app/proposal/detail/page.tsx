@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { message } from "antd";
 import type { NextPage } from "next";
@@ -24,23 +24,22 @@ const ProposalDetail: NextPage = () => {
   const searchParams = useSearchParams();
   const id = searchParams.get("id");
   const { address } = useAccount();
-  const proposal = useProposalAllInfo(Number(id));
+  const { info: proposal, refetch } = useProposalAllInfo(Number(id));
   const isMaintainer = useIsMaintainer(address || "");
   const hasVoted = useHasVoted(Number(id), address || "");
   const totalSupply = useTotalSupply() || 0;
   const [voteReason, setVoteReason] = useState("");
   const [isVoting, setIsVoting] = useState(false);
-
   const queueProposal = useQueueProposal(Number(id));
   const approveProposal = useApproveProposal(Number(id));
   const cancelProposal = useCancelProposal(Number(id));
   const emergencyShutdown = useEmergencyShutdownProposal(Number(id));
-
   // Only fetch voters if the proposal state is not Pending, Canceled, or Defeated
   // const shouldFetchVoters =
   //   proposal &&
   //   ![ProposalState.Pending, ProposalState.Canceled, ProposalState.Defeated].includes(Number(proposal.state));
   const voters = useProposalVoters(Number(id));
+  console.log("proposal: ", proposal);
   console.log("voters: ", voters);
   // const voters = null;
   // Vote casting functions
@@ -60,6 +59,7 @@ const ProposalDetail: NextPage = () => {
     try {
       await queueProposal();
       message.success("Proposal queued for execution");
+      refetch();
     } catch (error) {
       console.error("Error queueing proposal:", error);
       message.error("Failed to queue proposal");
@@ -70,6 +70,7 @@ const ProposalDetail: NextPage = () => {
     try {
       await approveProposal();
       message.success("Proposal approved");
+      refetch();
     } catch (error) {
       console.error("Error approving proposal:", error);
       message.error("Failed to approve proposal");
@@ -80,6 +81,7 @@ const ProposalDetail: NextPage = () => {
     try {
       await cancelProposal();
       message.success("Proposal rejected");
+      refetch();
     } catch (error) {
       console.error("Error rejecting proposal:", error);
       message.error("Failed to reject proposal");
@@ -90,6 +92,7 @@ const ProposalDetail: NextPage = () => {
     try {
       await emergencyShutdown();
       message.success("Proposal emergency shutdown successful");
+      refetch();
     } catch (error) {
       console.error("Error in emergency shutdown:", error);
       message.error("Failed to emergency shutdown proposal");
@@ -102,6 +105,7 @@ const ProposalDetail: NextPage = () => {
       setIsVoting(true);
       await castVoteFor();
       message.success("Vote cast: For");
+      refetch();
     } catch (error) {
       console.error("Error casting vote:", error);
       message.error("Failed to cast vote");
@@ -115,6 +119,7 @@ const ProposalDetail: NextPage = () => {
       setIsVoting(true);
       await castVoteAgainst();
       message.success("Vote cast: Against");
+      refetch();
     } catch (error) {
       console.error("Error casting vote:", error);
       message.error("Failed to cast vote");
@@ -128,6 +133,7 @@ const ProposalDetail: NextPage = () => {
       setIsVoting(true);
       await castVoteAbstain();
       message.success("Vote cast: Abstain");
+      refetch();
     } catch (error) {
       console.error("Error casting vote:", error);
       message.error("Failed to cast vote");
@@ -159,7 +165,7 @@ const ProposalDetail: NextPage = () => {
       );
     }
 
-    if (Number(proposal.state) === ProposalState.Active && isMaintainer) {
+    if (Number(proposal.state) === ProposalState.Succeeded && isMaintainer) {
       return (
         <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
           <h2 className="text-xl font-bold text-gray-800 mb-6">Proposal Actions</h2>
@@ -172,6 +178,15 @@ const ProposalDetail: NextPage = () => {
                 Put into execution queue
               </button>
             )}
+          </div>
+        </div>
+      );
+    }
+    if (Number(proposal.state) === ProposalState.Active && isMaintainer) {
+      return (
+        <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
+          <h2 className="text-xl font-bold text-gray-800 mb-6">Proposal Actions</h2>
+          <div className="space-y-4">
             <button
               onClick={handleEmergencyShutdown}
               className="w-full bg-orange-600 hover:bg-orange-700 text-white px-6 py-3 rounded-lg transition duration-300"

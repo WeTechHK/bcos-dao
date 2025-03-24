@@ -105,7 +105,7 @@ const useProposalAllInfo = (proposalId: number) => {
       setInfo(getProposalInfo(data, proposalId));
     }
   }, [data, proposalId, refetch]);
-  return info;
+  return { info, refetch };
 };
 
 const useLatestProposalId = () => {
