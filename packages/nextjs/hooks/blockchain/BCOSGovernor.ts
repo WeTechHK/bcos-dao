@@ -135,14 +135,11 @@ const useProposalInfoPage = (offset: number, page: number) => {
   });
 };
 const useProposalList = (offset: number, page: number, totalNumber: number) => {
-  const latestProposal = useLatestProposalId();
-  console.log("latestProposal: ", latestProposal);
-  // 状态管理
-  const [data, setData] = useState<ProposalAllInfo[]>([]); // 存储接口返回的数据
-  const [filterState, setFilterState] = useState(-1); // 存储接口返回的数据
-  // const [loading, setLoading] = useState(false); // 加载状态
-  const [currentOffset, setCurrentOffset] = useState(offset); // 当前偏移量
-  const [currentPage] = useState(page); // 当前页码
+  const [data, setData] = useState<ProposalAllInfo[]>([]);
+  const [currentOffset, setCurrentOffset] = useState(offset);
+  const [currentPage] = useState(page);
+  const [loading, setLoading] = useState(false);
+
   const { data: proposalInfosData, refetch } = useScaffoldReadContract({
     contractName: "BCOSGovernor",
     functionName: "getProposalInfoPage",
@@ -150,47 +147,29 @@ const useProposalList = (offset: number, page: number, totalNumber: number) => {
   });
 
   useEffect(() => {
-    console.log("proposalInfosData: ", proposalInfosData);
     if (proposalInfosData && totalNumber) {
+      setLoading(true);
       const handledData = proposalInfosData.map(pro => {
         return getProposalInfo(pro, Number(pro.proposalId));
       });
-      setData(prevData =>
-        [...prevData, ...handledData].filter(v => {
-          if (filterState === -1) {
-            return true;
-          }
-          return Number(v.state) === filterState;
-        }),
-      );
+      setData(prevData => [...prevData, ...handledData]);
+      setLoading(false);
     }
-  }, [proposalInfosData, filterState, totalNumber]); // 保持这个依赖
+  }, [proposalInfosData, totalNumber]);
 
-  // 添加新的 useEffect 来监听 currentOffset 变化
   useEffect(() => {
-    // 当 offset 变化时，重新获取数据
-    refetch();
+    setLoading(true);
+    refetch().finally(() => setLoading(false));
   }, [currentOffset, refetch]);
 
-  // 切换新的 filterState 来监听 currentOffset 变化
-  useEffect(() => {
-    // 当 offset 变化时，重新获取数据
-    setCurrentOffset(0);
-  }, [filterState]);
-
-  function loadMore() {
-    if (totalNumber > currentOffset) {
-      console.log("load more");
+  async function loadMore() {
+    if (totalNumber > currentOffset && !loading) {
       setCurrentOffset(currentOffset + currentPage);
     }
   }
 
-  function switchProposalState(proposalState: number) {
-    setFilterState(proposalState);
-  }
-
   const hasMoreProposals = totalNumber > currentOffset;
-  return { data, loadMore, hasMoreProposals, switchProposalState };
+  return { data, loadMore, hasMoreProposals, loading };
 };
 
 function useHasVoted(proposalId: number, voter: string): boolean {
@@ -216,7 +195,8 @@ function useProposalVoters(proposalId: number): { voters: string[] } {
   });
 
   if (voters === undefined) {
-    throw new Error("Invalid proposal voters data");
+    return { voters: [] };
+    // throw new Error("Invalid proposal voters data");
   }
   console.log("useProposalVoters useScaffoldReadContract: ", voters);
   return { voters: [...voters] };
@@ -231,6 +211,7 @@ function useProposalVoterInfo(
   support: VoteType;
   blockNumber: number;
 } {
+  console.log("useProposalVoterInfo proposalId: ", proposalId, "voter: ", voter);
   const { data: info } = useScaffoldReadContract({
     contractName: "BCOSGovernor",
     functionName: "proposalVoterInfo",
@@ -238,7 +219,8 @@ function useProposalVoterInfo(
   });
 
   if (info === undefined) {
-    throw new Error("Invalid proposal voter weight data");
+    return { voter: voter, weight: 0, support: VoteType.Against, blockNumber: 0 };
+    // throw new Error("Invalid proposal voter weight data");
   }
   const [weight, support, blockNumber] = info;
   console.log("useProposalVoterInfo useScaffoldReadContract: ", info);

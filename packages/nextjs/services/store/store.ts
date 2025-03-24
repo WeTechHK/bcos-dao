@@ -21,6 +21,12 @@ export enum ProposalState {
   Expired = 6,
   Executed = 7,
 }
+
+export enum VoteType {
+  Against = 0,
+  VoteFor = 1,
+  Abstain = 2,
+}
 // 根据状态设置颜色
 export const stateColors: { [key: number]: string } = {
   0: "bg-yellow-100 text-yellow-800", // Pending

@@ -10,45 +10,14 @@ import { ProposalCard } from "~~/components/ProposalCard";
 import { useIsMaintainer } from "~~/hooks/blockchain/BCOSGovernor";
 import { useLatestProposalId, useProposalList } from "~~/hooks/blockchain/BCOSGovernor";
 
-type ProposalStatus = {
-  key: number;
-  label: string;
-  color: string;
-  icon?: React.ReactNode;
-};
-
-const proposalStatuses: ProposalStatus[] = [
-  {
-    key: -1,
-    label: "All Proposals",
-    color: "bg-blue-400",
-  },
-  {
-    key: 0,
-    label: "Pending",
-    color: "bg-yellow-400",
-  },
-  {
-    key: 1,
-    label: "Active",
-    color: "bg-green-400",
-  },
-  {
-    key: 2,
-    label: "Canceled",
-    color: "bg-red-400",
-  },
-];
-
 const Home: NextPage = () => {
   const { address } = useAccount();
   const isMaintainer = useIsMaintainer(address || "");
   console.log("isMaintainer: ", isMaintainer);
-  const proposalFilterKey = -1;
   const latestProposal = useLatestProposalId();
   console.log("latestProposal: ", latestProposal);
 
-  const { data: proposalList, loadMore, hasMoreProposals, switchProposalState } = useProposalList(0, 6, latestProposal);
+  const { data: proposalList, loadMore, hasMoreProposals, loading } = useProposalList(0, 6, latestProposal);
   console.log("proposalList: ", proposalList);
   return (
     <>
@@ -90,36 +59,20 @@ const Home: NextPage = () => {
               Create Proposal
             </Link>
           </div>
-          {/*Filter Tabs*/}
-          <div className="flex space-x-4 mb-6">
-            {proposalStatuses.map(status => {
-              const isActive = status.key === proposalFilterKey;
-              return (
-                <Button
-                  key={status.key}
-                  color="default"
-                  variant="filled"
-                  className={`${
-                    isActive ? "bg-secondary shadow-md" : ""
-                  } font-medium text-neutral hover:bg-secondary hover:shadow-md focus:!bg-secondary active:!text-neutral py-1.5 px-3 text-sm rounded-full gap-2 grid grid-flow-col`}
-                  icon={status.icon}
-                  onClick={() => switchProposalState(status.key)}
-                >
-                  {status.label}
-                </Button>
-              );
-            })}
-          </div>
 
-          <div>
+          {loading ? (
+            <div className="flex justify-center items-center h-40">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            </div>
+          ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {proposalList.map(proposal => (
                 <ProposalCard key={proposal.id} {...proposal} />
               ))}
             </div>
-          </div>
+          )}
 
-          {hasMoreProposals ? (
+          {hasMoreProposals && !loading && (
             <div className="text-center mt-8">
               <button
                 onClick={loadMore}
@@ -128,7 +81,7 @@ const Home: NextPage = () => {
                 Load More Proposals
               </button>
             </div>
-          ) : null}
+          )}
         </div>
       </div>
     </>
