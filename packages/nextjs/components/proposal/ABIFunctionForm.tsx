@@ -43,14 +43,18 @@ export const ABIFunctionForm = ({ abi, abiFunction, onChange, inheritedFrom }: A
   }, [abiFunction]);
   useEffect(() => {
     if (form) {
-      console.log(form);
-      const encodeData = encodeFunctionData({
-        abi: abi,
-        functionName: abiFunction.name,
-        args: getParsedContractFunctionArgs(form),
-      });
-      setAbiData(encodeData);
-      onChange(encodeData);
+      try {
+        console.log(form);
+        const encodeData = encodeFunctionData({
+          abi: abi,
+          functionName: abiFunction.name,
+          args: getParsedContractFunctionArgs(form),
+        });
+        setAbiData(encodeData);
+        onChange(encodeData);
+      } catch (e) {
+        console.error("⚡️ ~ file: ABIFunctionForm.tsx:handleWrite ~ error", e);
+      }
     }
   }, [abi, form]);
 

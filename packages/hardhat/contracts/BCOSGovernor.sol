@@ -27,6 +27,7 @@ struct ProposalVote {
     uint256 abstainVotes;
     EnumerableSet.AddressSet voters;
     mapping(address voter => uint256) hasVoted;
+    mapping(address voter => uint8) voteType;
     mapping(address voter => uint256) voteBlock;
 }
 
@@ -55,8 +56,10 @@ contract BCOSGovernor is
         For,
         Abstain
     }
-    bytes32 public constant MAINTAINER_ROLE = keccak256("MAINTAINER_ROLE");
-    bytes32 public constant EXECUTOR_ROLE = keccak256("EXECUTOR_ROLE");
+    // keccak256("MAINTAINER_ROLE");
+    bytes32 public constant MAINTAINER_ROLE = 0x339759585899103d2ace64958e37e18ccb0504652c81d4a1b8aa80fe2126ab95;
+    // keccak256("EXECUTOR_ROLE");
+    bytes32 public constant EXECUTOR_ROLE = 0xd8aa0f3194971a2a116679f7c2090f6939c8d4e01a2a8d7e41d55e5351469e63;
 
     function initialize(VotesUpgradeable _token, TimelockControllerUpgradeable _timelock) public initializer {
         __Governor_init("BCOSGovernor");
@@ -132,6 +135,7 @@ contract BCOSGovernor is
             info.proposalDetail.calldatas,
             info.proposalDetail.descriptionHash
         ) = proposalDetails(proposalHash);
+        info.proposalId = proposalId;
         info.proposalState = state(proposalHash);
         info.proposalId = proposalId;
         (info.proposalVote.forVotes, info.proposalVote.againstVotes, info.proposalVote.abstainVotes) = proposalVotes(
@@ -141,6 +145,7 @@ contract BCOSGovernor is
         info.endBlock = proposalDeadline(proposalHash);
         info.eta = proposalEta(proposalHash);
         info.proposer = proposalProposer(proposalHash);
+        info.proposalTitle = _proposalTitle[proposalId];
         info.proposalDesc = _proposalDesc[proposalId];
     }
 
@@ -191,15 +196,11 @@ contract BCOSGovernor is
         return proposalVote.voters.values();
     }
 
-    // TODO)): 返回更多字段
-    function proposalVoterWeight(uint256 proposalId, address voter) public view returns (uint256) {
+    function proposalVoterInfo(uint256 proposalId, address voter) public view returns (uint256 weight, uint8 voteType, uint256 number) {
         ProposalVote storage proposalVote = _proposalVotes[proposalId];
-        return proposalVote.hasVoted[voter];
-    }
-
-    function proposalVoterBlock(uint256 proposalId, address voter) public view returns (uint256) {
-        ProposalVote storage proposalVote = _proposalVotes[proposalId];
-        return proposalVote.voteBlock[voter];
+        weight = proposalVote.hasVoted[voter];
+        voteType = proposalVote.voteType[voter];
+        number = proposalVote.voteBlock[voter];
     }
 
     function proposalThreshold() public view override(DAOSettings, GovernorUpgradeable) returns (uint256) {
@@ -243,9 +244,6 @@ contract BCOSGovernor is
         if (proposalVote.hasVoted[account] > 0) {
             revert GovernorAlreadyCastVote(account);
         }
-        proposalVote.hasVoted[account] = weight;
-        proposalVote.voters.add(account);
-        proposalVote.voteBlock[account] = block.number;
 
         if (support == uint8(VoteType.Against)) {
             proposalVote.againstVotes += weight;
@@ -256,7 +254,10 @@ contract BCOSGovernor is
         } else {
             revert GovernorInvalidVoteType();
         }
-
+        proposalVote.hasVoted[account] = weight;
+        proposalVote.voters.add(account);
+        proposalVote.voteType[account] = support;
+        proposalVote.voteBlock[account] = block.number;
         return weight;
     }
 
@@ -277,8 +278,6 @@ contract BCOSGovernor is
         }
         ProposalApprovalFlow storage approvalFlow = _proposalApprovalFlow[proposalId];
         approvalFlow.approvers.push(_msgSender());
-        console.log("length: ", approveThreshold());
-        console.log("approveThreshold: ", approvalFlow.approvers.length);
         if (approvalFlow.approvers.length >= approveThreshold()) {
             approvalFlow.approved = true;
         }

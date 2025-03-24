@@ -110,6 +110,7 @@ export function useScaffoldWriteContract<TContractName extends ContractName>(
           {
             abi: deployedContractData.abi as Abi,
             address: deployedContractData.address,
+            __mode: "prepared",
             ...variables,
           } as WriteContractVariables<Abi, string, any[], Config, number>,
           mutateOptions as
@@ -156,6 +157,7 @@ export function useScaffoldWriteContract<TContractName extends ContractName>(
       {
         abi: deployedContractData.abi as Abi,
         address: deployedContractData.address,
+        __mode: "prepared",
         ...variables,
       } as WriteContractVariables<Abi, string, any[], Config, number>,
       options as

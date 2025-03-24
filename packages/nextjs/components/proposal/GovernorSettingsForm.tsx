@@ -1,7 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-import { InfoCircleFilled } from "@ant-design/icons";
+import React, { useState } from "react";
 import { Abi, AbiFunction } from "abitype";
 import { Card, Form, Input, Select, Switch } from "antd";
 import { ABIFunctionForm } from "~~/components/proposal/ABIFunctionForm";
@@ -43,17 +42,8 @@ const governorSettings = [
   },
 ];
 
-const GovernorSettingsForm = ({
-  form,
-  field,
-  index,
-  onChange,
-}: {
-  form?: any;
-  field?: any;
-  index?: any;
-  onChange: any;
-}) => {
+const GovernorSettingsForm = ({ field, index, onChange }: { field?: any; index?: any; onChange: any }) => {
+  const parentForm = Form.useFormInstance();
   const FormItem = Form.Item;
   const [valueVisible, setValueVisible] = useState<boolean>(false);
   const [method, setMethod] = useState<{ fn: AbiFunction; inherited: string }>();
@@ -118,7 +108,7 @@ const GovernorSettingsForm = ({
           </FormItem>
 
           {method && (
-            <FormItem name="args" label={<div className="text-lg font-bold mb-1">Method arguments</div>}>
+            <FormItem label={<div className="text-lg font-bold mb-1">Method arguments</div>}>
               <div>
                 {deployedContractData && method && (
                   <ABIFunctionForm
@@ -126,6 +116,7 @@ const GovernorSettingsForm = ({
                     abiFunction={method.fn as AbiFunction}
                     onChange={(encodeData: string) => {
                       console.log(encodeData);
+                      parentForm.setFieldValue(["actions", index, "calldata"], encodeData);
                     }}
                     inheritedFrom={method.inherited}
                   />
@@ -137,15 +128,18 @@ const GovernorSettingsForm = ({
           {method && (
             <div className="mb-4 inline-flex gap-2">
               <div>Also send TOKEN to the target address? (this is not common)</div>
-              <Switch onChange={() => setValueVisible(!valueVisible)}></Switch>
+              <Switch
+                onChange={() => {
+                  setValueVisible(!valueVisible);
+                  govForm.setFieldValue("value", "0");
+                  parentForm.setFieldValue(["actions", index, "value"], "0");
+                }}
+              ></Switch>
             </div>
           )}
 
           {valueVisible && (
             <FormItem name="value" label={<div className="text-lg font-bold mb-1">Value</div>}>
-              <div className="mb-3">
-                The amount of Balance you wish to send the target address (External Account or Smart Contract)
-              </div>
               <Input
                 className="h-12"
                 placeholder={

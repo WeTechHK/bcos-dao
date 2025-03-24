@@ -34,3 +34,12 @@ export const useDelegate = () => {
     });
   };
 };
+
+export const useTotalSupply = () => {
+  const { data: totalSupplyData } = useScaffoldReadContract({
+    contractName: "ERC20VotePower",
+    functionName: "totalSupply",
+  });
+
+  return totalSupplyData;
+};

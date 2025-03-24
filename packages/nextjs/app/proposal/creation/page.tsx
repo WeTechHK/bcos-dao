@@ -41,6 +41,7 @@ import { default as FormList } from "antd/es/form/FormList";
 import Dragger from "antd/es/upload/Dragger";
 import type { NextPage } from "next";
 import { erc20Abi } from "viem";
+import { ChainSystemChangeForm } from "~~/components/proposal/ChainSystemChangeForm";
 import CustomActionForm, { actionSelectOptions } from "~~/components/proposal/CustomActionForm";
 import GovernorSettingsForm from "~~/components/proposal/GovernorSettingsForm";
 import ProposalTextForm from "~~/components/proposal/ProposalTextForm";
@@ -92,7 +93,7 @@ const findProposalForm = (name: string, args: any) => {
     case "Governor Settings":
       return <GovernorSettingsForm {...args} />;
     case "Chain System Change":
-      return <GovernorSettingsForm {...args} />;
+      return <ChainSystemChangeForm {...args} />;
     case "Transfer Token":
       return <TransferTokenForm {...args} />;
     case "Custom Action":
@@ -199,7 +200,7 @@ const ProposalCreation: NextPage = () => {
                     <div className="flex justify-between mb-4">
                       <div className="inline-grid grid-cols-1 gap-4">
                         <Tag color="blue" bordered={false} className="text-lg font-bold content-center">
-                          Action #{index + 1}
+                          {"Action #" + (index + 1).toString() + ": " + form.getFieldValue(["actions", index, "name"])}
                         </Tag>
                       </div>
                       <div className="inline-grid grid-cols-1 gap-4">
@@ -226,7 +227,7 @@ const ProposalCreation: NextPage = () => {
                           const actions = form.getFieldValue(["actions", index]);
                           form.setFieldValue(["actions", index], { ...actions, ...value });
                         };
-                        return findProposalForm(actionName, { form, field, index, onChange });
+                        return findProposalForm(actionName, { parentForm: form, field, index, onChange });
                       }}
                     </FormItem>
 
