@@ -1,9 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { message } from "antd";
-import { useAccount } from "wagmi";
-import { useIsMaintainer, useProposalVotes } from "~~/hooks/blockchain/BCOSGovernor";
+import { Popover } from "antd";
+import { useProposalVotes } from "~~/hooks/blockchain/BCOSGovernor";
 import { ProposalState, stateColors } from "~~/services/store/store";
 
 interface ProposalCardProps {
@@ -37,8 +36,14 @@ export const ProposalCard = ({ id, title, proposer, startBlock, endBlock, state,
       <div className="p-6 flex flex-col h-[280px]">
         {/* Header */}
         <div className="flex justify-between items-start mb-4">
-          <span className={`px-3 py-1 text-sm font-semibold rounded-full ${stateColors[Number(state)]}`}>
-            {ProposalState[Number(state)]}
+          <span
+            className={`px-3 py-1 text-sm font-semibold rounded-full ${
+              stateColors[
+                typeof state === "string" ? ProposalState[state as keyof typeof ProposalState] : Number(state)
+              ]
+            }`}
+          >
+            {typeof state === "string" ? state : ProposalState[Number(state)]}
           </span>
           <span className="text-sm text-gray-500">
             Block: {startBlock} - {endBlock}
@@ -47,8 +52,11 @@ export const ProposalCard = ({ id, title, proposer, startBlock, endBlock, state,
 
         {/* Content */}
         <div className="flex-1">
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">{title}</h3>
-          <p className="text-sm text-gray-600 mb-4 line-clamp-2">{description}</p>
+          <Popover content={title} trigger="hover" placement="topLeft" overlayStyle={{ maxWidth: "50%" }}>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2 whitespace-nowrap overflow-hidden text-ellipsis cursor-pointer">
+              {title}
+            </h3>
+          </Popover>
           <div className="flex items-center gap-2">
             <span className="bg-purple-50 text-purple-700 px-2 py-1 rounded text-sm">
               By: {proposer.slice(0, 6)}...{proposer.slice(-4)}

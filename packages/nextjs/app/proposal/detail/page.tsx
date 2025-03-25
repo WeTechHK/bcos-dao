@@ -1,24 +1,29 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { message } from "antd";
 import type { NextPage } from "next";
 import { useAccount } from "wagmi";
+import { CheckCircleIcon } from "@heroicons/react/24/outline";
+import { ProposalOverview } from "~~/components/proposal/ProposalOverview";
 import {
   useApproveProposal,
   useCancelProposal,
   useCastVote,
   useEmergencyShutdownProposal,
+  useExecuteProposal,
   useHasVoted,
   useIsMaintainer,
   useProposalAllInfo,
   useProposalVoterInfo,
   useProposalVoters,
   useQueueProposal,
+  useQuorumNumerator,
+  useVoteSuccessThreshold,
 } from "~~/hooks/blockchain/BCOSGovernor";
 import { useTotalSupply } from "~~/hooks/blockchain/ERC20VotePower";
-import { ProposalState, VoteType, stateColors } from "~~/services/store/store";
+import { ProposalState, VoteType } from "~~/services/store/store";
 
 const ProposalDetail: NextPage = () => {
   const searchParams = useSearchParams();
@@ -27,6 +32,7 @@ const ProposalDetail: NextPage = () => {
   const { info: proposal, refetch } = useProposalAllInfo(Number(id));
   const isMaintainer = useIsMaintainer(address || "");
   const hasVoted = useHasVoted(Number(id), address || "");
+  console.log(hasVoted, "hasVoted");
   const totalSupply = useTotalSupply() || 0;
   const [voteReason, setVoteReason] = useState("");
   const [isVoting, setIsVoting] = useState(false);
@@ -34,26 +40,35 @@ const ProposalDetail: NextPage = () => {
   const approveProposal = useApproveProposal(Number(id));
   const cancelProposal = useCancelProposal(Number(id));
   const emergencyShutdown = useEmergencyShutdownProposal(Number(id));
-  // Only fetch voters if the proposal state is not Pending, Canceled, or Defeated
-  // const shouldFetchVoters =
-  //   proposal &&
-  //   ![ProposalState.Pending, ProposalState.Canceled, ProposalState.Defeated].includes(Number(proposal.state));
+  const executeProposal = useExecuteProposal(Number(id));
   const voters = useProposalVoters(Number(id));
   console.log("proposal: ", proposal);
   console.log("voters: ", voters);
-  // const voters = null;
-  // Vote casting functions
   const castVoteFor = useCastVote(Number(id), VoteType.VoteFor, voteReason);
   const castVoteAgainst = useCastVote(Number(id), VoteType.Against, voteReason);
   const castVoteAbstain = useCastVote(Number(id), VoteType.Abstain, voteReason);
+  const voteSuccessThreshold = useVoteSuccessThreshold();
+  const quorumNumerator = useQuorumNumerator();
 
   if (!proposal) {
     return <div className="container mx-auto px-4 py-8">Loading...</div>;
   }
 
-  const totalVotes = proposal.forVotes + proposal.againstVotes + proposal.abstainVotes;
-  const forPercentage = totalVotes > 0 ? (proposal.forVotes / totalVotes) * 100 : 0;
-  const participationRate = totalSupply > 0 ? (totalVotes / Number(totalSupply)) * 100 : 0;
+  // Convert values to BigInt for calculations
+  const forVotesBigInt = BigInt(proposal.forVotes);
+  const againstVotesBigInt = BigInt(proposal.againstVotes);
+  const abstainVotesBigInt = BigInt(proposal.abstainVotes);
+  const totalVotesBigInt = forVotesBigInt + againstVotesBigInt + abstainVotesBigInt;
+  const totalSupplyBigInt = BigInt(totalSupply);
+
+  // Calculate percentages
+  const getPercentage = (value: bigint, total: bigint) => {
+    if (total === 0n) return 0;
+    return Number((value * 100n) / total);
+  };
+
+  // Use BigInt calculations instead
+  const forPercentage = getPercentage(forVotesBigInt, totalVotesBigInt);
 
   const handleQueue = async () => {
     try {
@@ -99,12 +114,23 @@ const ProposalDetail: NextPage = () => {
     }
   };
 
-  // Vote handling functions
+  const handleExecute = async () => {
+    try {
+      await executeProposal();
+      message.success("Proposal executed successfully");
+      refetch();
+    } catch (error) {
+      console.error("Error executing proposal:", error);
+      message.error("Failed to execute proposal");
+    }
+  };
+
   const handleVoteFor = async () => {
     try {
       setIsVoting(true);
       await castVoteFor();
       message.success("Vote cast: For");
+      console.log(99999, "vote success =================");
       refetch();
     } catch (error) {
       console.error("Error casting vote:", error);
@@ -143,6 +169,26 @@ const ProposalDetail: NextPage = () => {
   };
 
   const renderActionButtons = () => {
+    const state = Number(proposal.state);
+    const hasMetQuorum = getPercentage(totalVotesBigInt, totalSupplyBigInt) >= quorumNumerator;
+    const hasMetThreshold = getPercentage(forVotesBigInt, totalVotesBigInt) >= voteSuccessThreshold;
+
+    if (state === ProposalState.Succeeded && hasMetQuorum && hasMetThreshold) {
+      return (
+        <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
+          <h2 className="text-xl font-bold text-gray-800 mb-6">Proposal Actions</h2>
+          <div className="space-y-4">
+            <button
+              onClick={handleQueue}
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg transition duration-300"
+            >
+              Put into execution queue
+            </button>
+          </div>
+        </div>
+      );
+    }
+
     if (Number(proposal.state) === ProposalState.Pending && isMaintainer) {
       return (
         <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
@@ -165,23 +211,22 @@ const ProposalDetail: NextPage = () => {
       );
     }
 
-    if (Number(proposal.state) === ProposalState.Succeeded && isMaintainer) {
+    if (Number(proposal.state) === ProposalState.Queued && isMaintainer) {
       return (
         <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
           <h2 className="text-xl font-bold text-gray-800 mb-6">Proposal Actions</h2>
           <div className="space-y-4">
-            {forPercentage >= 50 && (
-              <button
-                onClick={handleQueue}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg transition duration-300"
-              >
-                Put into execution queue
-              </button>
-            )}
+            <button
+              onClick={handleExecute}
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg transition duration-300"
+            >
+              Execute Proposal
+            </button>
           </div>
         </div>
       );
     }
+
     if (Number(proposal.state) === ProposalState.Active && isMaintainer) {
       return (
         <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
@@ -201,7 +246,6 @@ const ProposalDetail: NextPage = () => {
     return null;
   };
 
-  // Render voting buttons for active proposals
   const renderVotingButtons = () => {
     if (Number(proposal.state) !== ProposalState.Active || !address || hasVoted) {
       return null;
@@ -252,7 +296,7 @@ const ProposalDetail: NextPage = () => {
   };
 
   const VoterRow = ({ voter, proposalId }: { voter: string; proposalId: number }) => {
-    const { weight, support, blockNumber } = useProposalVoterInfo(proposalId, voter);
+    const { weight, blockNumber } = useProposalVoterInfo(proposalId, voter);
 
     return (
       <tr key={voter}>
@@ -290,85 +334,77 @@ const ProposalDetail: NextPage = () => {
   return (
     <main className="container mx-auto px-4 py-8">
       <div className="flex gap-8">
-        {/*Left Column*/}
         <div className="w-2/3">
-          {/*Proposal Overview*/}
-          <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
-            <div className="flex justify-between items-center mb-4">
-              <h1 className="text-2xl font-bold text-gray-800">{proposal.title}</h1>
-              <span className={`px-3 py-1 text-sm font-semibold rounded-full ${stateColors[Number(proposal.state)]}`}>
-                {ProposalState[Number(proposal.state)]}
-              </span>
-            </div>
-            <div className="grid grid-cols-2 gap-4 mb-6">
-              <div>
-                <p className="text-sm text-gray-500">Proposer</p>
-                <p className="text-md font-medium">{shortenAddress(proposal.proposer)}</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-500">Proposer ID</p>
-                <p className="text-md font-medium">{proposal.id}</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-500">Block Range</p>
-                <p className="text-md font-medium">
-                  {proposal.startBlock} ~ {proposal.endBlock}
-                </p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-500">Transaction</p>
-                <a href="#" className="text-blue-600 hover:text-blue-800">
-                  View on Explorer
-                </a>
-              </div>
-            </div>
-
-            {/*Proposal Description*/}
-            <div className="bg-gray-50 rounded-lg p-4 mb-6">
-              <h3 className="text-lg font-semibold mb-2">Description</h3>
-              <div className="prose whitespace-pre-line break-all line-clamp-3">{proposal.description}</div>
-            </div>
-          </div>
+          <ProposalOverview proposal={proposal} isPreview={false} />
 
           {/* Voting Overview */}
-          <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
-            <h2 className="text-xl font-bold text-gray-800 mb-6">Voting Overview</h2>
+          <div className="bg-white rounded-xl shadow-lg p-6 mb-8 mt-8">
+            <h2 className="text-xl font-bold text-gray-800 mb-6">Votes</h2>
 
-            {/* Progress Bars */}
-            <div className="space-y-6">
+            {proposal.state === ProposalState.Succeeded && (
+              <div className="mb-6 p-4 bg-green-50 rounded-lg flex items-center gap-2 text-green-600">
+                <CheckCircleIcon className="h-5 w-5" />
+                <span>This agenda has been passed. We are preparing to execute the contents.</span>
+              </div>
+            )}
+
+            <div className="space-y-8">
+              {/* Participated Voting Power */}
               <div>
                 <div className="flex justify-between mb-2">
-                  <span className="text-sm font-medium text-gray-600">Vote Weight Approval</span>
-                  <span className="text-sm font-medium text-gray-900">{forPercentage.toFixed(1)}% / 51%</span>
+                  <span className="text-sm font-medium text-gray-600">Participated Voting Power</span>
+                  <span className="text-sm font-medium text-gray-900">Minimum ({quorumNumerator}%)</span>
                 </div>
-                <div className="w-full bg-gray-200 rounded-full h-2.5">
-                  <div className="bg-green-600 h-2.5 rounded-full" style={{ width: `${forPercentage}%` }}></div>
+                <div className="relative h-4 bg-gray-100 rounded-full overflow-hidden">
+                  <div
+                    className="absolute h-full bg-blue-400"
+                    style={{ width: `${getPercentage(forVotesBigInt, totalSupplyBigInt)}%` }}
+                  />
+                  <div
+                    className="absolute h-full bg-gray-400"
+                    style={{
+                      left: `${getPercentage(forVotesBigInt, totalSupplyBigInt)}%`,
+                      width: `${getPercentage(abstainVotesBigInt, totalSupplyBigInt)}%`,
+                    }}
+                  />
+                  <div className="absolute h-full w-px bg-black" style={{ left: `${quorumNumerator}%` }} />
+                </div>
+                <div className="grid grid-cols-3 gap-4 mt-4">
+                  <div className="text-center">
+                    <div className="text-lg font-semibold text-blue-600">
+                      {proposal.forVotes} ({getPercentage(forVotesBigInt, totalVotesBigInt).toFixed(2)}%)
+                    </div>
+                    <div className="text-sm text-gray-500">Yes</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-lg font-semibold text-red-600">
+                      {proposal.againstVotes} ({getPercentage(againstVotesBigInt, totalVotesBigInt).toFixed(2)}%)
+                    </div>
+                    <div className="text-sm text-gray-500">No</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-lg font-semibold text-gray-600">
+                      {proposal.abstainVotes} ({getPercentage(abstainVotesBigInt, totalVotesBigInt).toFixed(2)}%)
+                    </div>
+                    <div className="text-sm text-gray-500">Abstain</div>
+                  </div>
+                </div>
+                <div className="mt-4 text-sm text-gray-500">
+                  Participated / Total Voting Power (Voting Rate): {totalVotesBigInt.toString()} /{" "}
+                  {totalSupplyBigInt.toString()} ({getPercentage(totalVotesBigInt, totalSupplyBigInt).toFixed(2)}%)
                 </div>
               </div>
+
+              {/* GC Participation */}
               <div>
                 <div className="flex justify-between mb-2">
-                  <span className="text-sm font-medium text-gray-600">Participation Rate</span>
-                  <span className="text-sm font-medium text-gray-900">{participationRate}% / 30%</span>
+                  <span className="text-sm font-medium text-gray-600">GC Participation</span>
+                  <span className="text-sm font-medium text-gray-900">Minimum ({voteSuccessThreshold}%)</span>
                 </div>
-                <div className="w-full bg-gray-200 rounded-full h-2.5">
-                  <div className="bg-blue-600 h-2.5 rounded-full" style={{ width: `${participationRate}%` }}></div>
+                <div className="relative h-4 bg-gray-100 rounded-full overflow-hidden">
+                  <div className="absolute h-full bg-green-400" style={{ width: `${forPercentage}%` }} />
+                  <div className="absolute h-full w-px bg-black" style={{ left: `${voteSuccessThreshold}%` }} />
                 </div>
-              </div>
-            </div>
-
-            {/* Vote Statistics */}
-            <div className="grid grid-cols-3 gap-4 mt-6">
-              <div className="bg-green-50 rounded-lg p-4">
-                <p className="text-sm text-gray-600">For</p>
-                <p className="text-xl font-bold text-green-700">{proposal.forVotes} votes</p>
-              </div>
-              <div className="bg-red-50 rounded-lg p-4">
-                <p className="text-sm text-gray-600">Against</p>
-                <p className="text-xl font-bold text-red-700">{proposal.againstVotes} votes</p>
-              </div>
-              <div className="bg-gray-50 rounded-lg p-4">
-                <p className="text-sm text-gray-600">Abstain</p>
-                <p className="text-xl font-bold text-gray-700">{proposal.abstainVotes} votes</p>
               </div>
             </div>
           </div>
@@ -394,15 +430,11 @@ const ProposalDetail: NextPage = () => {
           )}
         </div>
 
-        {/* Right Column */}
         <div className="w-1/3">
-          {/* Voting Buttons */}
           {renderVotingButtons()}
 
-          {/* Action Buttons */}
           {renderActionButtons()}
 
-          {/* Contract Information */}
           <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
             <h2 className="text-xl font-bold text-gray-800 mb-6">Contract Information</h2>
             <div className="space-y-4">
@@ -421,7 +453,6 @@ const ProposalDetail: NextPage = () => {
             </div>
           </div>
 
-          {/* Governance Token */}
           <div className="bg-white rounded-xl shadow-lg p-6">
             <h2 className="text-xl font-bold text-gray-800 mb-6">Governance Token</h2>
             <div className="space-y-4">

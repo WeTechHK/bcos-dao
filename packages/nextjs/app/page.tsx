@@ -2,13 +2,13 @@
 
 import React from "react";
 import Link from "next/link";
-import { Button } from "antd";
 import type { NextPage } from "next";
 import { useAccount } from "wagmi";
 // 假设使用wagmi获取当前连接的账户
 import { ProposalCard } from "~~/components/ProposalCard";
-import { useIsMaintainer } from "~~/hooks/blockchain/BCOSGovernor";
+import { useIsMaintainer, useProposalThreshold } from "~~/hooks/blockchain/BCOSGovernor";
 import { useLatestProposalId, useProposalList } from "~~/hooks/blockchain/BCOSGovernor";
+import { useVotePower } from "~~/hooks/blockchain/ERC20VotePower";
 
 const Home: NextPage = () => {
   const { address } = useAccount();
@@ -16,7 +16,9 @@ const Home: NextPage = () => {
   console.log("isMaintainer: ", isMaintainer);
   const latestProposal = useLatestProposalId();
   console.log("latestProposal: ", latestProposal);
-
+  const votingPower = useVotePower(address || "");
+  const proposalThreshold = useProposalThreshold();
+  console.log("votingPower: ", votingPower);
   const { data: proposalList, loadMore, hasMoreProposals, loading } = useProposalList(0, 6, latestProposal);
   console.log("proposalList: ", proposalList);
   return (
@@ -52,12 +54,14 @@ const Home: NextPage = () => {
         <div>
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-2xl font-bold text-gray-800">Proposals</h2>
-            <Link
-              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition duration-300"
-              href="/proposal/creation"
-            >
-              Create Proposal
-            </Link>
+            {Number(votingPower) >= proposalThreshold && (
+              <Link
+                className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition duration-300"
+                href="/proposal/creation"
+              >
+                Create Proposal
+              </Link>
+            )}
           </div>
 
           {loading ? (
