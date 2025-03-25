@@ -5,3 +5,8 @@ export const replacer = (_key: string, value: unknown) => (typeof value === "big
 export const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
 
 export const isZeroAddress = (address: string) => address === ZERO_ADDRESS;
+
+export const shortenAddress = (address: string) => {
+  if (!address) return "";
+  return `${address.slice(0, 6)}...${address.slice(-4)}`;
+};

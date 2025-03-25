@@ -274,7 +274,8 @@ function useProposalThreshold(): number {
   });
 
   if (proposalThreshold === undefined) {
-    throw new Error("Invalid proposal threshold data");
+    return 0;
+    // throw new Error("Invalid proposal threshold data");
   }
   console.log("useProposalThreshold useScaffoldReadContract: ", proposalThreshold);
   return Number(proposalThreshold);
@@ -371,7 +372,8 @@ function useVoteSuccessThreshold() {
   });
 
   if (voteSuccessThreshold === undefined) {
-    throw new Error("Invalid vote success threshold data");
+    return 0;
+    // throw new Error("Invalid vote success threshold data");
   }
   console.log("useVoteSuccessThreshold useScaffoldReadContract: ", voteSuccessThreshold);
   return Number(voteSuccessThreshold);
@@ -385,7 +387,8 @@ function useQuorumNumerator() {
   });
 
   if (quorumNumerator === undefined) {
-    throw new Error("Invalid quorum numerators data");
+    return 0;
+    // throw new Error("Invalid quorum numerators data");
   }
   console.log("useQuorumNumerators useScaffoldReadContract: ", quorumNumerator);
   return Number(quorumNumerator);

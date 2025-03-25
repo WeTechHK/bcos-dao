@@ -162,7 +162,7 @@ export const Header = () => {
       {/* First Modal: Delegate Options */}
       <Modal title="Delegate" open={showDelegateOptions} footer={null} onCancel={() => setShowDelegateOptions(false)}>
         <div className="py-4">
-          {currentDelegate && (
+          {currentDelegate && currentDelegate !== "0x0000000000000000000000000000000000000000" && (
             <div className="mb-4 p-3 bg-gray-50 rounded-lg">
               <p className="text-sm text-gray-600 mb-1">Current Delegate</p>
               <p className="font-medium">{currentDelegate}</p>
@@ -177,11 +177,10 @@ export const Header = () => {
             </button>
             <button
               onClick={handleDelegateToOther}
-              className="w-full py-2 text-center text-lg border border-black rounded-xl transition-colors bg-gray-200 text-gray-800 hover:bg-gray-300"
+              className="w-full py-2 text-center text-lg rounded-xl transition-colors bg-gray-200 text-gray-800 hover:bg-gray-300"
             >
               Someone else
             </button>
-            <div className="px-4 py-2 text-sm text-gray-500">Not eligible for free delegation</div>
           </div>
         </div>
       </Modal>
