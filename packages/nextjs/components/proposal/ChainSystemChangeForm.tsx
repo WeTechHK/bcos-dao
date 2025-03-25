@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import { Abi, AbiFunction } from "abitype";
-import { Flex, Form, Input, Select, Space, Switch } from "antd";
+import { Form, Input, Select, Space, Switch } from "antd";
 import { ABIFunctionForm } from "~~/components/proposal/ABIFunctionForm";
-import * as CommitteeManagerABI from "~~/contracts/abi/CommitteeManager.json";
+import CommitteeManagerABI from "~~/contracts/abi/CommitteeManager.json";
 
 const committeeSettings = [
   {
@@ -50,7 +50,6 @@ const contractNameSelector = [
 ];
 
 export const ChainSystemChangeForm = ({
-  field,
   index,
   onChange,
 }: {

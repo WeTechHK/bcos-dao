@@ -72,7 +72,13 @@ const proposalPresentations: ProposalPresentation[] = [
     key: "3",
     icon: <PayCircleFilled style={{ fontSize: "x-large" }} />,
     name: "Transfer Token",
-    form: <TransferTokenForm />,
+    form: (
+      <TransferTokenForm
+        onChange={(e: any) => {
+          console.log(e);
+        }}
+      />
+    ),
   },
   {
     key: "4",
