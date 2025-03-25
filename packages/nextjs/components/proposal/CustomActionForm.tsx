@@ -3,14 +3,13 @@
 import React, { ReactElement, useState } from "react";
 import { InboxOutlined, InfoCircleFilled } from "@ant-design/icons";
 import { Abi, AbiFunction } from "abitype";
-import { Card, Form, Input, Select, Switch, Upload, UploadProps, message } from "antd";
+import { Form, Input, Select, Switch, Upload, UploadProps, message } from "antd";
 import { erc20Abi, erc721Abi, erc4626Abi } from "viem";
 import { ABIFunctionForm } from "~~/components/proposal/ABIFunctionForm";
-import * as ERC1155 from "~~/contracts/abi/ERC1155.json";
-import * as GovernorABI from "~~/contracts/abi/GovernorUpgradeable.json";
-import * as IVotes from "~~/contracts/abi/IVotes.json";
-import * as TimelockABI from "~~/contracts/abi/TimelockControllerUpgradeable.json";
-import { GenericContract, InheritedFunctions } from "~~/utils/scaffold-eth/contract";
+import ERC1155 from "~~/contracts/abi/ERC1155.json";
+import GovernorABI from "~~/contracts/abi/GovernorUpgradeable.json";
+import IVotes from "~~/contracts/abi/IVotes.json";
+import TimelockABI from "~~/contracts/abi/TimelockControllerUpgradeable.json";
 
 export const actionSelectOptions = [
   {

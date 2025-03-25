@@ -311,7 +311,7 @@ contract BCOSGovernor is
         return super._executor();
     }
 
-    function propose(
+    function proposeWithTitle(
         string memory title,
         address[] memory targets,
         uint256[] memory values,

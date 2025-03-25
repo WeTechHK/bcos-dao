@@ -202,6 +202,16 @@ function useProposalVoters(proposalId: number): { voters: string[] } {
   return { voters: [...voters] };
 }
 
+function useProposeProposal() {
+  const { writeContractAsync: proposeProposalAsync } = useScaffoldWriteContract({ contractName: "BCOSGovernor" });
+  return async (title: string, targets: string[], values: bigint[], calldatas: string[], description: string) => {
+    await proposeProposalAsync({
+      functionName: "proposeWithTitle",
+      args: [title, targets, values, calldatas as `0x{string}`[], description],
+    });
+  };
+}
+
 function useProposalVoterInfo(
   proposalId: number,
   voter: string,
@@ -354,6 +364,33 @@ function useIsMaintainer(account: string): boolean {
   return Boolean(isMaintainer);
 }
 
+function useVoteSuccessThreshold() {
+  const { data: voteSuccessThreshold } = useScaffoldReadContract({
+    contractName: "BCOSGovernor",
+    functionName: "voteSuccessThreshold",
+  });
+
+  if (voteSuccessThreshold === undefined) {
+    throw new Error("Invalid vote success threshold data");
+  }
+  console.log("useVoteSuccessThreshold useScaffoldReadContract: ", voteSuccessThreshold);
+  return Number(voteSuccessThreshold);
+}
+
+function useQuorumNumerator() {
+  const { data: quorumNumerator } = useScaffoldReadContract({
+    contractName: "BCOSGovernor",
+    functionName: "quorumNumerator",
+    args: [] as never,
+  });
+
+  if (quorumNumerator === undefined) {
+    throw new Error("Invalid quorum numerators data");
+  }
+  console.log("useQuorumNumerators useScaffoldReadContract: ", quorumNumerator);
+  return Number(quorumNumerator);
+}
+
 export {
   useProposalAllInfo,
   useLatestProposalId,
@@ -372,6 +409,9 @@ export {
   useProposalInfoPage,
   useProposalList,
   useProposalVotes,
+  useProposeProposal,
+  useVoteSuccessThreshold,
+  useQuorumNumerator,
 };
 
 export type { ProposalAllInfo, ProposalState };

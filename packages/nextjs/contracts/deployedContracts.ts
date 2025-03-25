@@ -7,7 +7,7 @@ import { GenericContractsDeclaration } from "~~/utils/scaffold-eth/contract";
 const deployedContracts = {
   20200: {
     BCOSGovernor: {
-      address: "0x00D7939Ec5fC34E9d76fDD8AB2c8f99942258196",
+      address: "0x4d8998A588aed8B4F8F154d2deB26c27820E106C",
       abi: [
         {
           anonymous: false,
@@ -2191,11 +2191,6 @@ const deployedContracts = {
         {
           inputs: [
             {
-              internalType: "string",
-              name: "title",
-              type: "string",
-            },
-            {
               internalType: "address[]",
               name: "targets",
               type: "address[]",
@@ -2230,6 +2225,11 @@ const deployedContracts = {
         {
           inputs: [
             {
+              internalType: "string",
+              name: "title",
+              type: "string",
+            },
+            {
               internalType: "address[]",
               name: "targets",
               type: "address[]",
@@ -2250,7 +2250,7 @@ const deployedContracts = {
               type: "string",
             },
           ],
-          name: "propose",
+          name: "proposeWithTitle",
           outputs: [
             {
               internalType: "uint256",
@@ -2763,7 +2763,7 @@ const deployedContracts = {
       inheritedFunctions: {},
     },
     ERC20VotePower: {
-      address: "0xFcfc86EC03738d88C36124F5F1d10d135e23E6a9",
+      address: "0x6fF2996800E5367706F99D86b3a9dA5835Ed7d06",
       abi: [
         {
           anonymous: false,
@@ -3886,7 +3886,7 @@ const deployedContracts = {
       inheritedFunctions: {},
     },
     TimelockControllerUpgradeable: {
-      address: "0x37959A254FA16d3De70806F1953C4149a302311b",
+      address: "0x47155e49A4cFeBd5746659CFF94da097Bc6489D6",
       abi: [
         {
           anonymous: false,
