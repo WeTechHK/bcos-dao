@@ -140,35 +140,29 @@ const useProposalList = (offset: number, page: number, totalNumber: number) => {
   const [currentPage] = useState(page);
   const [loading, setLoading] = useState(false);
 
-  const { data: proposalInfosData, refetch } = useScaffoldReadContract({
+  const { data: proposalInfosData } = useScaffoldReadContract({
     contractName: "BCOSGovernor",
     functionName: "getProposalInfoPage",
-    args: [BigInt(currentOffset), BigInt(currentPage)],
+    args: [BigInt(currentOffset), BigInt(currentPage)], // currentOffset 变化会触发useScaffoldReadContract 重新调用
   });
 
   useEffect(() => {
     if (proposalInfosData && totalNumber) {
-      setLoading(true);
       const handledData = proposalInfosData.map(pro => {
         return getProposalInfo(pro, Number(pro.proposalId));
       });
-      setData(prevData => [...prevData, ...handledData]);
       setLoading(false);
+      setData(prevData => [...prevData, ...handledData]);
     }
   }, [proposalInfosData, totalNumber]);
-
-  useEffect(() => {
-    setLoading(true);
-    refetch().finally(() => setLoading(false));
-  }, [currentOffset, refetch]);
 
   async function loadMore() {
     if (totalNumber > currentOffset && !loading) {
       setCurrentOffset(currentOffset + currentPage);
+      setLoading(true);
     }
   }
-
-  const hasMoreProposals = totalNumber > currentOffset;
+  const hasMoreProposals = totalNumber > data.length;
   return { data, loadMore, hasMoreProposals, loading };
 };
 
