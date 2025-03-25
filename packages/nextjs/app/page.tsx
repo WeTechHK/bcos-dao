@@ -64,20 +64,20 @@ const Home: NextPage = () => {
             )}
           </div>
 
-          {loading ? (
-            <div className="flex justify-center items-center h-40">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {proposalList.map(proposal => (
+              <ProposalCard key={proposal.id} {...proposal} />
+            ))}
+          </div>
+
+          {loading && (
+            <div className="col-span-full flex justify-center items-center py-6">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {proposalList.map(proposal => (
-                <ProposalCard key={proposal.id} {...proposal} />
-              ))}
             </div>
           )}
 
           {hasMoreProposals && !loading && (
-            <div className="text-center mt-8">
+            <div className="text-center mt-8 col-span-full">
               <button
                 onClick={loadMore}
                 className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition duration-300"
