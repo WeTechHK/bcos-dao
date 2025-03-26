@@ -9,8 +9,8 @@ import { hardhat } from "viem/chains";
 import { useAccount } from "wagmi";
 import { ArrowPathIcon, Bars3Icon, BugAntIcon } from "@heroicons/react/24/outline";
 import { FaucetButton, RainbowKitCustomConnectButton } from "~~/components/scaffold-eth";
+import { useIsMaintainer } from "~~/hooks/blockchain/BCOSGovernor";
 import { useDelegate, useDelegates, useVotePower } from "~~/hooks/blockchain/ERC20VotePower";
-// import { useDelegate } from "~~/hooks/blockchain/BCOSGovernor";
 import { useOutsideClick, useTargetNetwork } from "~~/hooks/scaffold-eth";
 
 type HeaderMenuLink = {
@@ -65,6 +65,7 @@ export const Header = () => {
   const { address } = useAccount();
   const votePowerData = useVotePower(address || "");
   const currentDelegate = useDelegates(address || ""); // 从合约获取当前delegate
+  const isMaintainer = useIsMaintainer(address || ""); // 检查用户是否是maintainer
   console.log("currentDelegate: ", currentDelegate);
   const delegate = useDelegate();
   const isLocalNetwork = targetNetwork.id === hardhat.id;
@@ -97,7 +98,7 @@ export const Header = () => {
   // 处理 voting power 显示
   const formatVotePower = (power: bigint | undefined) => {
     if (!power) return "0";
-    const powerNum = Number(power);
+    const powerNum = Number(power) / 10 ** 18;
     if (powerNum > 1000) {
       return `${(powerNum / 1000).toFixed(1)}k`;
     }
@@ -145,6 +146,9 @@ export const Header = () => {
       <div className="navbar-end flex-grow mr-4">
         <div className="flex gap-4 items-center">
           <div className="flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-lg">
+            {isMaintainer && (
+              <span className="px-2 py-0.5 text-xs font-semibold bg-blue-500 text-white rounded-md">Maintainer</span>
+            )}
             <span className="text-sm font-semibold">Voting Power: {formatVotePower(votePowerData)}</span>
             <button
               onClick={() => setShowDelegateOptions(true)}

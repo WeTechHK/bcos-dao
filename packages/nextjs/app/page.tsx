@@ -14,18 +14,22 @@ const Home: NextPage = () => {
   const { address } = useAccount();
   const isMaintainer = useIsMaintainer(address || "");
   console.log("isMaintainer: ", isMaintainer);
+  const pageSize = 9;
   const latestProposal = useLatestProposalId();
   console.log("latestProposal: ", latestProposal);
   const votingPower = useVotePower(address || "");
   const proposalThreshold = useProposalThreshold();
   console.log("votingPower: ", votingPower);
-  const { data: proposalList, loadMore, hasMoreProposals, loading } = useProposalList(0, 6, latestProposal);
+  const { data: proposalList, loadMore, hasMoreProposals, loading } = useProposalList(pageSize, latestProposal || 0);
+  if (!latestProposal) {
+    return <div className="container mx-auto px-4 py-6">loading....</div>;
+  }
   console.log("proposalList: ", proposalList);
   return (
     <>
       <div className="container mx-auto px-4 py-6">
         {/*Stats Section*/}
-        <div className="grid grid-cols-4 gap-6 mb-6">
+        {/* <div className="grid grid-cols-4 gap-6 mb-6">
           <div id="userStats" className="contents">
             <div className="bg-white rounded-xl p-6 shadow-lg">
               <h3 className="text-gray-600 text-sm">Active Proposals</h3>
@@ -48,7 +52,7 @@ const Home: NextPage = () => {
               <p className="text-green-600 text-sm mt-1">+3 this week</p>
             </div>
           </div>
-        </div>
+        </div> */}
 
         {/*Proposal Section*/}
         <div>
