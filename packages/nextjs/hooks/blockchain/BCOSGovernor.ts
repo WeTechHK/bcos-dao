@@ -134,35 +134,46 @@ const useProposalInfoPage = (offset: number, page: number) => {
     return getProposalInfo(pro, Number(pro.proposalId));
   });
 };
-const useProposalList = (offset: number, page: number, totalNumber: number) => {
+const useProposalList = (page: number, totalNumber: number) => {
   const [data, setData] = useState<ProposalAllInfo[]>([]);
-  const [currentOffset, setCurrentOffset] = useState(offset);
+  const [currentOffset, setCurrentOffset] = useState(0);
   const [currentPage] = useState(page);
   const [loading, setLoading] = useState(false);
 
   const { data: proposalInfosData } = useScaffoldReadContract({
     contractName: "BCOSGovernor",
     functionName: "getProposalInfoPage",
-    args: [BigInt(currentOffset), BigInt(currentPage)], // currentOffset 变化会触发useScaffoldReadContract 重新调用
+    args: [
+      BigInt(Math.max(0, currentOffset - currentPage)),
+      BigInt(currentOffset - Math.max(0, currentOffset - currentPage)),
+    ],
   });
-
+  useEffect(() => {
+    setCurrentOffset(totalNumber);
+  }, [totalNumber]);
   useEffect(() => {
     if (proposalInfosData && totalNumber) {
-      const handledData = proposalInfosData.map(pro => {
-        return getProposalInfo(pro, Number(pro.proposalId));
-      });
+      const handledData = proposalInfosData
+        .map(pro => {
+          return getProposalInfo(pro, Number(pro.proposalId));
+        })
+        .reverse();
+      console.log(
+        "handledData======: ",
+        handledData.map(v => v.id),
+      );
       setLoading(false);
       setData(prevData => [...prevData, ...handledData]);
     }
   }, [proposalInfosData, totalNumber]);
 
   async function loadMore() {
-    if (totalNumber > currentOffset && !loading) {
-      setCurrentOffset(currentOffset + currentPage);
+    if (currentOffset > page && !loading) {
+      setCurrentOffset(Math.max(0, currentOffset - currentPage));
       setLoading(true);
     }
   }
-  const hasMoreProposals = totalNumber > data.length;
+  const hasMoreProposals = currentOffset > page;
   return { data, loadMore, hasMoreProposals, loading };
 };
 
@@ -284,7 +295,7 @@ function useProposalVotes(proposalId: number) {
 
   if (!data) return { againstVotes: 0n, forVotes: 0n, abstainVotes: 0n };
 
-  const [against, forVotes, abstain] = data;
+  const [forVotes, against, abstain] = data;
   return { againstVotes: against, forVotes, abstainVotes: abstain };
 }
 

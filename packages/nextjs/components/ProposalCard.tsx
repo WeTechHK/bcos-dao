@@ -22,7 +22,7 @@ interface ProposalCardProps {
   title: string;
 }
 
-export const ProposalCard = ({ id, title, proposer, startBlock, endBlock, state, description }: ProposalCardProps) => {
+export const ProposalCard = ({ id, title, proposer, startBlock, endBlock, state }: ProposalCardProps) => {
   const {
     forVotes: forVotesFromContract,
     againstVotes: againstVotesFromContract,

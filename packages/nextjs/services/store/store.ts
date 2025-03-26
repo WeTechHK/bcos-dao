@@ -33,8 +33,8 @@ export const stateColors: { [key: number]: string } = {
   1: "bg-green-100 text-green-800", // Active
   2: "bg-gray-100 text-gray-800", // Canceled
   3: "bg-red-100 text-red-800", // Defeated
-  4: "bg-blue-100 text-blue-800", // Succeeded
-  5: "bg-purple-100 text-purple-700", // Queued
+  4: "bg-green-100 text-green-800", // Succeeded
+  5: "bg-yellow-100 text-yellow-700", // Queued
   6: "bg-gray-100 text-gray-800", // Expired
   7: "bg-green-100 text-green-800", // Executed
 };
