@@ -2,7 +2,7 @@ import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { DeployFunction } from "hardhat-deploy/types";
 
 /**
- * Deploys a contract named "TimelockControllerUpgradeable" using the deployer account and
+ * Deploys a contract named "CustomTimelockControllerUpgradeable.sol" using the deployer account and
  * constructor arguments set to the deployer address
  *
  * @param hre HardhatRuntimeEnvironment object.
@@ -20,21 +20,20 @@ const deployTimelockControllerUpgradeable: DeployFunction = async function (hre:
   const { deployer } = await hre.getNamedAccounts();
   const { deploy } = hre.deployments;
 
-  const tcProxy = await deploy("TimelockControllerUpgradeable", {
+  const tcProxy = await deploy("CustomTimelockControllerUpgradeable", {
     from: deployer,
     log: true,
     autoMine: true,
-    args: [],
     proxy: {
       owner: deployer,
       proxyContract: "UUPS",
     },
   });
-  console.log("TimelockControllerUpgradeable", tcProxy.address);
+  console.log("CustomTimelockControllerUpgradeable", tcProxy.address);
 };
 
 export default deployTimelockControllerUpgradeable;
 
 // Tags are useful if you have multiple deploy files and only want to run one of them.
 // e.g. yarn deploy --tags Vote
-deployTimelockControllerUpgradeable.tags = ["TimelockControllerUpgradeable"];
+deployTimelockControllerUpgradeable.tags = ["CustomTimelockControllerUpgradeable"];

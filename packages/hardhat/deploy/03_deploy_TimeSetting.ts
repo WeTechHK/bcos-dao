@@ -2,12 +2,12 @@ import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { DeployFunction } from "hardhat-deploy/types";
 
 /**
- * Deploys a contract named "ERC20VotePower" using the deployer account and
+ * Deploys a contract named "TimeSetting.sol" using the deployer account and
  * constructor arguments set to the deployer address
  *
  * @param hre HardhatRuntimeEnvironment object.
  */
-const deployERC20VotePower: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
+const deployTimeSetting: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   // On localhost, the deployer account is the one that comes with Hardhat, which is already funded.
   //
   // When deploying to live networks (e.g `yarn deploy --network sepolia`), the deployer account
@@ -19,21 +19,17 @@ const deployERC20VotePower: DeployFunction = async function (hre: HardhatRuntime
 
   const { deployer } = await hre.getNamedAccounts();
   const { deploy } = hre.deployments;
-
-  const erc20VotePower = await deploy("ERC20VotePower", {
+  const time = await deploy("TimeSetting", {
     from: deployer,
     log: true,
     autoMine: true,
-    proxy: {
-      owner: deployer,
-      proxyContract: "UUPS",
-    },
+    args: [],
   });
-  console.log("ERC20VotePower", erc20VotePower.address);
+  console.log("TimeSetting", time);
 };
 
-export default deployERC20VotePower;
+export default deployTimeSetting;
 
 // Tags are useful if you have multiple deploy files and only want to run one of them.
 // e.g. yarn deploy --tags Vote
-deployERC20VotePower.tags = ["ERC20VotePower"];
+deployTimeSetting.tags = ["TimeSetting"];

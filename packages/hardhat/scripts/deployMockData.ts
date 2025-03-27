@@ -12,7 +12,7 @@ import {
 async function main() {
   const { deployer } = await getNamedAccounts();
   const [owner] = await ethers.getSigners();
-  const tc = await deployments.get("TimelockControllerUpgradeable");
+  const tc = await deployments.get("CustomTimelockControllerUpgradeable");
   const erc20 = await deployments.get("ERC20VotePower");
   const governor = await deployments.get("BCOSGovernor");
   console.log("deployer: ", deployer);

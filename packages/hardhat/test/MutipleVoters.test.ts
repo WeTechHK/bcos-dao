@@ -13,7 +13,7 @@ describe("Multiple Voters Test", function () {
     const [owner, newMaintainer, ...restVoters] = await ethers.getSigners();
     const BCOSGovernor = await ethers.getContractFactory("BCOSGovernor");
     const ERC20VotePower = await ethers.getContractFactory("ERC20VotePower");
-    const TimelockController = await ethers.getContractFactory("TimelockControllerUpgradeable");
+    const TimelockController = await ethers.getContractFactory("CustomTimelockControllerUpgradeable");
     const ERC1967Proxy = await ethers.getContractFactory("ERC1967Proxy");
     const evp = await ERC20VotePower.deploy(/*"ERC20Vote", "EVP"*/);
     const tc = await TimelockController.deploy(/*100n, [owner], [owner], owner*/);
