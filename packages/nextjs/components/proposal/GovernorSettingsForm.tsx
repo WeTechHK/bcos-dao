@@ -100,10 +100,18 @@ const GovernorSettingsForm = ({ field, index, onChange }: { field?: any; index?:
             onChange(govForm.getFieldsValue());
           }}
         >
-          <FormItem name="address" label={<div className="text-lg font-bold mb-1">Target Contract Address</div>}>
+          <FormItem
+            name="address"
+            label={<div className="text-lg font-bold mb-1">Target Contract Address</div>}
+            rules={[{ required: true, message: "Please input the target contract address" }]}
+          >
             <Input className="h-12" disabled></Input>
           </FormItem>
-          <FormItem name="method" label={<div className="text-lg font-bold mb-1">Contract Method</div>}>
+          <FormItem
+            name="method"
+            label={<div className="text-lg font-bold mb-1">Contract Method</div>}
+            rules={[{ required: true, message: "Please input the method address" }]}
+          >
             <Select options={governorSettings} onSelect={handleChange} className="h-12"></Select>
           </FormItem>
 

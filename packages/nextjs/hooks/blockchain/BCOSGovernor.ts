@@ -26,8 +26,8 @@ enum VoteType {
 interface ProposalAllInfo {
   id: number;
   proposer: string;
-  startBlock: number;
-  endBlock: number;
+  startTime: number;
+  endTime: number;
   eta: number;
   state: ProposalState | string;
   targets: string[];
@@ -54,8 +54,8 @@ function getProposalInfo(data: any, proposalId: number) {
     proposalState,
     proposalDetail,
     proposalVote,
-    startBlock,
-    endBlock,
+    startTime,
+    endTime,
     eta,
     proposalTitle,
     proposalDesc,
@@ -64,8 +64,8 @@ function getProposalInfo(data: any, proposalId: number) {
     eta: Number(eta),
     id: proposalId,
     proposer: proposer,
-    startBlock: Number(startBlock),
-    endBlock: Number(endBlock),
+    startTime: Number(startTime),
+    endTime: Number(endTime),
     state: proposalState,
     targets: [...proposalDetail.targets],
     values: [...proposalDetail.values],

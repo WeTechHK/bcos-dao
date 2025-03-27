@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Popover } from "antd";
 import { useProposalVotes } from "~~/hooks/blockchain/BCOSGovernor";
@@ -8,8 +9,8 @@ import { ProposalState, stateColors } from "~~/services/store/store";
 interface ProposalCardProps {
   id: number;
   proposer: string;
-  startBlock: number;
-  endBlock: number;
+  startTime: number;
+  endTime: number;
   eta: number;
   state: string | ProposalState;
   targets: string[];
@@ -22,7 +23,7 @@ interface ProposalCardProps {
   title: string;
 }
 
-export const ProposalCard = ({ id, title, proposer, startBlock, endBlock, state }: ProposalCardProps) => {
+export const ProposalCard = ({ id, title, proposer, startTime, endTime, state }: ProposalCardProps) => {
   const {
     forVotes: forVotesFromContract,
     againstVotes: againstVotesFromContract,
@@ -30,6 +31,32 @@ export const ProposalCard = ({ id, title, proposer, startBlock, endBlock, state 
   } = useProposalVotes(id);
   const totalVotes = Number(forVotesFromContract) + Number(againstVotesFromContract) + Number(abstainVotesFromContract);
   const progress = totalVotes > 0 ? (Number(forVotesFromContract) / totalVotes) * 100 : 0;
+
+  const [timeRange, setTimeRange] = useState<string>();
+
+  useEffect(() => {
+    if (startTime && endTime) {
+      const startTimeString = new Date(startTime).toLocaleString("zh-CN", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: undefined,
+        hour12: false,
+      });
+      const endTimeString = new Date(endTime).toLocaleString("zh-CN", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: undefined,
+        hour12: false,
+      });
+      setTimeRange(`${startTimeString} - ${endTimeString}`);
+    }
+  }, [startTime, endTime]);
 
   return (
     <div className="proposal-card bg-white rounded-xl shadow-lg overflow-hidden hover:-translate-y-1.5 duration-300">
@@ -45,9 +72,7 @@ export const ProposalCard = ({ id, title, proposer, startBlock, endBlock, state 
           >
             {typeof state === "string" ? state : ProposalState[Number(state)]}
           </span>
-          <span className="text-sm text-gray-500">
-            Block: {startBlock} - {endBlock}
-          </span>
+          <span className="text-sm text-gray-500">{timeRange ? timeRange : ""}</span>
         </div>
 
         {/* Content */}

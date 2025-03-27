@@ -21,7 +21,7 @@ const Home: NextPage = () => {
   const proposalThreshold = useProposalThreshold();
   console.log("votingPower: ", votingPower);
   const { data: proposalList, loadMore, hasMoreProposals, loading } = useProposalList(pageSize, latestProposal || 0);
-  if (!latestProposal) {
+  if (latestProposal === undefined || votingPower === undefined || proposalThreshold === undefined) {
     return <div className="container mx-auto px-4 py-6">loading....</div>;
   }
   console.log("proposalList: ", proposalList);
@@ -67,12 +67,13 @@ const Home: NextPage = () => {
               </Link>
             )}
           </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {proposalList.map(proposal => (
-              <ProposalCard key={proposal.id} {...proposal} />
-            ))}
-          </div>
+          {proposalList.length != 0 && (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {proposalList.map(proposal => (
+                <ProposalCard key={proposal.id} {...proposal} />
+              ))}
+            </div>
+          )}
 
           {loading && (
             <div className="col-span-full flex justify-center items-center py-6">
