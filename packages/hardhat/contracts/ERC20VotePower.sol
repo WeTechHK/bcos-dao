@@ -7,6 +7,7 @@ import { PausableUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/P
 import { NoncesUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/NoncesUpgradeable.sol";
 import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "./TimeSetting.sol";
 
 /**
  * @title ERC20VotePower
@@ -21,16 +22,23 @@ contract ERC20VotePower is
     PausableUpgradeable,
     OwnableUpgradeable
 {
-    function initialize(string memory name, string memory symbol) public initializer {
-        __ERC20VotePower_init(name, symbol);
+    TimeSetting private timer;
+
+    function initialize(string memory name, string memory symbol, TimeSetting _timer) public initializer {
+        __ERC20VotePower_init(name, symbol, _timer);
     }
 
-    function __ERC20VotePower_init(string memory name, string memory symbol) internal initializer {
+    function __ERC20VotePower_init(
+        string memory name,
+        string memory symbol,
+        TimeSetting _timer
+    ) internal onlyInitializing {
         __ERC20Permit_init(name);
         __ERC20Votes_init();
         __ERC20_init(name, symbol);
         __Ownable_init(msg.sender);
         __Pausable_init();
+        timer = _timer;
     }
 
     function _update(
@@ -61,5 +69,17 @@ contract ERC20VotePower is
 
     function unpause() public onlyOwner {
         _unpause();
+    }
+
+    function clock() public view override returns (uint48) {
+        return timer.clock();
+    }
+
+    function CLOCK_MODE() public view override returns (string memory) {
+        return timer.CLOCK_MODE();
+    }
+
+    function resetUint(uint256 _unit) public onlyOwner {
+        timer.resetUnit(_unit);
     }
 }

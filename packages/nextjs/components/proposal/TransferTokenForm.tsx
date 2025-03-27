@@ -18,7 +18,7 @@ const TransferTokenForm = ({ index, onChange }: { parentForm?: any; field?: any;
     contractName: "ERC20VotePower",
   });
   const { data: Timelock, isLoading: TimelockLoading } = useDeployedContractInfo({
-    contractName: "TimelockControllerUpgradeable",
+    contractName: "CustomTimelockControllerUpgradeable",
   });
   const timelockBalance = useBalance({ address: Timelock?.address });
   const balanceOfERC20 = useReadContract({

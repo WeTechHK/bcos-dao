@@ -1,5 +1,6 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { DeployFunction } from "hardhat-deploy/types";
+import { network } from "hardhat";
 
 /**
  * Deploys a contract named "BCOSGovernor" using the deployer account and
@@ -20,7 +21,16 @@ const deployBCOSGovernor: DeployFunction = async function (hre: HardhatRuntimeEn
   const { deployer } = await hre.getNamedAccounts();
   const { deploy, get } = hre.deployments;
   const erc20VotePower = await get("ERC20VotePower");
-  const tcProxy = await get("TimelockControllerUpgradeable");
+  const tcProxy = await get("CustomTimelockControllerUpgradeable");
+  const timer = await get("TimeSetting");
+  const quorumNumerator = 30n;
+  const votingDelay = 0n; // no delay
+  const votingPeriod = 7n * 24n * 60n * 60n; // 7 days
+  const proposalThreshold: bigint = 10000000000000000n; // 10e16
+  const minDelay = 24n * 60n * 60n; // 1 day
+  const initTokenPool: bigint = 1000000000000000000n; // 10e18
+  const unit: bigint = network.config.chainId === 20200 ? 1000n : 1n;
+
   const governor = await deploy("BCOSGovernor", {
     from: deployer,
     log: true,
@@ -31,7 +41,18 @@ const deployBCOSGovernor: DeployFunction = async function (hre: HardhatRuntimeEn
       proxyContract: "UUPS",
       execute: {
         methodName: "initialize",
-        args: [erc20VotePower.address, tcProxy.address],
+        args: [
+          erc20VotePower.address,
+          tcProxy.address,
+          quorumNumerator,
+          votingDelay,
+          votingPeriod,
+          proposalThreshold,
+          minDelay,
+          initTokenPool,
+          timer.address,
+          unit,
+        ],
       },
     },
   });
@@ -43,4 +64,4 @@ export default deployBCOSGovernor;
 // Tags are useful if you have multiple deploy files and only want to run one of them.
 // e.g. yarn deploy --tags Vote
 deployBCOSGovernor.tags = ["BCOSGovernor"];
-deployBCOSGovernor.dependencies = ["TimelockControllerUpgradeable", "ERC20VotePower"];
+deployBCOSGovernor.dependencies = ["CustomTimelockControllerUpgradeable", "ERC20VotePower", "TimeSetting"];
