@@ -4,15 +4,16 @@ pragma solidity ^0.8.26;
 
 import { GovernorUpgradeable } from "@openzeppelin/contracts-upgradeable/governance/GovernorUpgradeable.sol";
 import { GovernorVotesUpgradeable } from "@openzeppelin/contracts-upgradeable/governance/extensions/GovernorVotesUpgradeable.sol";
-import { GovernorTimelockControlUpgradeable } from "@openzeppelin/contracts-upgradeable/governance/extensions/GovernorTimelockControlUpgradeable.sol";
+import { GovernorTimelockControlUpgradeable } from "./GovernorTimelockControlUpgradeable.sol";
 import { GovernorStorageUpgradeable } from "@openzeppelin/contracts-upgradeable/governance/extensions/GovernorStorageUpgradeable.sol";
-import { TimelockControllerUpgradeable } from "@openzeppelin/contracts-upgradeable/governance/TimelockControllerUpgradeable.sol";
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import { AccessControlUpgradeable } from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "./DAOSettings.sol";
 import "./ERC20VotePower.sol";
+
+import "./CustomTimelockControllerUpgradeable.sol";
 
 using EnumerableSet for EnumerableSet.AddressSet;
 
@@ -64,7 +65,7 @@ contract BCOSGovernor is
 
     function initialize(
         ERC20VotePower _token,
-        TimelockControllerUpgradeable _timelock,
+        CustomTimelockControllerUpgradeable _timelock,
         uint256 _quorumNumeratorValue,
         uint48 _initialVotingDelay,
         uint32 _initialVotingPeriod,
@@ -81,17 +82,7 @@ contract BCOSGovernor is
         __GovernorTimelockControl_init(_timelock);
         __DAOSettings_init(_quorumNumeratorValue, _initialVotingDelay, _initialVotingPeriod, _initialProposalThreshold);
 
-        (bool success, ) = address(_timelock).call(
-            abi.encodeWithSignature(
-                "initialize(uint256,address,address,address,address)",
-                _minDelay,
-                address(this),
-                address(this),
-                _msgSender(),
-                _timer
-            )
-        );
-        require(success, "BCOSGovernor: TimelockControllerUpgradeable initialize failed");
+        _timelock.initialize(_minDelay, address(this), address(this), _msgSender(), _timer);
         _grantRole(MAINTAINER_ROLE, _msgSender());
         _token.mint(_msgSender(), _initTokenPool);
     }

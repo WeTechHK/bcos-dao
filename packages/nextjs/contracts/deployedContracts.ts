@@ -7,7 +7,7 @@ import { GenericContractsDeclaration } from "~~/utils/scaffold-eth/contract";
 const deployedContracts = {
   20200: {
     BCOSGovernor: {
-      address: "0x5833AcA81B2F0328d763AB67Ef40b6dD3A480924",
+      address: "0xD50dEdbE88c4b2986cfB2e6C5eCb85936fF2C47c",
       abi: [
         {
           anonymous: false,
@@ -884,6 +884,24 @@ const deployedContracts = {
         {
           inputs: [
             {
+              internalType: "address",
+              name: "account",
+              type: "address",
+            },
+            {
+              internalType: "uint256",
+              name: "amount",
+              type: "uint256",
+            },
+          ],
+          name: "burnToken",
+          outputs: [],
+          stateMutability: "nonpayable",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
               internalType: "uint256",
               name: "proposalId",
               type: "uint256",
@@ -1326,12 +1344,12 @@ const deployedContracts = {
                 },
                 {
                   internalType: "uint256",
-                  name: "startBlock",
+                  name: "startTime",
                   type: "uint256",
                 },
                 {
                   internalType: "uint256",
-                  name: "endBlock",
+                  name: "endTime",
                   type: "uint256",
                 },
                 {
@@ -1491,12 +1509,12 @@ const deployedContracts = {
                 },
                 {
                   internalType: "uint256",
-                  name: "startBlock",
+                  name: "startTime",
                   type: "uint256",
                 },
                 {
                   internalType: "uint256",
-                  name: "endBlock",
+                  name: "endTime",
                   type: "uint256",
                 },
                 {
@@ -1711,14 +1729,54 @@ const deployedContracts = {
         {
           inputs: [
             {
-              internalType: "contract VotesUpgradeable",
+              internalType: "contract ERC20VotePower",
               name: "_token",
               type: "address",
             },
             {
-              internalType: "contract TimelockControllerUpgradeable",
+              internalType: "contract CustomTimelockControllerUpgradeable",
               name: "_timelock",
               type: "address",
+            },
+            {
+              internalType: "uint256",
+              name: "_quorumNumeratorValue",
+              type: "uint256",
+            },
+            {
+              internalType: "uint48",
+              name: "_initialVotingDelay",
+              type: "uint48",
+            },
+            {
+              internalType: "uint32",
+              name: "_initialVotingPeriod",
+              type: "uint32",
+            },
+            {
+              internalType: "uint256",
+              name: "_initialProposalThreshold",
+              type: "uint256",
+            },
+            {
+              internalType: "uint256",
+              name: "_minDelay",
+              type: "uint256",
+            },
+            {
+              internalType: "uint256",
+              name: "_initTokenPool",
+              type: "uint256",
+            },
+            {
+              internalType: "contract TimeSetting",
+              name: "_timer",
+              type: "address",
+            },
+            {
+              internalType: "uint256",
+              name: "_unit",
+              type: "uint256",
             },
           ],
           name: "initialize",
@@ -1766,6 +1824,24 @@ const deployedContracts = {
             },
           ],
           stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "address",
+              name: "account",
+              type: "address",
+            },
+            {
+              internalType: "uint256",
+              name: "amount",
+              type: "uint256",
+            },
+          ],
+          name: "mintToken",
+          outputs: [],
+          stateMutability: "nonpayable",
           type: "function",
         },
         {
@@ -1909,6 +1985,13 @@ const deployedContracts = {
               type: "bytes4",
             },
           ],
+          stateMutability: "nonpayable",
+          type: "function",
+        },
+        {
+          inputs: [],
+          name: "pauseToken",
+          outputs: [],
           stateMutability: "nonpayable",
           type: "function",
         },
@@ -2442,6 +2525,19 @@ const deployedContracts = {
         {
           inputs: [
             {
+              internalType: "uint256",
+              name: "_unit",
+              type: "uint256",
+            },
+          ],
+          name: "resetUint",
+          outputs: [],
+          stateMutability: "nonpayable",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
               internalType: "bytes32",
               name: "role",
               type: "bytes32",
@@ -2606,6 +2702,13 @@ const deployedContracts = {
           type: "function",
         },
         {
+          inputs: [],
+          name: "unpauseToken",
+          outputs: [],
+          stateMutability: "nonpayable",
+          type: "function",
+        },
+        {
           inputs: [
             {
               internalType: "uint256",
@@ -2621,7 +2724,7 @@ const deployedContracts = {
         {
           inputs: [
             {
-              internalType: "contract TimelockControllerUpgradeable",
+              internalType: "contract CustomTimelockControllerUpgradeable",
               name: "newTimelock",
               type: "address",
             },
@@ -2762,8 +2865,1118 @@ const deployedContracts = {
       ],
       inheritedFunctions: {},
     },
+    CustomTimelockControllerUpgradeable: {
+      address: "0x51cd956A60d01e97365dcDAA05d7dDCBAcc9B7E6",
+      abi: [
+        {
+          anonymous: false,
+          inputs: [
+            {
+              indexed: false,
+              internalType: "address",
+              name: "previousAdmin",
+              type: "address",
+            },
+            {
+              indexed: false,
+              internalType: "address",
+              name: "newAdmin",
+              type: "address",
+            },
+          ],
+          name: "AdminChanged",
+          type: "event",
+        },
+        {
+          anonymous: false,
+          inputs: [
+            {
+              indexed: true,
+              internalType: "address",
+              name: "beacon",
+              type: "address",
+            },
+          ],
+          name: "BeaconUpgraded",
+          type: "event",
+        },
+        {
+          anonymous: false,
+          inputs: [
+            {
+              indexed: true,
+              internalType: "address",
+              name: "implementation",
+              type: "address",
+            },
+          ],
+          name: "Upgraded",
+          type: "event",
+        },
+        {
+          stateMutability: "payable",
+          type: "fallback",
+        },
+        {
+          stateMutability: "payable",
+          type: "receive",
+        },
+        {
+          inputs: [],
+          name: "AccessControlBadConfirmation",
+          type: "error",
+        },
+        {
+          inputs: [
+            {
+              internalType: "address",
+              name: "account",
+              type: "address",
+            },
+            {
+              internalType: "bytes32",
+              name: "neededRole",
+              type: "bytes32",
+            },
+          ],
+          name: "AccessControlUnauthorizedAccount",
+          type: "error",
+        },
+        {
+          inputs: [],
+          name: "FailedCall",
+          type: "error",
+        },
+        {
+          inputs: [],
+          name: "InvalidInitialization",
+          type: "error",
+        },
+        {
+          inputs: [],
+          name: "NotInitializing",
+          type: "error",
+        },
+        {
+          inputs: [
+            {
+              internalType: "uint256",
+              name: "delay",
+              type: "uint256",
+            },
+            {
+              internalType: "uint256",
+              name: "minDelay",
+              type: "uint256",
+            },
+          ],
+          name: "TimelockInsufficientDelay",
+          type: "error",
+        },
+        {
+          inputs: [
+            {
+              internalType: "uint256",
+              name: "targets",
+              type: "uint256",
+            },
+            {
+              internalType: "uint256",
+              name: "payloads",
+              type: "uint256",
+            },
+            {
+              internalType: "uint256",
+              name: "values",
+              type: "uint256",
+            },
+          ],
+          name: "TimelockInvalidOperationLength",
+          type: "error",
+        },
+        {
+          inputs: [
+            {
+              internalType: "address",
+              name: "caller",
+              type: "address",
+            },
+          ],
+          name: "TimelockUnauthorizedCaller",
+          type: "error",
+        },
+        {
+          inputs: [
+            {
+              internalType: "bytes32",
+              name: "predecessorId",
+              type: "bytes32",
+            },
+          ],
+          name: "TimelockUnexecutedPredecessor",
+          type: "error",
+        },
+        {
+          inputs: [
+            {
+              internalType: "bytes32",
+              name: "operationId",
+              type: "bytes32",
+            },
+            {
+              internalType: "bytes32",
+              name: "expectedStates",
+              type: "bytes32",
+            },
+          ],
+          name: "TimelockUnexpectedOperationState",
+          type: "error",
+        },
+        {
+          anonymous: false,
+          inputs: [
+            {
+              indexed: true,
+              internalType: "bytes32",
+              name: "id",
+              type: "bytes32",
+            },
+            {
+              indexed: true,
+              internalType: "uint256",
+              name: "index",
+              type: "uint256",
+            },
+            {
+              indexed: false,
+              internalType: "address",
+              name: "target",
+              type: "address",
+            },
+            {
+              indexed: false,
+              internalType: "uint256",
+              name: "value",
+              type: "uint256",
+            },
+            {
+              indexed: false,
+              internalType: "bytes",
+              name: "data",
+              type: "bytes",
+            },
+          ],
+          name: "CallExecuted",
+          type: "event",
+        },
+        {
+          anonymous: false,
+          inputs: [
+            {
+              indexed: true,
+              internalType: "bytes32",
+              name: "id",
+              type: "bytes32",
+            },
+            {
+              indexed: false,
+              internalType: "bytes32",
+              name: "salt",
+              type: "bytes32",
+            },
+          ],
+          name: "CallSalt",
+          type: "event",
+        },
+        {
+          anonymous: false,
+          inputs: [
+            {
+              indexed: true,
+              internalType: "bytes32",
+              name: "id",
+              type: "bytes32",
+            },
+            {
+              indexed: true,
+              internalType: "uint256",
+              name: "index",
+              type: "uint256",
+            },
+            {
+              indexed: false,
+              internalType: "address",
+              name: "target",
+              type: "address",
+            },
+            {
+              indexed: false,
+              internalType: "uint256",
+              name: "value",
+              type: "uint256",
+            },
+            {
+              indexed: false,
+              internalType: "bytes",
+              name: "data",
+              type: "bytes",
+            },
+            {
+              indexed: false,
+              internalType: "bytes32",
+              name: "predecessor",
+              type: "bytes32",
+            },
+            {
+              indexed: false,
+              internalType: "uint256",
+              name: "delay",
+              type: "uint256",
+            },
+          ],
+          name: "CallScheduled",
+          type: "event",
+        },
+        {
+          anonymous: false,
+          inputs: [
+            {
+              indexed: true,
+              internalType: "bytes32",
+              name: "id",
+              type: "bytes32",
+            },
+          ],
+          name: "Cancelled",
+          type: "event",
+        },
+        {
+          anonymous: false,
+          inputs: [
+            {
+              indexed: false,
+              internalType: "uint64",
+              name: "version",
+              type: "uint64",
+            },
+          ],
+          name: "Initialized",
+          type: "event",
+        },
+        {
+          anonymous: false,
+          inputs: [
+            {
+              indexed: false,
+              internalType: "uint256",
+              name: "oldDuration",
+              type: "uint256",
+            },
+            {
+              indexed: false,
+              internalType: "uint256",
+              name: "newDuration",
+              type: "uint256",
+            },
+          ],
+          name: "MinDelayChange",
+          type: "event",
+        },
+        {
+          anonymous: false,
+          inputs: [
+            {
+              indexed: true,
+              internalType: "bytes32",
+              name: "role",
+              type: "bytes32",
+            },
+            {
+              indexed: true,
+              internalType: "bytes32",
+              name: "previousAdminRole",
+              type: "bytes32",
+            },
+            {
+              indexed: true,
+              internalType: "bytes32",
+              name: "newAdminRole",
+              type: "bytes32",
+            },
+          ],
+          name: "RoleAdminChanged",
+          type: "event",
+        },
+        {
+          anonymous: false,
+          inputs: [
+            {
+              indexed: true,
+              internalType: "bytes32",
+              name: "role",
+              type: "bytes32",
+            },
+            {
+              indexed: true,
+              internalType: "address",
+              name: "account",
+              type: "address",
+            },
+            {
+              indexed: true,
+              internalType: "address",
+              name: "sender",
+              type: "address",
+            },
+          ],
+          name: "RoleGranted",
+          type: "event",
+        },
+        {
+          anonymous: false,
+          inputs: [
+            {
+              indexed: true,
+              internalType: "bytes32",
+              name: "role",
+              type: "bytes32",
+            },
+            {
+              indexed: true,
+              internalType: "address",
+              name: "account",
+              type: "address",
+            },
+            {
+              indexed: true,
+              internalType: "address",
+              name: "sender",
+              type: "address",
+            },
+          ],
+          name: "RoleRevoked",
+          type: "event",
+        },
+        {
+          inputs: [],
+          name: "CANCELLER_ROLE",
+          outputs: [
+            {
+              internalType: "bytes32",
+              name: "",
+              type: "bytes32",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [],
+          name: "DEFAULT_ADMIN_ROLE",
+          outputs: [
+            {
+              internalType: "bytes32",
+              name: "",
+              type: "bytes32",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [],
+          name: "EXECUTOR_ROLE",
+          outputs: [
+            {
+              internalType: "bytes32",
+              name: "",
+              type: "bytes32",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [],
+          name: "PROPOSER_ROLE",
+          outputs: [
+            {
+              internalType: "bytes32",
+              name: "",
+              type: "bytes32",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "bytes32",
+              name: "id",
+              type: "bytes32",
+            },
+          ],
+          name: "cancel",
+          outputs: [],
+          stateMutability: "nonpayable",
+          type: "function",
+        },
+        {
+          inputs: [],
+          name: "clock",
+          outputs: [
+            {
+              internalType: "uint48",
+              name: "",
+              type: "uint48",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "address",
+              name: "target",
+              type: "address",
+            },
+            {
+              internalType: "uint256",
+              name: "value",
+              type: "uint256",
+            },
+            {
+              internalType: "bytes",
+              name: "payload",
+              type: "bytes",
+            },
+            {
+              internalType: "bytes32",
+              name: "predecessor",
+              type: "bytes32",
+            },
+            {
+              internalType: "bytes32",
+              name: "salt",
+              type: "bytes32",
+            },
+          ],
+          name: "execute",
+          outputs: [],
+          stateMutability: "payable",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "address[]",
+              name: "targets",
+              type: "address[]",
+            },
+            {
+              internalType: "uint256[]",
+              name: "values",
+              type: "uint256[]",
+            },
+            {
+              internalType: "bytes[]",
+              name: "payloads",
+              type: "bytes[]",
+            },
+            {
+              internalType: "bytes32",
+              name: "predecessor",
+              type: "bytes32",
+            },
+            {
+              internalType: "bytes32",
+              name: "salt",
+              type: "bytes32",
+            },
+          ],
+          name: "executeBatch",
+          outputs: [],
+          stateMutability: "payable",
+          type: "function",
+        },
+        {
+          inputs: [],
+          name: "getMinDelay",
+          outputs: [
+            {
+              internalType: "uint256",
+              name: "",
+              type: "uint256",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "bytes32",
+              name: "id",
+              type: "bytes32",
+            },
+          ],
+          name: "getOperationState",
+          outputs: [
+            {
+              internalType: "enum CustomTimelockControllerUpgradeable.OperationState",
+              name: "",
+              type: "uint8",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "bytes32",
+              name: "role",
+              type: "bytes32",
+            },
+          ],
+          name: "getRoleAdmin",
+          outputs: [
+            {
+              internalType: "bytes32",
+              name: "",
+              type: "bytes32",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "bytes32",
+              name: "id",
+              type: "bytes32",
+            },
+          ],
+          name: "getTimestamp",
+          outputs: [
+            {
+              internalType: "uint256",
+              name: "",
+              type: "uint256",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "bytes32",
+              name: "role",
+              type: "bytes32",
+            },
+            {
+              internalType: "address",
+              name: "account",
+              type: "address",
+            },
+          ],
+          name: "grantRole",
+          outputs: [],
+          stateMutability: "nonpayable",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "bytes32",
+              name: "role",
+              type: "bytes32",
+            },
+            {
+              internalType: "address",
+              name: "account",
+              type: "address",
+            },
+          ],
+          name: "hasRole",
+          outputs: [
+            {
+              internalType: "bool",
+              name: "",
+              type: "bool",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "address",
+              name: "target",
+              type: "address",
+            },
+            {
+              internalType: "uint256",
+              name: "value",
+              type: "uint256",
+            },
+            {
+              internalType: "bytes",
+              name: "data",
+              type: "bytes",
+            },
+            {
+              internalType: "bytes32",
+              name: "predecessor",
+              type: "bytes32",
+            },
+            {
+              internalType: "bytes32",
+              name: "salt",
+              type: "bytes32",
+            },
+          ],
+          name: "hashOperation",
+          outputs: [
+            {
+              internalType: "bytes32",
+              name: "",
+              type: "bytes32",
+            },
+          ],
+          stateMutability: "pure",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "address[]",
+              name: "targets",
+              type: "address[]",
+            },
+            {
+              internalType: "uint256[]",
+              name: "values",
+              type: "uint256[]",
+            },
+            {
+              internalType: "bytes[]",
+              name: "payloads",
+              type: "bytes[]",
+            },
+            {
+              internalType: "bytes32",
+              name: "predecessor",
+              type: "bytes32",
+            },
+            {
+              internalType: "bytes32",
+              name: "salt",
+              type: "bytes32",
+            },
+          ],
+          name: "hashOperationBatch",
+          outputs: [
+            {
+              internalType: "bytes32",
+              name: "",
+              type: "bytes32",
+            },
+          ],
+          stateMutability: "pure",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "uint256",
+              name: "minDelay",
+              type: "uint256",
+            },
+            {
+              internalType: "address",
+              name: "proposer",
+              type: "address",
+            },
+            {
+              internalType: "address",
+              name: "executor",
+              type: "address",
+            },
+            {
+              internalType: "address",
+              name: "admin",
+              type: "address",
+            },
+            {
+              internalType: "contract TimeSetting",
+              name: "_timer",
+              type: "address",
+            },
+          ],
+          name: "initialize",
+          outputs: [],
+          stateMutability: "nonpayable",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "bytes32",
+              name: "id",
+              type: "bytes32",
+            },
+          ],
+          name: "isOperation",
+          outputs: [
+            {
+              internalType: "bool",
+              name: "",
+              type: "bool",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "bytes32",
+              name: "id",
+              type: "bytes32",
+            },
+          ],
+          name: "isOperationDone",
+          outputs: [
+            {
+              internalType: "bool",
+              name: "",
+              type: "bool",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "bytes32",
+              name: "id",
+              type: "bytes32",
+            },
+          ],
+          name: "isOperationPending",
+          outputs: [
+            {
+              internalType: "bool",
+              name: "",
+              type: "bool",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "bytes32",
+              name: "id",
+              type: "bytes32",
+            },
+          ],
+          name: "isOperationReady",
+          outputs: [
+            {
+              internalType: "bool",
+              name: "",
+              type: "bool",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "address",
+              name: "",
+              type: "address",
+            },
+            {
+              internalType: "address",
+              name: "",
+              type: "address",
+            },
+            {
+              internalType: "uint256[]",
+              name: "",
+              type: "uint256[]",
+            },
+            {
+              internalType: "uint256[]",
+              name: "",
+              type: "uint256[]",
+            },
+            {
+              internalType: "bytes",
+              name: "",
+              type: "bytes",
+            },
+          ],
+          name: "onERC1155BatchReceived",
+          outputs: [
+            {
+              internalType: "bytes4",
+              name: "",
+              type: "bytes4",
+            },
+          ],
+          stateMutability: "nonpayable",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "address",
+              name: "",
+              type: "address",
+            },
+            {
+              internalType: "address",
+              name: "",
+              type: "address",
+            },
+            {
+              internalType: "uint256",
+              name: "",
+              type: "uint256",
+            },
+            {
+              internalType: "uint256",
+              name: "",
+              type: "uint256",
+            },
+            {
+              internalType: "bytes",
+              name: "",
+              type: "bytes",
+            },
+          ],
+          name: "onERC1155Received",
+          outputs: [
+            {
+              internalType: "bytes4",
+              name: "",
+              type: "bytes4",
+            },
+          ],
+          stateMutability: "nonpayable",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "address",
+              name: "",
+              type: "address",
+            },
+            {
+              internalType: "address",
+              name: "",
+              type: "address",
+            },
+            {
+              internalType: "uint256",
+              name: "",
+              type: "uint256",
+            },
+            {
+              internalType: "bytes",
+              name: "",
+              type: "bytes",
+            },
+          ],
+          name: "onERC721Received",
+          outputs: [
+            {
+              internalType: "bytes4",
+              name: "",
+              type: "bytes4",
+            },
+          ],
+          stateMutability: "nonpayable",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "bytes32",
+              name: "role",
+              type: "bytes32",
+            },
+            {
+              internalType: "address",
+              name: "callerConfirmation",
+              type: "address",
+            },
+          ],
+          name: "renounceRole",
+          outputs: [],
+          stateMutability: "nonpayable",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "bytes32",
+              name: "role",
+              type: "bytes32",
+            },
+            {
+              internalType: "address",
+              name: "account",
+              type: "address",
+            },
+          ],
+          name: "revokeRole",
+          outputs: [],
+          stateMutability: "nonpayable",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "address",
+              name: "target",
+              type: "address",
+            },
+            {
+              internalType: "uint256",
+              name: "value",
+              type: "uint256",
+            },
+            {
+              internalType: "bytes",
+              name: "data",
+              type: "bytes",
+            },
+            {
+              internalType: "bytes32",
+              name: "predecessor",
+              type: "bytes32",
+            },
+            {
+              internalType: "bytes32",
+              name: "salt",
+              type: "bytes32",
+            },
+            {
+              internalType: "uint256",
+              name: "delay",
+              type: "uint256",
+            },
+          ],
+          name: "schedule",
+          outputs: [],
+          stateMutability: "nonpayable",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "address[]",
+              name: "targets",
+              type: "address[]",
+            },
+            {
+              internalType: "uint256[]",
+              name: "values",
+              type: "uint256[]",
+            },
+            {
+              internalType: "bytes[]",
+              name: "payloads",
+              type: "bytes[]",
+            },
+            {
+              internalType: "bytes32",
+              name: "predecessor",
+              type: "bytes32",
+            },
+            {
+              internalType: "bytes32",
+              name: "salt",
+              type: "bytes32",
+            },
+            {
+              internalType: "uint256",
+              name: "delay",
+              type: "uint256",
+            },
+          ],
+          name: "scheduleBatch",
+          outputs: [],
+          stateMutability: "nonpayable",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "bytes4",
+              name: "interfaceId",
+              type: "bytes4",
+            },
+          ],
+          name: "supportsInterface",
+          outputs: [
+            {
+              internalType: "bool",
+              name: "",
+              type: "bool",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "uint256",
+              name: "newDelay",
+              type: "uint256",
+            },
+          ],
+          name: "updateDelay",
+          outputs: [],
+          stateMutability: "nonpayable",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "address",
+              name: "_logic",
+              type: "address",
+            },
+            {
+              internalType: "bytes",
+              name: "_data",
+              type: "bytes",
+            },
+          ],
+          stateMutability: "payable",
+          type: "constructor",
+        },
+      ],
+      inheritedFunctions: {},
+    },
     ERC20VotePower: {
-      address: "0x9EF733Ce5687a85689dF78b24680Af16BcDBb998",
+      address: "0x5bA937268089bFD3B5a058a2dE386d62576954b9",
       abi: [
         {
           anonymous: false,
@@ -3609,6 +4822,11 @@ const deployedContracts = {
               name: "symbol",
               type: "string",
             },
+            {
+              internalType: "contract TimeSetting",
+              name: "_timer",
+              type: "address",
+            },
           ],
           name: "initialize",
           outputs: [],
@@ -3768,6 +4986,19 @@ const deployedContracts = {
           type: "function",
         },
         {
+          inputs: [
+            {
+              internalType: "uint256",
+              name: "_unit",
+              type: "uint256",
+            },
+          ],
+          name: "resetUint",
+          outputs: [],
+          stateMutability: "nonpayable",
+          type: "function",
+        },
+        {
           inputs: [],
           name: "symbol",
           outputs: [
@@ -3885,88 +5116,9 @@ const deployedContracts = {
       ],
       inheritedFunctions: {},
     },
-    TimelockControllerUpgradeable: {
-      address: "0xdA452F728145b1fc847eBBa5962848f61Db8064A",
+    TimeSetting: {
+      address: "0x95AbbCD60eBcC4695Ff0A90Bd9d8fEBF318Eae8d",
       abi: [
-        {
-          anonymous: false,
-          inputs: [
-            {
-              indexed: false,
-              internalType: "address",
-              name: "previousAdmin",
-              type: "address",
-            },
-            {
-              indexed: false,
-              internalType: "address",
-              name: "newAdmin",
-              type: "address",
-            },
-          ],
-          name: "AdminChanged",
-          type: "event",
-        },
-        {
-          anonymous: false,
-          inputs: [
-            {
-              indexed: true,
-              internalType: "address",
-              name: "beacon",
-              type: "address",
-            },
-          ],
-          name: "BeaconUpgraded",
-          type: "event",
-        },
-        {
-          anonymous: false,
-          inputs: [
-            {
-              indexed: true,
-              internalType: "address",
-              name: "implementation",
-              type: "address",
-            },
-          ],
-          name: "Upgraded",
-          type: "event",
-        },
-        {
-          stateMutability: "payable",
-          type: "fallback",
-        },
-        {
-          stateMutability: "payable",
-          type: "receive",
-        },
-        {
-          inputs: [],
-          name: "AccessControlBadConfirmation",
-          type: "error",
-        },
-        {
-          inputs: [
-            {
-              internalType: "address",
-              name: "account",
-              type: "address",
-            },
-            {
-              internalType: "bytes32",
-              name: "neededRole",
-              type: "bytes32",
-            },
-          ],
-          name: "AccessControlUnauthorizedAccount",
-          type: "error",
-        },
-        {
-          inputs: [],
-          name: "FailedCall",
-          type: "error",
-        },
         {
           inputs: [],
           name: "InvalidInitialization",
@@ -3980,195 +5132,40 @@ const deployedContracts = {
         {
           inputs: [
             {
-              internalType: "uint256",
-              name: "delay",
-              type: "uint256",
-            },
-            {
-              internalType: "uint256",
-              name: "minDelay",
-              type: "uint256",
+              internalType: "address",
+              name: "owner",
+              type: "address",
             },
           ],
-          name: "TimelockInsufficientDelay",
-          type: "error",
-        },
-        {
-          inputs: [
-            {
-              internalType: "uint256",
-              name: "targets",
-              type: "uint256",
-            },
-            {
-              internalType: "uint256",
-              name: "payloads",
-              type: "uint256",
-            },
-            {
-              internalType: "uint256",
-              name: "values",
-              type: "uint256",
-            },
-          ],
-          name: "TimelockInvalidOperationLength",
+          name: "OwnableInvalidOwner",
           type: "error",
         },
         {
           inputs: [
             {
               internalType: "address",
-              name: "caller",
+              name: "account",
               type: "address",
             },
           ],
-          name: "TimelockUnauthorizedCaller",
+          name: "OwnableUnauthorizedAccount",
           type: "error",
         },
         {
           inputs: [
             {
-              internalType: "bytes32",
-              name: "predecessorId",
-              type: "bytes32",
-            },
-          ],
-          name: "TimelockUnexecutedPredecessor",
-          type: "error",
-        },
-        {
-          inputs: [
-            {
-              internalType: "bytes32",
-              name: "operationId",
-              type: "bytes32",
+              internalType: "uint8",
+              name: "bits",
+              type: "uint8",
             },
             {
-              internalType: "bytes32",
-              name: "expectedStates",
-              type: "bytes32",
-            },
-          ],
-          name: "TimelockUnexpectedOperationState",
-          type: "error",
-        },
-        {
-          anonymous: false,
-          inputs: [
-            {
-              indexed: true,
-              internalType: "bytes32",
-              name: "id",
-              type: "bytes32",
-            },
-            {
-              indexed: true,
-              internalType: "uint256",
-              name: "index",
-              type: "uint256",
-            },
-            {
-              indexed: false,
-              internalType: "address",
-              name: "target",
-              type: "address",
-            },
-            {
-              indexed: false,
               internalType: "uint256",
               name: "value",
               type: "uint256",
             },
-            {
-              indexed: false,
-              internalType: "bytes",
-              name: "data",
-              type: "bytes",
-            },
           ],
-          name: "CallExecuted",
-          type: "event",
-        },
-        {
-          anonymous: false,
-          inputs: [
-            {
-              indexed: true,
-              internalType: "bytes32",
-              name: "id",
-              type: "bytes32",
-            },
-            {
-              indexed: false,
-              internalType: "bytes32",
-              name: "salt",
-              type: "bytes32",
-            },
-          ],
-          name: "CallSalt",
-          type: "event",
-        },
-        {
-          anonymous: false,
-          inputs: [
-            {
-              indexed: true,
-              internalType: "bytes32",
-              name: "id",
-              type: "bytes32",
-            },
-            {
-              indexed: true,
-              internalType: "uint256",
-              name: "index",
-              type: "uint256",
-            },
-            {
-              indexed: false,
-              internalType: "address",
-              name: "target",
-              type: "address",
-            },
-            {
-              indexed: false,
-              internalType: "uint256",
-              name: "value",
-              type: "uint256",
-            },
-            {
-              indexed: false,
-              internalType: "bytes",
-              name: "data",
-              type: "bytes",
-            },
-            {
-              indexed: false,
-              internalType: "bytes32",
-              name: "predecessor",
-              type: "bytes32",
-            },
-            {
-              indexed: false,
-              internalType: "uint256",
-              name: "delay",
-              type: "uint256",
-            },
-          ],
-          name: "CallScheduled",
-          type: "event",
-        },
-        {
-          anonymous: false,
-          inputs: [
-            {
-              indexed: true,
-              internalType: "bytes32",
-              name: "id",
-              type: "bytes32",
-            },
-          ],
-          name: "Cancelled",
-          type: "event",
+          name: "SafeCastOverflowedUintDowncast",
+          type: "error",
         },
         {
           anonymous: false,
@@ -4187,438 +5184,53 @@ const deployedContracts = {
           anonymous: false,
           inputs: [
             {
-              indexed: false,
-              internalType: "uint256",
-              name: "oldDuration",
-              type: "uint256",
-            },
-            {
-              indexed: false,
-              internalType: "uint256",
-              name: "newDuration",
-              type: "uint256",
-            },
-          ],
-          name: "MinDelayChange",
-          type: "event",
-        },
-        {
-          anonymous: false,
-          inputs: [
-            {
-              indexed: true,
-              internalType: "bytes32",
-              name: "role",
-              type: "bytes32",
-            },
-            {
-              indexed: true,
-              internalType: "bytes32",
-              name: "previousAdminRole",
-              type: "bytes32",
-            },
-            {
-              indexed: true,
-              internalType: "bytes32",
-              name: "newAdminRole",
-              type: "bytes32",
-            },
-          ],
-          name: "RoleAdminChanged",
-          type: "event",
-        },
-        {
-          anonymous: false,
-          inputs: [
-            {
-              indexed: true,
-              internalType: "bytes32",
-              name: "role",
-              type: "bytes32",
-            },
-            {
               indexed: true,
               internalType: "address",
-              name: "account",
+              name: "previousOwner",
               type: "address",
             },
             {
               indexed: true,
               internalType: "address",
-              name: "sender",
+              name: "newOwner",
               type: "address",
             },
           ],
-          name: "RoleGranted",
-          type: "event",
-        },
-        {
-          anonymous: false,
-          inputs: [
-            {
-              indexed: true,
-              internalType: "bytes32",
-              name: "role",
-              type: "bytes32",
-            },
-            {
-              indexed: true,
-              internalType: "address",
-              name: "account",
-              type: "address",
-            },
-            {
-              indexed: true,
-              internalType: "address",
-              name: "sender",
-              type: "address",
-            },
-          ],
-          name: "RoleRevoked",
+          name: "OwnershipTransferred",
           type: "event",
         },
         {
           inputs: [],
-          name: "CANCELLER_ROLE",
+          name: "CLOCK_MODE",
           outputs: [
             {
-              internalType: "bytes32",
+              internalType: "string",
               name: "",
-              type: "bytes32",
-            },
-          ],
-          stateMutability: "view",
-          type: "function",
-        },
-        {
-          inputs: [],
-          name: "DEFAULT_ADMIN_ROLE",
-          outputs: [
-            {
-              internalType: "bytes32",
-              name: "",
-              type: "bytes32",
-            },
-          ],
-          stateMutability: "view",
-          type: "function",
-        },
-        {
-          inputs: [],
-          name: "EXECUTOR_ROLE",
-          outputs: [
-            {
-              internalType: "bytes32",
-              name: "",
-              type: "bytes32",
-            },
-          ],
-          stateMutability: "view",
-          type: "function",
-        },
-        {
-          inputs: [],
-          name: "PROPOSER_ROLE",
-          outputs: [
-            {
-              internalType: "bytes32",
-              name: "",
-              type: "bytes32",
-            },
-          ],
-          stateMutability: "view",
-          type: "function",
-        },
-        {
-          inputs: [
-            {
-              internalType: "bytes32",
-              name: "id",
-              type: "bytes32",
-            },
-          ],
-          name: "cancel",
-          outputs: [],
-          stateMutability: "nonpayable",
-          type: "function",
-        },
-        {
-          inputs: [
-            {
-              internalType: "address",
-              name: "target",
-              type: "address",
-            },
-            {
-              internalType: "uint256",
-              name: "value",
-              type: "uint256",
-            },
-            {
-              internalType: "bytes",
-              name: "payload",
-              type: "bytes",
-            },
-            {
-              internalType: "bytes32",
-              name: "predecessor",
-              type: "bytes32",
-            },
-            {
-              internalType: "bytes32",
-              name: "salt",
-              type: "bytes32",
-            },
-          ],
-          name: "execute",
-          outputs: [],
-          stateMutability: "payable",
-          type: "function",
-        },
-        {
-          inputs: [
-            {
-              internalType: "address[]",
-              name: "targets",
-              type: "address[]",
-            },
-            {
-              internalType: "uint256[]",
-              name: "values",
-              type: "uint256[]",
-            },
-            {
-              internalType: "bytes[]",
-              name: "payloads",
-              type: "bytes[]",
-            },
-            {
-              internalType: "bytes32",
-              name: "predecessor",
-              type: "bytes32",
-            },
-            {
-              internalType: "bytes32",
-              name: "salt",
-              type: "bytes32",
-            },
-          ],
-          name: "executeBatch",
-          outputs: [],
-          stateMutability: "payable",
-          type: "function",
-        },
-        {
-          inputs: [],
-          name: "getMinDelay",
-          outputs: [
-            {
-              internalType: "uint256",
-              name: "",
-              type: "uint256",
-            },
-          ],
-          stateMutability: "view",
-          type: "function",
-        },
-        {
-          inputs: [
-            {
-              internalType: "bytes32",
-              name: "id",
-              type: "bytes32",
-            },
-          ],
-          name: "getOperationState",
-          outputs: [
-            {
-              internalType: "enum TimelockControllerUpgradeable.OperationState",
-              name: "",
-              type: "uint8",
-            },
-          ],
-          stateMutability: "view",
-          type: "function",
-        },
-        {
-          inputs: [
-            {
-              internalType: "bytes32",
-              name: "role",
-              type: "bytes32",
-            },
-          ],
-          name: "getRoleAdmin",
-          outputs: [
-            {
-              internalType: "bytes32",
-              name: "",
-              type: "bytes32",
-            },
-          ],
-          stateMutability: "view",
-          type: "function",
-        },
-        {
-          inputs: [
-            {
-              internalType: "bytes32",
-              name: "id",
-              type: "bytes32",
-            },
-          ],
-          name: "getTimestamp",
-          outputs: [
-            {
-              internalType: "uint256",
-              name: "",
-              type: "uint256",
-            },
-          ],
-          stateMutability: "view",
-          type: "function",
-        },
-        {
-          inputs: [
-            {
-              internalType: "bytes32",
-              name: "role",
-              type: "bytes32",
-            },
-            {
-              internalType: "address",
-              name: "account",
-              type: "address",
-            },
-          ],
-          name: "grantRole",
-          outputs: [],
-          stateMutability: "nonpayable",
-          type: "function",
-        },
-        {
-          inputs: [
-            {
-              internalType: "bytes32",
-              name: "role",
-              type: "bytes32",
-            },
-            {
-              internalType: "address",
-              name: "account",
-              type: "address",
-            },
-          ],
-          name: "hasRole",
-          outputs: [
-            {
-              internalType: "bool",
-              name: "",
-              type: "bool",
-            },
-          ],
-          stateMutability: "view",
-          type: "function",
-        },
-        {
-          inputs: [
-            {
-              internalType: "address",
-              name: "target",
-              type: "address",
-            },
-            {
-              internalType: "uint256",
-              name: "value",
-              type: "uint256",
-            },
-            {
-              internalType: "bytes",
-              name: "data",
-              type: "bytes",
-            },
-            {
-              internalType: "bytes32",
-              name: "predecessor",
-              type: "bytes32",
-            },
-            {
-              internalType: "bytes32",
-              name: "salt",
-              type: "bytes32",
-            },
-          ],
-          name: "hashOperation",
-          outputs: [
-            {
-              internalType: "bytes32",
-              name: "",
-              type: "bytes32",
+              type: "string",
             },
           ],
           stateMutability: "pure",
           type: "function",
         },
         {
-          inputs: [
-            {
-              internalType: "address[]",
-              name: "targets",
-              type: "address[]",
-            },
-            {
-              internalType: "uint256[]",
-              name: "values",
-              type: "uint256[]",
-            },
-            {
-              internalType: "bytes[]",
-              name: "payloads",
-              type: "bytes[]",
-            },
-            {
-              internalType: "bytes32",
-              name: "predecessor",
-              type: "bytes32",
-            },
-            {
-              internalType: "bytes32",
-              name: "salt",
-              type: "bytes32",
-            },
-          ],
-          name: "hashOperationBatch",
+          inputs: [],
+          name: "clock",
           outputs: [
             {
-              internalType: "bytes32",
+              internalType: "uint48",
               name: "",
-              type: "bytes32",
+              type: "uint48",
             },
           ],
-          stateMutability: "pure",
+          stateMutability: "view",
           type: "function",
         },
         {
           inputs: [
             {
               internalType: "uint256",
-              name: "minDelay",
+              name: "_unit",
               type: "uint256",
-            },
-            {
-              internalType: "address[]",
-              name: "proposers",
-              type: "address[]",
-            },
-            {
-              internalType: "address[]",
-              name: "executors",
-              type: "address[]",
-            },
-            {
-              internalType: "address",
-              name: "admin",
-              type: "address",
             },
           ],
           name: "initialize",
@@ -4627,207 +5239,21 @@ const deployedContracts = {
           type: "function",
         },
         {
-          inputs: [
-            {
-              internalType: "bytes32",
-              name: "id",
-              type: "bytes32",
-            },
-          ],
-          name: "isOperation",
+          inputs: [],
+          name: "owner",
           outputs: [
             {
-              internalType: "bool",
+              internalType: "address",
               name: "",
-              type: "bool",
+              type: "address",
             },
           ],
           stateMutability: "view",
           type: "function",
         },
         {
-          inputs: [
-            {
-              internalType: "bytes32",
-              name: "id",
-              type: "bytes32",
-            },
-          ],
-          name: "isOperationDone",
-          outputs: [
-            {
-              internalType: "bool",
-              name: "",
-              type: "bool",
-            },
-          ],
-          stateMutability: "view",
-          type: "function",
-        },
-        {
-          inputs: [
-            {
-              internalType: "bytes32",
-              name: "id",
-              type: "bytes32",
-            },
-          ],
-          name: "isOperationPending",
-          outputs: [
-            {
-              internalType: "bool",
-              name: "",
-              type: "bool",
-            },
-          ],
-          stateMutability: "view",
-          type: "function",
-        },
-        {
-          inputs: [
-            {
-              internalType: "bytes32",
-              name: "id",
-              type: "bytes32",
-            },
-          ],
-          name: "isOperationReady",
-          outputs: [
-            {
-              internalType: "bool",
-              name: "",
-              type: "bool",
-            },
-          ],
-          stateMutability: "view",
-          type: "function",
-        },
-        {
-          inputs: [
-            {
-              internalType: "address",
-              name: "",
-              type: "address",
-            },
-            {
-              internalType: "address",
-              name: "",
-              type: "address",
-            },
-            {
-              internalType: "uint256[]",
-              name: "",
-              type: "uint256[]",
-            },
-            {
-              internalType: "uint256[]",
-              name: "",
-              type: "uint256[]",
-            },
-            {
-              internalType: "bytes",
-              name: "",
-              type: "bytes",
-            },
-          ],
-          name: "onERC1155BatchReceived",
-          outputs: [
-            {
-              internalType: "bytes4",
-              name: "",
-              type: "bytes4",
-            },
-          ],
-          stateMutability: "nonpayable",
-          type: "function",
-        },
-        {
-          inputs: [
-            {
-              internalType: "address",
-              name: "",
-              type: "address",
-            },
-            {
-              internalType: "address",
-              name: "",
-              type: "address",
-            },
-            {
-              internalType: "uint256",
-              name: "",
-              type: "uint256",
-            },
-            {
-              internalType: "uint256",
-              name: "",
-              type: "uint256",
-            },
-            {
-              internalType: "bytes",
-              name: "",
-              type: "bytes",
-            },
-          ],
-          name: "onERC1155Received",
-          outputs: [
-            {
-              internalType: "bytes4",
-              name: "",
-              type: "bytes4",
-            },
-          ],
-          stateMutability: "nonpayable",
-          type: "function",
-        },
-        {
-          inputs: [
-            {
-              internalType: "address",
-              name: "",
-              type: "address",
-            },
-            {
-              internalType: "address",
-              name: "",
-              type: "address",
-            },
-            {
-              internalType: "uint256",
-              name: "",
-              type: "uint256",
-            },
-            {
-              internalType: "bytes",
-              name: "",
-              type: "bytes",
-            },
-          ],
-          name: "onERC721Received",
-          outputs: [
-            {
-              internalType: "bytes4",
-              name: "",
-              type: "bytes4",
-            },
-          ],
-          stateMutability: "nonpayable",
-          type: "function",
-        },
-        {
-          inputs: [
-            {
-              internalType: "bytes32",
-              name: "role",
-              type: "bytes32",
-            },
-            {
-              internalType: "address",
-              name: "callerConfirmation",
-              type: "address",
-            },
-          ],
-          name: "renounceRole",
+          inputs: [],
+          name: "renounceOwnership",
           outputs: [],
           stateMutability: "nonpayable",
           type: "function",
@@ -4835,17 +5261,12 @@ const deployedContracts = {
         {
           inputs: [
             {
-              internalType: "bytes32",
-              name: "role",
-              type: "bytes32",
-            },
-            {
-              internalType: "address",
-              name: "account",
-              type: "address",
+              internalType: "uint256",
+              name: "_unit",
+              type: "uint256",
             },
           ],
-          name: "revokeRole",
+          name: "resetUnit",
           outputs: [],
           stateMutability: "nonpayable",
           type: "function",
@@ -4854,128 +5275,36 @@ const deployedContracts = {
           inputs: [
             {
               internalType: "address",
-              name: "target",
+              name: "newOwner",
               type: "address",
             },
-            {
-              internalType: "uint256",
-              name: "value",
-              type: "uint256",
-            },
-            {
-              internalType: "bytes",
-              name: "data",
-              type: "bytes",
-            },
-            {
-              internalType: "bytes32",
-              name: "predecessor",
-              type: "bytes32",
-            },
-            {
-              internalType: "bytes32",
-              name: "salt",
-              type: "bytes32",
-            },
-            {
-              internalType: "uint256",
-              name: "delay",
-              type: "uint256",
-            },
           ],
-          name: "schedule",
+          name: "transferOwnership",
           outputs: [],
           stateMutability: "nonpayable",
           type: "function",
         },
         {
-          inputs: [
-            {
-              internalType: "address[]",
-              name: "targets",
-              type: "address[]",
-            },
-            {
-              internalType: "uint256[]",
-              name: "values",
-              type: "uint256[]",
-            },
-            {
-              internalType: "bytes[]",
-              name: "payloads",
-              type: "bytes[]",
-            },
-            {
-              internalType: "bytes32",
-              name: "predecessor",
-              type: "bytes32",
-            },
-            {
-              internalType: "bytes32",
-              name: "salt",
-              type: "bytes32",
-            },
-            {
-              internalType: "uint256",
-              name: "delay",
-              type: "uint256",
-            },
-          ],
-          name: "scheduleBatch",
-          outputs: [],
-          stateMutability: "nonpayable",
-          type: "function",
-        },
-        {
-          inputs: [
-            {
-              internalType: "bytes4",
-              name: "interfaceId",
-              type: "bytes4",
-            },
-          ],
-          name: "supportsInterface",
+          inputs: [],
+          name: "unit",
           outputs: [
             {
-              internalType: "bool",
+              internalType: "uint256",
               name: "",
-              type: "bool",
+              type: "uint256",
             },
           ],
           stateMutability: "view",
           type: "function",
-        },
-        {
-          inputs: [
-            {
-              internalType: "uint256",
-              name: "newDelay",
-              type: "uint256",
-            },
-          ],
-          name: "updateDelay",
-          outputs: [],
-          stateMutability: "nonpayable",
-          type: "function",
-        },
-        {
-          inputs: [
-            {
-              internalType: "address",
-              name: "_logic",
-              type: "address",
-            },
-            {
-              internalType: "bytes",
-              name: "_data",
-              type: "bytes",
-            },
-          ],
-          stateMutability: "payable",
-          type: "constructor",
         },
       ],
-      inheritedFunctions: {},
+      inheritedFunctions: {
+        owner: "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol",
+        renounceOwnership: "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol",
+        transferOwnership: "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol",
+        CLOCK_MODE: "@openzeppelin/contracts/interfaces/IERC6372.sol",
+        clock: "@openzeppelin/contracts/interfaces/IERC6372.sol",
+      },
     },
   },
 } as const;

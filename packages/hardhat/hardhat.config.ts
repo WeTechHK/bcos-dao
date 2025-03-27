@@ -56,10 +56,12 @@ const config: HardhatUserConfig = {
     },
     dev_net: {
       url: `http://140.210.218.31:8545`,
+      chainId: 20200,
       accounts: [deployerPrivateKey],
     },
     potos_testnet: {
       url: `https://rpc.eightart.hk/`,
+      chainId: 20200,
       accounts: [deployerPrivateKey],
     },
     eth_mainnet: {

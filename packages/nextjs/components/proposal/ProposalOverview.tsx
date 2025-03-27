@@ -15,8 +15,8 @@ interface ProposalOverviewProps {
     state: string | ProposalState;
     proposer: string;
     id: number;
-    startBlock: number;
-    endBlock: number;
+    startTime: number;
+    endTime: number;
     description: string;
     forVotes: number;
     againstVotes: number;
@@ -77,7 +77,7 @@ export const ProposalOverview = ({ proposal, isPreview = false }: ProposalOvervi
               <div>
                 <p className="text-sm text-gray-500 mb-1">Block Range</p>
                 <p className="text-md font-medium">
-                  {proposal.startBlock} ~ {proposal.endBlock}
+                  {proposal.startTime} ~ {proposal.endTime}
                 </p>
               </div>
               <div>

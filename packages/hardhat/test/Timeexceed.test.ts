@@ -121,9 +121,9 @@ describe("Timeout Test", function () {
       expect(proposal.proposalDetail.targets[0]).to.equal(await governorTemplate.getAddress());
       expect(proposal.proposalDetail.calldatas[0]).to.equal(calldata);
       const number = await time.latestBlock();
-      expect(proposal.startBlock).to.equal(number + 1);
-      expect(proposal.endBlock).to.eq(number + 1 + 10);
-      expect(proposal.startBlock).to.lt(proposal.endBlock);
+      expect(proposal.startTime).to.equal(number + 1);
+      expect(proposal.endTime).to.eq(number + 1 + 10);
+      expect(proposal.startTime).to.lt(proposal.endTime);
       expect(proposal.proposalState).to.equal(ProposalState.Pending);
       expect(proposal.proposalVote.forVotes).to.equal(0);
       expect(proposal.proposalVote.againstVotes).to.equal(0);
@@ -153,8 +153,8 @@ describe("Timeout Test", function () {
       // 检查提案是否过期
       proposal = await governorTemplate.getProposalAllInfo(proposalId);
       console.log("Current Block:", await time.latestBlock());
-      console.log("Proposal Start Block:", proposal.startBlock);
-      console.log("Proposal End Block:", proposal.endBlock);
+      console.log("Proposal Start Block:", proposal.startTime);
+      console.log("Proposal End Block:", proposal.endTime);
       console.log("Proposal State:", proposal.proposalState);
       expect(proposal.proposalState).to.equal(ProposalState.Defeated);
 
