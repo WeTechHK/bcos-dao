@@ -14,7 +14,7 @@ const scaffoldConfig = {
   // The networks on which your DApp is live
   targetNetworks: [
     {
-      id: 20200,
+      id: 30303,
       name: "BCOS Testnet",
       nativeCurrency: {
         decimals: 18,
@@ -22,14 +22,14 @@ const scaffoldConfig = {
         symbol: "UBT",
       },
       rpcUrls: {
-        default: { http: ["https://rpc.eightart.hk"] },
+        default: { http: ["http://140.210.218.31:8555"] },
       },
-      // blockExplorers: {
-      //   default: {
-      //     name: "Eightart Explorer",
-      //     url: "https://blockscout.eight-art.com/",
-      //   },
-      // },
+      blockExplorers: {
+        default: {
+          name: "POTOS Testnet Explorer",
+          url: "http://140.210.218.31/",
+        },
+      },
     },
   ],
 

@@ -26,8 +26,8 @@ enum VoteType {
 interface ProposalAllInfo {
   id: number;
   proposer: string;
-  startBlock: number;
-  endBlock: number;
+  startTime: number;
+  endTime: number;
   eta: number;
   state: ProposalState | string;
   targets: string[];
@@ -38,6 +38,9 @@ interface ProposalAllInfo {
   againstVotes: number;
   abstainVotes: number;
   title: string;
+  createBlock: number;
+  executedBlock: number;
+  canceledBlock: number;
 }
 
 interface ProposalApprovalFlow {
@@ -49,32 +52,25 @@ interface ProposalApprovalFlow {
 }
 
 function getProposalInfo(data: any, proposalId: number) {
-  const {
-    proposer,
-    proposalState,
-    proposalDetail,
-    proposalVote,
-    startBlock,
-    endBlock,
-    eta,
-    proposalTitle,
-    proposalDesc,
-  } = data;
+  const { proposer, proposalState, proposalDetail, proposalVote, startTime, endTime, eta, extra } = data;
   return {
     eta: Number(eta),
     id: proposalId,
     proposer: proposer,
-    startBlock: Number(startBlock),
-    endBlock: Number(endBlock),
+    startTime: Number(startTime),
+    endTime: Number(endTime),
     state: proposalState,
     targets: [...proposalDetail.targets],
     values: [...proposalDetail.values],
     calldatas: [...proposalDetail.calldatas],
-    description: proposalDesc,
+    description: extra.description,
     forVotes: Number(proposalVote.forVotes),
     againstVotes: Number(proposalVote.againstVotes),
     abstainVotes: Number(proposalVote.abstainVotes),
-    title: proposalTitle,
+    title: extra.title,
+    createBlock: extra.createBlockNumber,
+    executedBlock: extra.executedBlockNumber,
+    canceledBlock: extra.canceledBlockNumber,
   };
 }
 
@@ -173,6 +169,7 @@ const useProposalList = (page: number, totalNumber: number) => {
       setLoading(true);
     }
   }
+
   const hasMoreProposals = currentOffset > page;
   return { data, loadMore, hasMoreProposals, loading };
 };
@@ -384,7 +381,7 @@ function useVoteSuccessThreshold() {
   return Number(voteSuccessThreshold);
 }
 
-function useQuorumNumerator() {
+export const useQuorumNumerator = () => {
   const { data: quorumNumerator } = useScaffoldReadContract({
     contractName: "BCOSGovernor",
     functionName: "quorumNumerator",
@@ -397,7 +394,22 @@ function useQuorumNumerator() {
   }
   console.log("useQuorumNumerators useScaffoldReadContract: ", quorumNumerator);
   return Number(quorumNumerator);
-}
+};
+
+export const useVotingPeriod = () => {
+  const { data: proposalDuration } = useScaffoldReadContract({
+    contractName: "BCOSGovernor",
+    functionName: "votingPeriod",
+    args: [] as never,
+  });
+
+  if (proposalDuration === undefined) {
+    return 0;
+    // throw new Error("Invalid proposal duration data");
+  }
+  console.log("useVotingPeriod useScaffoldReadContract: ", proposalDuration);
+  return Number(proposalDuration);
+};
 
 export {
   useProposalAllInfo,
@@ -419,7 +431,6 @@ export {
   useProposalVotes,
   useProposeProposal,
   useVoteSuccessThreshold,
-  useQuorumNumerator,
 };
 
 export type { ProposalAllInfo, ProposalState };

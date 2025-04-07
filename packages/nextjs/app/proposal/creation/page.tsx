@@ -159,19 +159,31 @@ const ProposalCreation: NextPage = () => {
             console.log("onFinish", values);
             const title = values.title;
             const description = values.description;
-            const targets = values.actions?.map(action => action.address);
-            const valuesArray = values.actions?.map(action => action.value);
-            const calldatas = values.actions?.map(action => action.calldata);
-            await submitter(
-              title,
-              targets ? targets : [],
-              valuesArray ? valuesArray : [],
-              calldatas ? calldatas : [],
-              description,
-            );
+            if (!values.actions || values.actions.length === 0) {
+              messageApi.error("Please add at least one action");
+              return;
+            }
+            const targets: string[] = [];
+            const valuesArray: bigint[] = [];
+            const calldatas: string[] = [];
+            for (let i = 0; i < values.actions.length; i++) {
+              const action = values.actions[i];
+              if (!action.calldata || !action.address || action.value === undefined || action.value === null) {
+                messageApi.error("Please fill in all fields for Action#" + (i + 1));
+                form.scrollToField(["actions", i]);
+                return;
+              }
+              targets.push(action.address);
+              valuesArray.push(action.value);
+              calldatas.push(action.calldata);
+            }
+            await submitter(title, targets, valuesArray, calldatas, description);
             messageApi.open({
               type: "success",
               content: "Proposal created successfully",
+              onClose: () => {
+                window.location.href = "/";
+              },
             });
           } catch (error) {
             messageApi.open({
@@ -182,18 +194,49 @@ const ProposalCreation: NextPage = () => {
         }}
       >
         <Card>
-          <FormItem name="title" label={<h3 className="text-lg font-semibold text-gray-900 mb-2">Title</h3>}>
+          <Tag color="blue" bordered={false} className="text-lg font-bold content-center mb-4">
+            Main Information
+          </Tag>
+          <FormItem
+            name="title"
+            label={<h3 className="text-lg font-semibold text-gray-900 mb-2">Title</h3>}
+            rules={[
+              {
+                required: true,
+                message: "Please enter the title of your proposal",
+              },
+            ]}
+          >
             <Input placeholder="Enter the title of your proposal"></Input>
           </FormItem>
           <FormItem
             name="description"
             label={<h3 className="text-lg font-semibold text-gray-900 mb-2">Description</h3>}
+            rules={[
+              {
+                required: true,
+                message: "Please enter the description of your proposal",
+              },
+            ]}
           >
             <MDXEditor markdown={""} />
           </FormItem>
         </Card>
 
-        <FormList name="actions">
+        <FormList
+          name="actions"
+          rules={[
+            {
+              validator: async () => {
+                const value = form.getFieldValue("actions");
+                if (!value || value.length === 0) {
+                  return Promise.resolve(new Error("Please add at least one action"));
+                }
+                return Promise.resolve();
+              },
+            },
+          ]}
+        >
           {(fields: any, { add, remove }) => (
             <>
               {fields.map((field: any, index: number) => {

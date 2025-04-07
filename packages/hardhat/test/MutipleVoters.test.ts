@@ -121,9 +121,9 @@ describe("Multiple Voters Test", function () {
       expect(proposal.proposalDetail.targets[0]).to.equal(await governorTemplate.getAddress());
       expect(proposal.proposalDetail.calldatas[0]).to.equal(calldata);
       const number = await time.latestBlock();
-      expect(proposal.startBlock).to.equal(number + 1);
-      expect(proposal.endBlock).to.eq(number + 1 + 10);
-      expect(proposal.startBlock).to.lt(proposal.endBlock);
+      expect(proposal.startTime).to.equal(number + 1);
+      expect(proposal.endTime).to.eq(number + 1 + 10);
+      expect(proposal.startTime).to.lt(proposal.endTime);
       expect(proposal.proposalState).to.equal(ProposalState.Pending);
       expect(proposal.proposalVote.forVotes).to.equal(0);
       expect(proposal.proposalVote.againstVotes).to.equal(0);

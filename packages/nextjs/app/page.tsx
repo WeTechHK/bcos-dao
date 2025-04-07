@@ -2,13 +2,14 @@
 
 import React from "react";
 import Link from "next/link";
+import { BlockOutlined, ContainerOutlined, FileDoneOutlined, PlusCircleOutlined } from "@ant-design/icons";
+import { Button } from "antd";
 import type { NextPage } from "next";
 import { useAccount } from "wagmi";
-// 假设使用wagmi获取当前连接的账户
 import { ProposalCard } from "~~/components/ProposalCard";
-import { useIsMaintainer, useProposalThreshold } from "~~/hooks/blockchain/BCOSGovernor";
+import { useIsMaintainer, useProposalThreshold, useVotingPeriod } from "~~/hooks/blockchain/BCOSGovernor";
 import { useLatestProposalId, useProposalList } from "~~/hooks/blockchain/BCOSGovernor";
-import { useVotePower } from "~~/hooks/blockchain/ERC20VotePower";
+import { useVotePower, useVotePowerDecimal } from "~~/hooks/blockchain/ERC20VotePower";
 
 const Home: NextPage = () => {
   const { address } = useAccount();
@@ -18,10 +19,18 @@ const Home: NextPage = () => {
   const latestProposal = useLatestProposalId();
   console.log("latestProposal: ", latestProposal);
   const votingPower = useVotePower(address || "");
+  const decimals = useVotePowerDecimal();
   const proposalThreshold = useProposalThreshold();
+  const votingPeriod = useVotingPeriod();
   console.log("votingPower: ", votingPower);
   const { data: proposalList, loadMore, hasMoreProposals, loading } = useProposalList(pageSize, latestProposal || 0);
-  if (!latestProposal) {
+  if (
+    latestProposal === undefined ||
+    votingPower === undefined ||
+    proposalThreshold === undefined ||
+    decimals === undefined ||
+    votingPeriod === undefined
+  ) {
     return <div className="container mx-auto px-4 py-6">loading....</div>;
   }
   console.log("proposalList: ", proposalList);
@@ -56,23 +65,82 @@ const Home: NextPage = () => {
 
         {/*Proposal Section*/}
         <div>
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold text-gray-800">Proposals</h2>
-            {Number(votingPower) >= proposalThreshold && (
-              <Link
-                className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition duration-300"
-                href="/proposal/creation"
-              >
-                Create Proposal
-              </Link>
-            )}
-          </div>
+          {!loading && proposalList.length === 0 ? (
+            <div className="w-full min-h-[80vh] flex flex-col items-center justify-center from-blue-50 to-indigo-50 p-6">
+              <div className="max-w-2xl w-full bg-white/80 backdrop-blur-sm rounded-xl border border-blue-100 shadow-md p-8 flex flex-col items-center">
+                {/* Empty state illustration */}
+                <div className="relative w-40 h-40 mb-6">
+                  <div className="absolute inset-0 bg-gradient-to-br from-blue-200 to-purple-200 rounded-full animate-pulse"></div>
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <ContainerOutlined
+                      style={{ fontSize: "120px", fontWeight: "bolder" }}
+                      className="w-20 h-20 text-blue-500 opacity-80"
+                    />
+                  </div>
+                  <div className="absolute -right-3 -bottom-3 bg-indigo-500 rounded-full p-2 shadow-lg">
+                    <PlusCircleOutlined style={{ fontSize: "xx-large" }} className="w-8 h-8 text-white" />
+                  </div>
+                </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {proposalList.map(proposal => (
-              <ProposalCard key={proposal.id} {...proposal} />
-            ))}
-          </div>
+                {/* Title */}
+                <h1 className="text-3xl font-bold text-center bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent mb-4">
+                  No Proposals Yet
+                </h1>
+
+                {/* Description */}
+                <p className="text-slate-600 text-center max-w-md mb-8">
+                  Be the first to create a proposal for your DAO community. Proposals help drive collective decisions
+                  and shape the future of our organization.
+                </p>
+
+                {/* Action Button */}
+                <Button
+                  type="primary"
+                  className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white px-8 py-6 h-auto rounded-xl font-medium text-lg shadow-md transition-all duration-200 flex items-center gap-2 mb-6"
+                  href="/proposal/creation"
+                >
+                  <PlusCircleOutlined style={{ fontSize: "xx-large" }} className="w-10 h-10" />
+                  Create First Proposal
+                </Button>
+
+                {/* Info Box */}
+                <div className="w-full bg-blue-50 rounded-lg p-2 border border-blue-100 mt-2">
+                  <div className="flex items-start gap-3">
+                    <div className="bg-blue-100 p-2 rounded-lg">
+                      <FileDoneOutlined style={{ fontSize: "large" }} className="w-5 h-5 text-blue-600" />
+                    </div>
+                    <div>
+                      <h3 className="font-medium text-sm text-slate-700">How proposals work</h3>
+                      <div className="text-xs text-slate-600 mt-1">
+                        Proposals require a minimum of {proposalThreshold / 10 ** decimals} tokens to create and will be
+                        open for voting for {votingPeriod / (24 * 60 * 60)} days. Members with governance tokens can
+                        cast their votes to approve or reject each proposal.
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : (
+            proposalList.length > 0 && (
+              <>
+                <div className="flex justify-between items-center mb-6">
+                  <h2 className="text-2xl font-bold text-gray-800">Proposals</h2>
+                  <Link
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition duration-300"
+                    href="/proposal/creation"
+                  >
+                    Create Proposal
+                  </Link>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {proposalList.map(proposal => (
+                    <ProposalCard key={proposal.id} {...proposal} />
+                  ))}
+                </div>
+              </>
+            )
+          )}
 
           {loading && (
             <div className="col-span-full flex justify-center items-center py-6">

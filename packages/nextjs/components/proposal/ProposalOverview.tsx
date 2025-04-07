@@ -1,30 +1,24 @@
+import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
+import Link from "next/link";
+import { LinkOutlined } from "@ant-design/icons";
 import { codeBlockPlugin, headingsPlugin, linkPlugin, listsPlugin, quotePlugin } from "@mdxeditor/editor";
 import "@mdxeditor/editor/style.css";
 import { Popover } from "antd";
 import { message } from "antd";
 import { ClipboardIcon } from "@heroicons/react/24/outline";
+import deployedContracts from "~~/contracts/deployedContracts";
+import { type ProposalAllInfo } from "~~/hooks/blockchain/BCOSGovernor";
+import { useTransactionsByAddress } from "~~/hooks/blockchain/useTransactionByAddress";
+import { useDeployedContractInfo, useTargetNetwork } from "~~/hooks/scaffold-eth";
 import { ProposalState, stateColors } from "~~/services/store/store";
+import { formatUTCDate } from "~~/utils/TimeFormatter";
 import { shortenAddress } from "~~/utils/scaffold-eth/common";
 
 const MDXEditor = dynamic(() => import("@mdxeditor/editor").then(mod => mod.MDXEditor), { ssr: false });
 
 interface ProposalOverviewProps {
-  proposal: {
-    title: string;
-    state: string | ProposalState;
-    proposer: string;
-    id: number;
-    startBlock: number;
-    endBlock: number;
-    description: string;
-    forVotes: number;
-    againstVotes: number;
-    abstainVotes: number;
-    targets: string[];
-    values: (string | bigint)[];
-    calldatas: string[];
-  };
+  proposal: ProposalAllInfo;
   isPreview?: boolean;
 }
 
@@ -37,12 +31,72 @@ export const ProposalOverview = ({ proposal, isPreview = false }: ProposalOvervi
       message.error("Failed to copy");
     }
   };
+  const bcosGovernor = useDeployedContractInfo({
+    contractName: "BCOSGovernor",
+  });
+  const stateColor = stateColors[Number(proposal.state)];
+  const [timeRange, setTimeRange] = useState<string>();
+  const [etaTime, setEtaTime] = useState<string>();
+  const [timeSuffix, setTimeSuffix] = useState<string>("");
+  const [txHash, setTxHash] = useState<string>();
+  const txsByProposer = useTransactionsByAddress(proposal.createBlock, proposal.proposer);
+  useEffect(() => {
+    if (proposal.startTime && proposal.endTime) {
+      const startTimeString = formatUTCDate(proposal.startTime * 1000);
+      const endTimeString = formatUTCDate(proposal.endTime * 1000);
+      setTimeRange(`${startTimeString} - ${endTimeString}`);
+    }
+  }, [proposal.startTime, proposal.endTime]);
+
+  useEffect(() => {
+    if (proposal.eta && proposal.eta !== 0) {
+      const etaString = formatUTCDate(proposal.eta * 1000);
+      const eta = new Date(proposal.eta * 1000);
+      const now = new Date();
+      let timeSuffix = "";
+      let diffDate;
+      if (now < eta) {
+        diffDate = new Date(now.getTime() - eta.getTime());
+        timeSuffix = " (ends in " + diffDate.getUTCDate() + " days " + diffDate.getUTCHours() + " hours)";
+      } else {
+        // eta <= now
+        timeSuffix = " (Ready to go!)";
+      }
+      setEtaTime(etaString);
+      setTimeSuffix(timeSuffix);
+    }
+  }, [proposal.eta]);
+
+  useEffect(() => {
+    if (txsByProposer && bcosGovernor) {
+      console.log("txsByProposer", txsByProposer);
+      const txhash = txsByProposer.filter(tx => {
+        return tx.to === bcosGovernor.data?.address && tx.input.startsWith("0xb7fb511b");
+      });
+      if (txhash.length === 1) {
+        setTxHash(txhash[0].hash);
+      }
+    }
+  }, [txsByProposer]);
+
+  const { targetNetwork } = useTargetNetwork();
+  const blockExplorerBaseURL = targetNetwork.blockExplorers?.default?.url;
 
   return (
-    <div className="bg-white rounded-xl shadow-lg p-6">
-      {/* General Info */}
-      <div className="mb-8">
-        <div className="flex justify-between items-center mb-6">
+    <div className="bg-white rounded-xl shadow-lg">
+      {/*Header*/}
+      {!isPreview && (
+        <div className={`flex rounded-t-xl justify-between items-center p-4 ${stateColor}`}>
+          <span className={`px-3 py-1 text-sm font-semibold rounded-full bg-white`}>
+            {ProposalState[Number(proposal.state)]}
+          </span>
+          <span className="text-lg font-bold text-white">No. {proposal.id}</span>
+        </div>
+      )}
+      {/*Body*/}
+      <div className="p-6">
+        {/* General Info */}
+        <div className="mb-8">
           <Popover content={proposal.title} trigger="hover" placement="topLeft" overlayStyle={{ maxWidth: "50%" }}>
             <h1
               className={`text-2xl font-bold text-gray-800 truncate cursor-pointer ${
@@ -52,119 +106,127 @@ export const ProposalOverview = ({ proposal, isPreview = false }: ProposalOvervi
               {proposal.title}
             </h1>
           </Popover>
-          {!isPreview && (
-            <span className={`px-3 py-1 text-sm font-semibold rounded-full ${stateColors[Number(proposal.state)]}`}>
-              {ProposalState[Number(proposal.state)]}
-            </span>
-          )}
-        </div>
 
-        <div className="grid grid-cols-2 gap-6">
-          <div>
-            {isPreview ? (
-              <h2 className="text-lg font-semibold mb-4">Proposer</h2>
+          <div className="grid grid-cols-2 gap-6 mt-6">
+            {etaTime !== undefined ? (
+              <div>
+                <h2 className="text-xl font-bold text-gray-800">Executable Time</h2>
+                <div className="flex justify-start">
+                  <p className="text-md font-medium text-gray-500">{etaTime}</p>
+                  <p className="text-md text-emerald-500">{timeSuffix}</p>
+                </div>
+              </div>
             ) : (
-              <p className="text-sm text-gray-500 mb-1">Proposer</p>
+              <div>
+                <h2 className="text-xl font-bold text-gray-800">Voting Period</h2>
+                <p className="text-md font-medium text-gray-500">{timeRange}</p>
+              </div>
             )}
-            <p className="text-md font-medium">{shortenAddress(proposal.proposer)}</p>
-          </div>
-          {!isPreview && (
-            <>
+            <div>
+              <h2 className="text-xl font-bold text-gray-800">Proposer</h2>
+              <Link
+                href={`${blockExplorerBaseURL}/address/${proposal.proposer}`}
+                className="text-md font-medium text-blue-500"
+                target="_blank"
+              >
+                <LinkOutlined />
+                {shortenAddress(proposal.proposer)}
+              </Link>
+            </div>
+
+            {txHash && (
               <div>
-                <p className="text-sm text-gray-500 mb-1">Proposal ID</p>
-                <p className="text-md font-medium">#{proposal.id}</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-500 mb-1">Block Range</p>
-                <p className="text-md font-medium">
-                  {proposal.startBlock} ~ {proposal.endBlock}
-                </p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-500 mb-1">Transaction</p>
-                <a href="#" className="text-blue-600 hover:text-blue-800">
+                <h2 className="text-xl font-bold text-gray-800">Transaction</h2>
+                <Link
+                  href={`${blockExplorerBaseURL}/tx/${txHash}`}
+                  className="text-md font-medium text-blue-500"
+                  target={`_blank`}
+                >
+                  <LinkOutlined />
                   View on Explorer →
-                </a>
+                </Link>
               </div>
-            </>
-          )}
+            )}
+          </div>
         </div>
-      </div>
 
-      {/* Actions */}
-      <div className="mb-8">
-        <h2 className="text-lg font-semibold mb-4">Actions</h2>
-        <div className="overflow-x-auto">
-          <table className="w-full divide-y divide-gray-200 table-fixed">
-            <thead className="bg-gray-50">
-              <tr>
-                <th
-                  scope="col"
-                  className="w-[10%] px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                >
-                  Type
-                </th>
-                <th
-                  scope="col"
-                  className="w-[20%] px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                >
-                  Address
-                </th>
-                <th
-                  scope="col"
-                  className="w-[10%] px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                >
-                  Value
-                </th>
-                <th
-                  scope="col"
-                  className="w-[60%] px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                >
-                  CallData
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {proposal.targets.map((target, index) => (
-                <tr key={index}>
-                  <td className="px-6 py-4 text-sm text-gray-500 overflow-hidden">{""}</td>
-                  <td className="px-6 py-4 text-sm font-medium text-gray-900 overflow-hidden">
-                    {shortenAddress(target)}
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-500 overflow-hidden">{Number(proposal.values[index])}</td>
-                  <td className="px-6 py-4 text-sm text-gray-500 font-mono">
-                    <div className="flex items-center">
-                      <span className="truncate" title={proposal.calldatas[index]}>
-                        {proposal.calldatas[index]}
-                      </span>
-                      <button
-                        onClick={() => copyToClipboard(proposal.calldatas[index])}
-                        className="ml-2 p-1 hover:bg-gray-100 rounded-md flex-shrink-0"
-                        title="Copy calldata"
-                      >
-                        <ClipboardIcon className="h-4 w-4" />
-                      </button>
-                    </div>
-                  </td>
+        {/* Actions */}
+        <div className="mb-8">
+          <h2 className="text-xl font-bold text-gray-800 mb-4">Actions</h2>
+          <div className="overflow-x-auto">
+            <table className="w-full divide-y divide-gray-200 table-fixed">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th
+                    scope="col"
+                    className="w-[10%] px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Type
+                  </th>
+                  <th
+                    scope="col"
+                    className="w-[20%] px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Address
+                  </th>
+                  <th
+                    scope="col"
+                    className="w-[10%] px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Value
+                  </th>
+                  <th
+                    scope="col"
+                    className="w-[60%] px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    CallData
+                  </th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {proposal.targets.map((target, index) => (
+                  <tr key={index}>
+                    <td className="px-6 py-4 text-sm text-gray-500 overflow-hidden">{""}</td>
+                    <td className="px-6 py-4 text-sm font-medium text-gray-900 overflow-hidden">
+                      {shortenAddress(target)}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-500 overflow-hidden">
+                      {Number(proposal.values[index])}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-500 font-mono">
+                      <div className="flex items-center">
+                        <span className="truncate" title={proposal.calldatas[index]}>
+                          {proposal.calldatas[index]}
+                        </span>
+                        <button
+                          onClick={() => copyToClipboard(proposal.calldatas[index])}
+                          className="ml-2 p-1 hover:bg-gray-100 rounded-md flex-shrink-0"
+                          title="Copy calldata"
+                        >
+                          <ClipboardIcon className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
-      </div>
 
-      {/* Description */}
-      <div>
-        <h2 className="text-lg font-semibold mb-4">Description</h2>
-        <div className="prose max-w-none bg-gray-50 p-4 rounded-lg">
-          {typeof window !== "undefined" && (
-            <MDXEditor
-              markdown={proposal.description}
-              readOnly
-              contentEditableClassName="!bg-transparent"
-              plugins={[linkPlugin(), listsPlugin(), quotePlugin(), headingsPlugin(), codeBlockPlugin()]}
-            />
-          )}
+        {/* Description */}
+        <div>
+          <h2 className="text-xl font-bold text-gray-800 mb-4">Description</h2>
+          <div className="prose max-w-none bg-gray-50 p-4 rounded-lg">
+            {typeof window !== "undefined" && (
+              <MDXEditor
+                markdown={proposal.description}
+                readOnly
+                contentEditableClassName="!bg-transparent"
+                plugins={[linkPlugin(), listsPlugin(), quotePlugin(), headingsPlugin(), codeBlockPlugin()]}
+              />
+            )}
+          </div>
         </div>
       </div>
     </div>

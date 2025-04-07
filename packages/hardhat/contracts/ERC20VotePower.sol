@@ -7,6 +7,8 @@ import { PausableUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/P
 import { NoncesUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/NoncesUpgradeable.sol";
 import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import { ECDSA } from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+
 import "./TimeSetting.sol";
 
 /**
@@ -23,6 +25,8 @@ contract ERC20VotePower is
     OwnableUpgradeable
 {
     TimeSetting private timer;
+    bytes32 private constant DELEGATION_TYPEHASH =
+        keccak256("Delegation(address delegatee,uint256 nonce,uint256 expiry)");
 
     function initialize(string memory name, string memory symbol, TimeSetting _timer) public initializer {
         __ERC20VotePower_init(name, symbol, _timer);
@@ -39,6 +43,27 @@ contract ERC20VotePower is
         __Ownable_init(msg.sender);
         __Pausable_init();
         timer = _timer;
+    }
+
+    function delegateBySig(
+        address delegatee,
+        uint256 nonce,
+        uint256 expiry,
+        uint8 v,
+        bytes32 r,
+        bytes32 s
+    ) public virtual override {
+        if (clock() > expiry) {
+            revert VotesExpiredSignature(expiry);
+        }
+        address signer = ECDSA.recover(
+            _hashTypedDataV4(keccak256(abi.encode(DELEGATION_TYPEHASH, delegatee, nonce, expiry))),
+            v,
+            r,
+            s
+        );
+        _useCheckedNonce(signer, nonce);
+        _delegate(signer, delegatee);
     }
 
     function _update(

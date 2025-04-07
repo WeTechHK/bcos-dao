@@ -3,13 +3,22 @@
 import { useScaffoldReadContract, useScaffoldWriteContract } from "~~/hooks/scaffold-eth";
 
 export const useVotePower = (address: string) => {
-  const { data: votePowerData } = useScaffoldReadContract({
+  const { data: votePowerData, refetch: refetchVotePower } = useScaffoldReadContract({
     contractName: "ERC20VotePower",
     functionName: "getVotes",
     args: [address],
   });
 
-  return votePowerData;
+  return { votePowerData, refetchVotePower };
+};
+
+export const useVotePowerDecimal = () => {
+  const { data: decimals } = useScaffoldReadContract({
+    contractName: "ERC20VotePower",
+    functionName: "decimals",
+  });
+
+  return decimals;
 };
 
 export const useDelegates = (address: string) => {
@@ -41,5 +50,28 @@ export const useTotalSupply = () => {
     functionName: "totalSupply",
   });
 
+  if (totalSupplyData === undefined) {
+    return 0n;
+  }
+
   return totalSupplyData;
+};
+
+export const useBalanceOf = (address: string) => {
+  const { data: balanceData } = useScaffoldReadContract({
+    contractName: "ERC20VotePower",
+    functionName: "balanceOf",
+    args: [address],
+  });
+
+  return balanceData;
+};
+
+export const useSymbol = () => {
+  const { data: symbol } = useScaffoldReadContract({
+    contractName: "ERC20VotePower",
+    functionName: "symbol",
+  });
+
+  return symbol;
 };

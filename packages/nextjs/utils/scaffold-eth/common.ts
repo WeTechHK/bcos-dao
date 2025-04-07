@@ -8,5 +8,5 @@ export const isZeroAddress = (address: string) => address === ZERO_ADDRESS;
 
 export const shortenAddress = (address: string) => {
   if (!address) return "";
-  return `${address.slice(0, 6)}...${address.slice(-4)}`;
+  return `${address.slice(0, 8)}...${address.slice(-6)}`;
 };
