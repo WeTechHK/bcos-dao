@@ -126,7 +126,7 @@ const useProposalInfoPage = (offset: number, page: number) => {
     args: [BigInt(offset), BigInt(page)],
   });
 
-  return proposalInfos?.map(pro => {
+  return proposalInfos?.map((pro: { proposalId: any }) => {
     return getProposalInfo(pro, Number(pro.proposalId));
   });
 };
@@ -150,13 +150,13 @@ const useProposalList = (page: number, totalNumber: number) => {
   useEffect(() => {
     if (proposalInfosData && totalNumber) {
       const handledData = proposalInfosData
-        .map(pro => {
+        .map((pro: { proposalId: any }) => {
           return getProposalInfo(pro, Number(pro.proposalId));
         })
         .reverse();
       console.log(
         "handledData======: ",
-        handledData.map(v => v.id),
+        handledData.map((v: { id: any }) => v.id),
       );
       setLoading(false);
       setData(prevData => [...prevData, ...handledData]);
