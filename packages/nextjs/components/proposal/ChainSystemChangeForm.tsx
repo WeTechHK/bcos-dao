@@ -29,10 +29,6 @@ const committeeSettings = [
     label: <div>Reset Admin of a Specific Contract</div>,
     value: "createResetAdminProposal",
   },
-  {
-    label: <div>Upgrade DAO Contract</div>,
-    value: "upgradeToAndCall",
-  },
 ];
 
 const contractNameSelector = [

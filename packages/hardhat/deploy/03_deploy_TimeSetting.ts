@@ -25,7 +25,7 @@ const deployTimeSetting: DeployFunction = async function (hre: HardhatRuntimeEnv
     autoMine: true,
     args: [],
   });
-  console.log("TimeSetting", time);
+  console.log("TimeSetting", time.address);
 };
 
 export default deployTimeSetting;

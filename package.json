@@ -43,6 +43,8 @@
     "next:serve": "yarn workspace @bcos-dao/nextjs serve",
     "precommit": "lint-staged",
     "start": "yarn workspace @bcos-dao/nextjs dev",
+    "start:dev": "yarn workspace @bcos-dao/nextjs start:dev",
+    "start:prod": "yarn workspace @bcos-dao/nextjs start:prod",
     "test": "yarn hardhat:test",
     "vercel": "yarn workspace @bcos-dao/nextjs vercel",
     "vercel:login": "yarn workspace @bcos-dao/nextjs vercel:login",

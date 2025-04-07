@@ -9,36 +9,90 @@ import { GenericContract, InheritedFunctions } from "~~/utils/scaffold-eth/contr
 
 const governorSettings = [
   {
-    label: <div>Proposal Threshold</div>,
-    value: "setProposalThreshold",
+    label: <div>DAO Settings</div>,
+    title: "DAO Settings",
+    options: [
+      {
+        label: <div>Proposal Threshold</div>,
+        value: "setProposalThreshold",
+      },
+      {
+        label: <div>Vote Success Threshold</div>,
+        value: "setVoteSuccessThreshold",
+      },
+      {
+        label: <div>Proposal Approval Threshold</div>,
+        value: "setApproveThreshold",
+      },
+      {
+        label: <div>Quorum Numerator</div>,
+        value: "updateQuorumNumerator",
+      },
+      {
+        label: <div>Voting Delay</div>,
+        value: "setVotingDelay",
+      },
+      {
+        label: <div>Voting Period</div>,
+        value: "setVotingPeriod",
+      },
+      {
+        label: <div>Timelock</div>,
+        value: "updateTimelock",
+      },
+      {
+        label: <div>Voting Success Logic</div>,
+        value: "updateVoteSuccessLogic",
+      },
+      {
+        label: <div>Upgrade DAO Contract</div>,
+        value: "upgradeToAndCall",
+      },
+      {
+        label: <div>Change Timestamp Unit</div>,
+        value: "resetUint",
+      },
+    ],
   },
   {
-    label: <div>Vote Success Threshold</div>,
-    value: "setVoteSuccessThreshold",
+    label: <div>DAO Role Changing</div>,
+    title: "DAO Role Changing",
+    options: [
+      {
+        label: <div>Grant Maintainer</div>,
+        value: "grantMaintainer",
+      },
+      {
+        label: <div>Revoke Role</div>,
+        value: "revokeRole",
+      },
+      {
+        label: <div>Renounce Role</div>,
+        value: "renounceRole",
+      },
+    ],
   },
   {
-    label: <div>Quorum Numerator</div>,
-    value: "updateQuorumNumerator",
-  },
-  {
-    label: <div>Voting Delay</div>,
-    value: "setVotingDelay",
-  },
-  {
-    label: <div>Voting Period</div>,
-    value: "setVotingPeriod",
-  },
-  {
-    label: <div>Timelock</div>,
-    value: "updateTimelock",
-  },
-  {
-    label: <div>Voting Success Logic</div>,
-    value: "updateVoteSuccessLogic",
-  },
-  {
-    label: <div>Upgrade DAO Contract</div>,
-    value: "upgradeToAndCall",
+    label: <div>EVP Token Changing</div>,
+    title: "EVP Token Changing",
+    options: [
+      {
+        label: <div>Mint EVP Token</div>,
+        value: "mintToken",
+      },
+      {
+        label: <div>Burn EVP Token</div>,
+        value: "burnToken",
+      },
+      {
+        label: <div>Pause EVP Token</div>,
+        value: "pauseToken",
+      },
+      {
+        label: <div>Unpause EVP Token</div>,
+        value: "unpauseToken",
+      },
+    ],
   },
 ];
 

@@ -1,6 +1,5 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { DeployFunction } from "hardhat-deploy/types";
-import { network } from "hardhat";
 
 /**
  * Deploys a contract named "BCOSGovernor" using the deployer account and
@@ -29,7 +28,17 @@ const deployBCOSGovernor: DeployFunction = async function (hre: HardhatRuntimeEn
   const proposalThreshold: bigint = 10000000000000000n; // 10e16
   const minDelay = 24n * 60n * 60n; // 1 day
   const initTokenPool: bigint = 1000000000000000000n; // 10e18
-  const unit: bigint = network.config.chainId === 30303 ? 1000n : 1n;
+  const unit: bigint = process.env.TIMER_UNIT ? BigInt(process.env.TIMER_UNIT) : 1000n;
+
+  // print all args
+  console.log("deployer", deployer);
+  console.log("quorumNumerator", quorumNumerator);
+  console.log("votingDelay", votingDelay);
+  console.log("votingPeriod", votingPeriod);
+  console.log("proposalThreshold", proposalThreshold);
+  console.log("minDelay", minDelay);
+  console.log("initTokenPool", initTokenPool);
+  console.log("unit", unit);
 
   const governor = await deploy("BCOSGovernor", {
     from: deployer,
