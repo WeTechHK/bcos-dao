@@ -194,6 +194,9 @@ const ProposalCreation: NextPage = () => {
         }}
       >
         <Card>
+          <Tag color="blue" bordered={false} className="text-lg font-bold content-center mb-4">
+            Main Information
+          </Tag>
           <FormItem
             name="title"
             label={<h3 className="text-lg font-semibold text-gray-900 mb-2">Title</h3>}

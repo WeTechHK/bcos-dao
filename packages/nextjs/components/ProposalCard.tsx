@@ -3,8 +3,10 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Popover } from "antd";
-import { useProposalVotes } from "~~/hooks/blockchain/BCOSGovernor";
+import { useProposalVotes, useQuorumNumerator } from "~~/hooks/blockchain/BCOSGovernor";
+import { useTotalSupply } from "~~/hooks/blockchain/ERC20VotePower";
 import { ProposalState, stateColors } from "~~/services/store/store";
+import { formatUTCDate } from "~~/utils/TimeFormatter";
 
 interface ProposalCardProps {
   id: number;
@@ -23,58 +25,69 @@ interface ProposalCardProps {
   title: string;
 }
 
-export const ProposalCard = ({ id, title, proposer, startTime, endTime, state }: ProposalCardProps) => {
+function truncateWords(text: string, maxWords = 25) {
+  const regex = new RegExp(`^(\\s*\\S+){${maxWords}}|.+$`, "g");
+  const matched = text.match(regex);
+  if (!matched) return text.slice(0, maxWords) + "...";
+  return matched[0].replace(/(\s+\S*)$/, "...");
+}
+
+export const ProposalCard = ({
+  id,
+  title,
+  proposer,
+  startTime,
+  endTime,
+  eta,
+  state,
+  description,
+}: ProposalCardProps) => {
   const {
     forVotes: forVotesFromContract,
     againstVotes: againstVotesFromContract,
     abstainVotes: abstainVotesFromContract,
   } = useProposalVotes(id);
-  const totalVotes = Number(forVotesFromContract) + Number(againstVotesFromContract) + Number(abstainVotesFromContract);
-  const progress = totalVotes > 0 ? (Number(forVotesFromContract) / totalVotes) * 100 : 0;
+  const quorumNumerator = useQuorumNumerator();
+  const totalSupply = useTotalSupply();
+  const quorum = (BigInt(quorumNumerator) * totalSupply) / 100n;
+  const totalVotes = forVotesFromContract + againstVotesFromContract + abstainVotesFromContract;
+  const progress = Number(quorum > 0 ? (totalVotes / quorum) * 100n : 0);
+  const progressFixed = progress >= 100 ? 100 : progress;
 
   const [timeRange, setTimeRange] = useState<string>();
+  const [etaTime, setEtaTime] = useState<string>();
 
   useEffect(() => {
     if (startTime && endTime) {
-      const startTimeString = new Date(startTime).toLocaleString("zh-CN", {
-        year: "numeric",
-        month: "2-digit",
-        day: "2-digit",
-        hour: "2-digit",
-        minute: "2-digit",
-        second: undefined,
-        hour12: false,
-      });
-      const endTimeString = new Date(endTime).toLocaleString("zh-CN", {
-        year: "numeric",
-        month: "2-digit",
-        day: "2-digit",
-        hour: "2-digit",
-        minute: "2-digit",
-        second: undefined,
-        hour12: false,
-      });
+      const startTimeString = formatUTCDate(startTime * 1000);
+      const endTimeString = formatUTCDate(endTime * 1000);
       setTimeRange(`${startTimeString} - ${endTimeString}`);
     }
   }, [startTime, endTime]);
 
+  useEffect(() => {
+    if (eta && eta !== 0) {
+      const etaString = formatUTCDate(eta * 1000);
+      setEtaTime(etaString);
+    }
+  }, [eta]);
+
   return (
-    <div className="proposal-card bg-white rounded-xl shadow-lg overflow-hidden hover:-translate-y-1.5 duration-300">
-      <div className="p-6 flex flex-col h-[280px]">
+    <div className="flex-col bg-white rounded-xl shadow-lg overflow-hidden hover:-translate-y-1.5 duration-300">
+      <div>
         {/* Header */}
-        <div className="flex justify-between items-start mb-4">
-          <span
-            className={`px-3 py-1 text-sm font-semibold rounded-full ${
-              stateColors[
-                typeof state === "string" ? ProposalState[state as keyof typeof ProposalState] : Number(state)
-              ]
-            }`}
-          >
+        <div
+          className={`flex p-4 justify-between items-center ${
+            stateColors[typeof state === "string" ? ProposalState[state as keyof typeof ProposalState] : Number(state)]
+          }`}
+        >
+          <span className={`px-3 py-1 text-sm font-semibold rounded-full bg-white`}>
             {typeof state === "string" ? state : ProposalState[Number(state)]}
           </span>
-          <span className="text-sm text-gray-500">{timeRange ? timeRange : ""}</span>
+          <span className="text-lg font-bold text-white">No. {id}</span>
         </div>
-
+      </div>
+      <div className="p-6 pt-3 flex flex-col h-[280px]">
         {/* Content */}
         <div className="flex-1">
           <Popover content={title} trigger="hover" placement="topLeft" overlayStyle={{ maxWidth: "50%" }}>
@@ -87,23 +100,38 @@ export const ProposalCard = ({ id, title, proposer, startTime, endTime, state }:
               By: {proposer.slice(0, 6)}...{proposer.slice(-4)}
             </span>
           </div>
+          <div className="flex items-center gap-2">{truncateWords(description)}...</div>
         </div>
 
         {/* Footer */}
         <div className="mt-4">
-          {state === ProposalState.Active && (
+          {state !== ProposalState.Pending && state !== ProposalState.Canceled && (
             <div className="space-y-2 mb-3">
               <div className="flex justify-between items-center text-sm">
-                <span className="text-gray-500">For Votes</span>
-                <span className="text-gray-900 font-medium">{progress.toFixed(1)}%</span>
+                <span className=" text-gray-500">Total Votes: {(totalVotes / 10n ** 18n).toString()}</span>
+                {progressFixed === 100 ? (
+                  <span className="text-gray-900 font-medium">Reach Quorum!</span>
+                ) : (
+                  <span className="text-gray-900 font-medium">{progress.toFixed(1)}%</span>
+                )}
               </div>
               <div className="w-full bg-gray-200 rounded-full h-2">
-                <div className="bg-blue-600 h-2 rounded-full" style={{ width: `${progress}%` }}></div>
+                <div className="bg-blue-600 h-2 rounded-full" style={{ width: `${progressFixed}%` }}></div>
               </div>
             </div>
           )}
+          {/*show time range*/}
+          {state === ProposalState.Canceled && (
+            <div className="flex justify-between text-sm">
+              <span className="text-gray-900 font-medium">Canceled</span>
+            </div>
+          )}
           <div className="flex justify-between text-sm">
-            <span className="text-gray-500">Total Votes: {totalVotes}</span>
+            {eta === 0 ? (
+              <span className="text-sm text-gray-500">{timeRange ? timeRange : ""}</span>
+            ) : (
+              <span className="text-sm text-gray-500">Executable Time : {etaTime}</span>
+            )}
             <Link href={{ pathname: "/proposal/detail", query: { id } }} className="text-blue-600 hover:text-blue-800">
               View Details →
             </Link>

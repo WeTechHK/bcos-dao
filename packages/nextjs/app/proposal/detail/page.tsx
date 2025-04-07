@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { message } from "antd";
 import type { NextPage } from "next";
@@ -24,6 +24,7 @@ import {
 } from "~~/hooks/blockchain/BCOSGovernor";
 import { useTotalSupply } from "~~/hooks/blockchain/ERC20VotePower";
 import { ProposalState, VoteType } from "~~/services/store/store";
+import { shortenAddress } from "~~/utils/scaffold-eth/common";
 
 const ProposalDetail: NextPage = () => {
   const searchParams = useSearchParams();
@@ -474,8 +475,12 @@ const ProposalDetail: NextPage = () => {
   );
 };
 
-const shortenAddress = (address: string) => {
-  return `${address.slice(0, 6)}...${address.slice(-4)}`;
+const ProposalDetailPage = () => {
+  return (
+    <Suspense fallback={<div className="container mx-auto px-4 py-8">Loading...</div>}>
+      <ProposalDetail />
+    </Suspense>
+  );
 };
 
-export default ProposalDetail;
+export default ProposalDetailPage;

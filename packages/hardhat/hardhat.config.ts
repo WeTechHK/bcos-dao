@@ -55,13 +55,13 @@ const config: HardhatUserConfig = {
       blockGasLimit: 30000000,
     },
     dev_net: {
-      url: `http://140.210.218.31:8545`,
-      chainId: 20200,
+      url: `http://140.210.218.31:8555`,
+      chainId: 30303,
       accounts: [deployerPrivateKey],
     },
     potos_testnet: {
-      url: `https://rpc.eightart.hk/`,
-      chainId: 20200,
+      url: `https://rpc-testnet.potos.hk`,
+      chainId: 60600,
       accounts: [deployerPrivateKey],
     },
     eth_mainnet: {

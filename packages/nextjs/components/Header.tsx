@@ -4,14 +4,17 @@ import React, { useCallback, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { LinkOutlined } from "@ant-design/icons";
 import { Input, Modal, message } from "antd";
+import { formatEther } from "viem";
 import { hardhat } from "viem/chains";
 import { useAccount } from "wagmi";
 import { ArrowPathIcon, Bars3Icon, BugAntIcon } from "@heroicons/react/24/outline";
 import { FaucetButton, RainbowKitCustomConnectButton } from "~~/components/scaffold-eth";
 import { useIsMaintainer } from "~~/hooks/blockchain/BCOSGovernor";
-import { useDelegate, useDelegates, useVotePower } from "~~/hooks/blockchain/ERC20VotePower";
+import { useBalanceOf, useDelegate, useDelegates, useSymbol, useVotePower } from "~~/hooks/blockchain/ERC20VotePower";
 import { useOutsideClick, useTargetNetwork } from "~~/hooks/scaffold-eth";
+import { shortenAddress } from "~~/utils/scaffold-eth/common";
 
 type HeaderMenuLink = {
   label: string;
@@ -63,16 +66,18 @@ export const HeaderMenuLinks = () => {
 export const Header = () => {
   const { targetNetwork } = useTargetNetwork();
   const { address } = useAccount();
-  const votePowerData = useVotePower(address || "");
+  const { votePowerData, refetchVotePower } = useVotePower(address || "");
   const currentDelegate = useDelegates(address || ""); // 从合约获取当前delegate
   const isMaintainer = useIsMaintainer(address || ""); // 检查用户是否是maintainer
+  const balance = useBalanceOf(address || "");
+  const symbol = useSymbol();
   console.log("currentDelegate: ", currentDelegate);
   const delegate = useDelegate();
   const isLocalNetwork = targetNetwork.id === hardhat.id;
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [showDelegateOptions, setShowDelegateOptions] = useState(false);
   const [showAddressModal, setShowAddressModal] = useState(false);
-
+  const blockExplorerBaseURL = targetNetwork.blockExplorers?.default?.url;
   const burgerMenuRef = useRef<HTMLDivElement>(null);
   useOutsideClick(
     burgerMenuRef,
@@ -87,6 +92,8 @@ export const Header = () => {
     } catch (error) {
       console.error("Error delegating:", error);
       message.error("Failed to delegate");
+    } finally {
+      await refetchVotePower();
     }
   };
 
@@ -95,14 +102,8 @@ export const Header = () => {
     setShowAddressModal(true);
   };
 
-  // 处理 voting power 显示
   const formatVotePower = (power: bigint | undefined) => {
-    if (!power) return "0";
-    const powerNum = Number(power) / 10 ** 18;
-    if (powerNum > 1000) {
-      return `${(powerNum / 1000).toFixed(1)}k`;
-    }
-    return powerNum.toString();
+    return power ? Number(formatEther(power)) : 0;
   };
 
   return (
@@ -136,7 +137,7 @@ export const Header = () => {
           </div>
           <div className="flex flex-col">
             <span className="font-bold leading-tight">BCOS Chain DAO</span>
-            {/*<span className="text-xs">Ethereum dev stack</span>*/}
+            <span className="text-xs"></span>
           </div>
         </Link>
         <ul className="hidden lg:flex lg:flex-nowrap menu menu-horizontal px-1 gap-2">
@@ -149,7 +150,13 @@ export const Header = () => {
             {isMaintainer && (
               <span className="px-2 py-0.5 text-xs font-semibold bg-blue-500 text-white rounded-md">Maintainer</span>
             )}
-            <span className="text-sm font-semibold">Voting Power: {formatVotePower(votePowerData)}</span>
+            <div className="flex-col">
+              <div>
+                <span className="text-sm font-semibold">{formatVotePower(votePowerData).toFixed(4)}</span>
+                <span className="text-[0.8em] font-bold ml-1">{symbol ? symbol : "EVP"}</span>
+              </div>
+              <div className="text-xs text-gray-600">Voting Power</div>
+            </div>
             <button
               onClick={() => setShowDelegateOptions(true)}
               className="p-1 hover:bg-primary/20 rounded-md transition-colors"
@@ -164,12 +171,27 @@ export const Header = () => {
       </div>
 
       {/* First Modal: Delegate Options */}
-      <Modal title="Delegate" open={showDelegateOptions} footer={null} onCancel={() => setShowDelegateOptions(false)}>
+      <Modal
+        title="Delegate to..."
+        open={showDelegateOptions}
+        footer={null}
+        onCancel={() => setShowDelegateOptions(false)}
+      >
         <div className="py-4">
-          {currentDelegate && currentDelegate !== "0x0000000000000000000000000000000000000000" && (
-            <div className="mb-4 p-3 bg-gray-50 rounded-lg">
-              <p className="text-sm text-gray-600 mb-1">Current Delegate</p>
-              <p className="font-medium">{currentDelegate}</p>
+          {currentDelegate && (
+            <div className="mb-4 p-3 bg-gray-50 rounded-lg grid grid-cols-2 gap-6">
+              <div>
+                <p className="text-sm text-gray-600">Balance</p>
+                <span className="text-sm font-semibold">{formatVotePower(balance).toFixed(4)}</span>
+                <span className="text-[0.8em] font-bold ml-1">{symbol ? symbol : "EVP"}</span>
+              </div>
+              <div>
+                <p className="text-sm text-gray-600">Delegator</p>
+                <Link className="font-medium" href={`${blockExplorerBaseURL}/address/${currentDelegate}`}>
+                  <LinkOutlined />
+                  {shortenAddress(currentDelegate)}
+                </Link>
+              </div>
             </div>
           )}
           <div className="flex flex-col gap-3">
@@ -190,7 +212,21 @@ export const Header = () => {
       </Modal>
 
       {/* Second Modal: Address Input */}
-      <AddressInputModal open={showAddressModal} onClose={() => setShowAddressModal(false)} onDelegate={delegate} />
+      <AddressInputModal
+        open={showAddressModal}
+        onClose={() => setShowAddressModal(false)}
+        onDelegate={async (address: string) => {
+          try {
+            await delegate(address || "");
+            message.success("Successfully delegated to yourself");
+            setShowDelegateOptions(false);
+          } catch (error) {
+            throw error;
+          } finally {
+            await refetchVotePower();
+          }
+        }}
+      />
     </div>
   );
 };

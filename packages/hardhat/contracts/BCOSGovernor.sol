@@ -41,6 +41,13 @@ contract BCOSGovernor is
     AccessControlUpgradeable,
     UUPSUpgradeable
 {
+    struct ProposalExtraStorage {
+        string title;
+        string description;
+        uint256 createBlockNumber;
+        uint256 executedBlockNumber;
+        uint256 canceledBlockNumber;
+    }
     struct ProposalInfo {
         uint256 proposalId;
         address proposer;
@@ -50,14 +57,18 @@ contract BCOSGovernor is
         uint256 startTime;
         uint256 endTime;
         uint256 eta;
-        string proposalTitle;
-        string proposalDesc;
+        ProposalExtraStorage extra;
     }
     enum VoteType {
         Against,
         For,
         Abstain
     }
+    struct ProposalApprovalFlow {
+        address[] approvers;
+        bool approved;
+    }
+
     // keccak256("MAINTAINER_ROLE");
     bytes32 public constant MAINTAINER_ROLE = 0x339759585899103d2ace64958e37e18ccb0504652c81d4a1b8aa80fe2126ab95;
     // keccak256("EXECUTOR_ROLE");
@@ -87,11 +98,6 @@ contract BCOSGovernor is
         _token.mint(_msgSender(), _initTokenPool);
     }
 
-    struct ProposalApprovalFlow {
-        address[] approvers;
-        bool approved;
-    }
-
     modifier onlyMaintainer() {
         require(hasRole(MAINTAINER_ROLE, _msgSender()), "BCOSGovernor: caller is not a maintainer");
         _;
@@ -99,8 +105,7 @@ contract BCOSGovernor is
 
     mapping(uint256 proposalHash => uint256 proposalId) private _proposalIds;
     mapping(uint256 proposalId => uint256 proposalHash) private _proposalHashes;
-    mapping(uint256 proposalId => string) private _proposalDesc;
-    mapping(uint256 proposalId => string) private _proposalTitle;
+    mapping(uint256 proposalId => ProposalExtraStorage) private _proposalExtra;
     uint256 private _latestProposalId;
     // proposalId => vote
     mapping(uint256 proposalId => ProposalVote) private _proposalVotes;
@@ -157,8 +162,7 @@ contract BCOSGovernor is
         info.endTime = proposalDeadline(proposalHash);
         info.eta = proposalEta(proposalHash);
         info.proposer = proposalProposer(proposalHash);
-        info.proposalTitle = _proposalTitle[proposalId];
-        info.proposalDesc = _proposalDesc[proposalId];
+        info.extra = _proposalExtra[proposalId];
     }
 
     function getProposalInfoPage(
@@ -274,8 +278,10 @@ contract BCOSGovernor is
         string memory description
     ) public returns (uint256) {
         uint proposalHash = super.propose(targets, values, calldatas, description);
-        _proposalDesc[_latestProposalId] = description;
-        _proposalTitle[_latestProposalId] = title;
+        ProposalExtraStorage storage extra = _proposalExtra[_latestProposalId];
+        extra.createBlockNumber = block.number;
+        extra.title = title;
+        extra.description = description;
         return proposalHash;
     }
 
@@ -309,6 +315,9 @@ contract BCOSGovernor is
     function executeById(uint256 proposalId) public payable onlyMaintainer {
         uint256 proposalHash = _proposalHashes[proposalId];
         super.execute(proposalHash);
+        ProposalExtraStorage storage extra = _proposalExtra[proposalId];
+        extra.executedBlockNumber = block.number;
+        extra.canceledBlockNumber = 0;
     }
 
     function emergencyShutdownProposal(uint256 proposalId) public onlyMaintainer {
@@ -333,6 +342,9 @@ contract BCOSGovernor is
     function cancelById(uint256 proposalId) public onlyMaintainer {
         uint256 proposalHash = _proposalHashes[proposalId];
         super.cancel(proposalHash);
+        ProposalExtraStorage storage extra = _proposalExtra[proposalId];
+        extra.canceledBlockNumber = block.number;
+        extra.executedBlockNumber = 0;
     }
 
     /***************************
