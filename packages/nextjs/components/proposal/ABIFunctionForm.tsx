@@ -20,21 +20,20 @@ type ABIFunctionFormProps = {
 
 export const ABIFunctionForm = ({ abi, abiFunction, onChange, inheritedFrom }: ABIFunctionFormProps) => {
   const [form, setForm] = useState<Record<string, any>>(() => getInitialFormState(abiFunction));
-  const [abiData, setAbiData] = useState<`0x${string}`>("0x");
 
-  const handleWrite = async () => {
-    try {
-      const encodeData = encodeFunctionData({
-        abi: abi,
-        functionName: abiFunction.name,
-        args: getParsedContractFunctionArgs(form),
-      });
-      setAbiData(encodeData);
-      console.log(encodeData);
-    } catch (e: any) {
-      console.error("⚡️ ~ file: ABIFunctionForm.tsx:handleWrite ~ error", e);
-    }
-  };
+  // const handleWrite = async () => {
+  //   try {
+  //     const encodeData = encodeFunctionData({
+  //       abi: abi,
+  //       functionName: abiFunction.name,
+  //       args: getParsedContractFunctionArgs(form),
+  //     });
+  //     setAbiData(encodeData);
+  //     console.log(encodeData);
+  //   } catch (e: any) {
+  //     console.error("⚡️ ~ file: ABIFunctionForm.tsx:handleWrite ~ error", e);
+  //   }
+  // };
 
   useEffect(() => {
     if (abiFunction) {
@@ -50,7 +49,6 @@ export const ABIFunctionForm = ({ abi, abiFunction, onChange, inheritedFrom }: A
           functionName: abiFunction.name,
           args: getParsedContractFunctionArgs(form),
         });
-        setAbiData(encodeData);
         onChange(encodeData);
       } catch (e) {
         console.error("⚡️ ~ file: ABIFunctionForm.tsx:handleWrite ~ error", e);

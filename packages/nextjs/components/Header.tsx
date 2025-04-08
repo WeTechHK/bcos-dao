@@ -71,7 +71,6 @@ export const Header = () => {
   const isMaintainer = useIsMaintainer(address || ""); // 检查用户是否是maintainer
   const balance = useBalanceOf(address || "");
   const symbol = useSymbol();
-  console.log("currentDelegate: ", currentDelegate);
   const delegate = useDelegate();
   const isLocalNetwork = targetNetwork.id === hardhat.id;
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);

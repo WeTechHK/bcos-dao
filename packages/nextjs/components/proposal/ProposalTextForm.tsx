@@ -1,4 +1,3 @@
-import { Dispatch, SetStateAction } from "react";
 import dynamic from "next/dynamic";
 import { Card, Form, Input } from "antd";
 import { default as FormItem } from "antd/es/form/FormItem";
