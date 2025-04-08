@@ -3,9 +3,10 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Popover } from "antd";
+import classNames from "classnames";
 import { useProposalVotes, useQuorumNumerator } from "~~/hooks/blockchain/BCOSGovernor";
 import { useTotalSupply } from "~~/hooks/blockchain/ERC20VotePower";
-import { ProposalState, stateColors } from "~~/services/store/store";
+import { ProposalState, stateColorsClassName } from "~~/services/store/store";
 import { formatUTCDate } from "~~/utils/TimeFormatter";
 
 interface ProposalCardProps {
@@ -30,6 +31,27 @@ function truncateWords(text: string, maxWords = 25) {
   const matched = text.match(regex);
   if (!matched) return text.slice(0, maxWords) + "...";
   return matched[0].replace(/(\s+\S*)$/, "...");
+}
+
+function CardHeader(props: { state: string | ProposalState; id: number }) {
+  const colorClassName =
+    stateColorsClassName[
+      typeof props.state === "string" ? ProposalState[props.state as keyof typeof ProposalState] : Number(props.state)
+    ];
+  return (
+    <div
+      className={classNames(
+        "flex p-4 justify-between items-center",
+        `bg-${colorClassName}-300`,
+        `text-${colorClassName}-800`,
+      )}
+    >
+      <span className={`px-3 py-1 text-sm font-semibold rounded-full bg-white`}>
+        {typeof props.state === "string" ? props.state : ProposalState[Number(props.state)]}
+      </span>
+      <span className="text-lg font-bold text-white">No. {props.id}</span>
+    </div>
+  );
 }
 
 export const ProposalCard = ({
@@ -73,34 +95,25 @@ export const ProposalCard = ({
   }, [eta]);
 
   return (
-    <div className="flex-col bg-white rounded-xl shadow-lg overflow-hidden hover:-translate-y-1.5 duration-300">
+    <div className="flex-col bg-base-100 rounded-xl shadow-lg overflow-hidden hover:-translate-y-1.5 duration-300">
       <div>
         {/* Header */}
-        <div
-          className={`flex p-4 justify-between items-center ${
-            stateColors[typeof state === "string" ? ProposalState[state as keyof typeof ProposalState] : Number(state)]
-          }`}
-        >
-          <span className={`px-3 py-1 text-sm font-semibold rounded-full bg-white`}>
-            {typeof state === "string" ? state : ProposalState[Number(state)]}
-          </span>
-          <span className="text-lg font-bold text-white">No. {id}</span>
-        </div>
+        <CardHeader state={state} id={id} />
       </div>
       <div className="p-6 pt-3 flex flex-col h-[280px]">
         {/* Content */}
         <div className="flex-1">
           <Popover content={title} trigger="hover" placement="topLeft" overlayStyle={{ maxWidth: "50%" }}>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2 whitespace-nowrap overflow-hidden text-ellipsis cursor-pointer">
+            <h3 className="text-lg font-semibold text-neutral mb-2 whitespace-nowrap overflow-hidden text-ellipsis cursor-pointer">
               {title}
             </h3>
           </Popover>
           <div className="flex items-center gap-2">
-            <span className="bg-purple-50 text-purple-700 px-2 py-1 rounded text-sm">
+            <span className="bg-base-200 text-neutral px-2 py-1 rounded text-sm">
               By: {proposer.slice(0, 6)}...{proposer.slice(-4)}
             </span>
           </div>
-          <div className="flex items-center gap-2">{truncateWords(description)}...</div>
+          <div className="flex items-center gap-2 text-base-content">{truncateWords(description)}...</div>
         </div>
 
         {/* Footer */}
@@ -108,14 +121,14 @@ export const ProposalCard = ({
           {state !== ProposalState.Pending && state !== ProposalState.Canceled && (
             <div className="space-y-2 mb-3">
               <div className="flex justify-between items-center text-sm">
-                <span className=" text-gray-500">Total Votes: {(totalVotes / 10n ** 18n).toString()}</span>
+                <span className=" text-base-content">Total Votes: {(totalVotes / 10n ** 18n).toString()}</span>
                 {progressFixed === 100 ? (
-                  <span className="text-gray-900 font-medium">Reach Quorum!</span>
+                  <span className="text-base-content font-medium">Reach Quorum!</span>
                 ) : (
-                  <span className="text-gray-900 font-medium">{progress.toFixed(1)}%</span>
+                  <span className="text-base-content font-medium">{progress.toFixed(1)}%</span>
                 )}
               </div>
-              <div className="w-full bg-gray-200 rounded-full h-2">
+              <div className="w-full bg-base-content rounded-full h-2">
                 <div className="bg-blue-600 h-2 rounded-full" style={{ width: `${progressFixed}%` }}></div>
               </div>
             </div>
@@ -123,14 +136,14 @@ export const ProposalCard = ({
           {/*show time range*/}
           {state === ProposalState.Canceled && (
             <div className="flex justify-between text-sm">
-              <span className="text-gray-900 font-medium">Canceled</span>
+              <span className="text-base-content font-medium">Canceled</span>
             </div>
           )}
           <div className="flex justify-between text-sm">
             {eta === 0 ? (
-              <span className="text-sm text-gray-500">{timeRange ? timeRange : ""}</span>
+              <span className="text-sm text-base-content">{timeRange ? timeRange : ""}</span>
             ) : (
-              <span className="text-sm text-gray-500">Executable Time : {etaTime}</span>
+              <span className="text-sm text-base-content">Executable Time : {etaTime}</span>
             )}
             <Link href={{ pathname: "/proposal/detail", query: { id } }} className="text-blue-600 hover:text-blue-800">
               View Details →

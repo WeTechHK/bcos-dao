@@ -125,7 +125,7 @@ const Home: NextPage = () => {
             proposalList.length > 0 && (
               <>
                 <div className="flex justify-between items-center mb-6">
-                  <h2 className="text-2xl font-bold text-gray-800">Proposals</h2>
+                  <h2 className="text-2xl font-bold text-neutral">Proposals</h2>
                   <Link
                     className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition duration-300"
                     href="/proposal/creation"

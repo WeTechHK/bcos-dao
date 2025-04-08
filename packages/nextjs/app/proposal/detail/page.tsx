@@ -1,7 +1,9 @@
 "use client";
 
 import { Suspense, useState } from "react";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import { LinkOutlined } from "@ant-design/icons";
 import { message } from "antd";
 import type { NextPage } from "next";
 import { useAccount } from "wagmi";
@@ -23,7 +25,9 @@ import {
   useVoteSuccessThreshold,
 } from "~~/hooks/blockchain/BCOSGovernor";
 import { useTotalSupply } from "~~/hooks/blockchain/ERC20VotePower";
+import { useDeployedContractInfo, useTargetNetwork } from "~~/hooks/scaffold-eth";
 import { ProposalState, VoteType } from "~~/services/store/store";
+import { formatToken } from "~~/utils/TokenFormatter";
 import { shortenAddress } from "~~/utils/scaffold-eth/common";
 
 const ProposalDetail: NextPage = () => {
@@ -50,8 +54,17 @@ const ProposalDetail: NextPage = () => {
   const castVoteAbstain = useCastVote(Number(id), VoteType.Abstain, voteReason);
   const voteSuccessThreshold = useVoteSuccessThreshold();
   const quorumNumerator = useQuorumNumerator();
+  const { targetNetwork } = useTargetNetwork();
+  const blockExplorerBaseURL = targetNetwork.blockExplorers?.default?.url;
+  const bcosGovernor = useDeployedContractInfo({
+    contractName: "BCOSGovernor",
+  });
+  const timelock = useDeployedContractInfo({ contractName: "CustomTimelockControllerUpgradeable" });
+  const erc20 = useDeployedContractInfo({
+    contractName: "ERC20VotePower",
+  });
 
-  if (!proposal) {
+  if (!proposal || !bcosGovernor || !timelock || !erc20) {
     return <div className="container mx-auto px-4 py-8">Loading...</div>;
   }
 
@@ -176,8 +189,8 @@ const ProposalDetail: NextPage = () => {
 
     if (state === ProposalState.Succeeded && hasMetQuorum && hasMetThreshold) {
       return (
-        <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
-          <h2 className="text-xl font-bold text-gray-800 mb-6">Proposal Actions</h2>
+        <div className="bg-base-100 rounded-xl shadow-lg p-6 mb-8">
+          <h2 className="text-xl font-bold text-neutral mb-6">Proposal Actions</h2>
           <div className="space-y-4">
             <button
               onClick={handleQueue}
@@ -192,8 +205,8 @@ const ProposalDetail: NextPage = () => {
 
     if (Number(proposal.state) === ProposalState.Pending && isMaintainer) {
       return (
-        <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
-          <h2 className="text-xl font-bold text-gray-800 mb-6">Proposal Actions</h2>
+        <div className="bg-base-100 rounded-xl shadow-lg p-6 mb-8">
+          <h2 className="text-xl font-bold text-neutral mb-6">Proposal Actions</h2>
           <div className="space-y-4">
             <button
               onClick={handleApprove}
@@ -214,8 +227,8 @@ const ProposalDetail: NextPage = () => {
 
     if (Number(proposal.state) === ProposalState.Queued && isMaintainer) {
       return (
-        <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
-          <h2 className="text-xl font-bold text-gray-800 mb-6">Proposal Actions</h2>
+        <div className="bg-base-100 rounded-xl shadow-lg p-6 mb-8">
+          <h2 className="text-xl font-bold text-neutral mb-6">Proposal Actions</h2>
           <div className="space-y-4">
             <button
               onClick={handleExecute}
@@ -230,8 +243,8 @@ const ProposalDetail: NextPage = () => {
 
     if (Number(proposal.state) === ProposalState.Active && isMaintainer) {
       return (
-        <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
-          <h2 className="text-xl font-bold text-gray-800 mb-6">Proposal Actions</h2>
+        <div className="bg-base-100 rounded-xl shadow-lg p-6 mb-8">
+          <h2 className="text-xl font-bold text-neutral mb-6">Proposal Actions</h2>
           <div className="space-y-4">
             <button
               onClick={handleEmergencyShutdown}
@@ -339,13 +352,13 @@ const ProposalDetail: NextPage = () => {
           <ProposalOverview proposal={proposal} isPreview={false} />
 
           {/* Voting Overview */}
-          <div className="bg-white rounded-xl shadow-lg p-6 mb-8 mt-8">
-            <h2 className="text-xl font-bold text-gray-800 mb-6">Votes</h2>
+          <div className="bg-base-100 rounded-xl shadow-lg p-6 mb-8 mt-8">
+            <h2 className="text-xl font-bold text-base-content mb-6">Votes</h2>
 
             {proposal.state === ProposalState.Succeeded && (
-              <div className="mb-6 p-4 bg-green-50 rounded-lg flex items-center gap-2 text-green-600">
+              <div className="mb-6 p-4 bg-base-100 rounded-lg flex items-center gap-2 text-green-600">
                 <CheckCircleIcon className="h-5 w-5" />
-                <span>This agenda has been passed. We are preparing to execute the contents.</span>
+                <span>This proposal has been passed. We are preparing to execute the contents.</span>
               </div>
             )}
 
@@ -353,8 +366,8 @@ const ProposalDetail: NextPage = () => {
               {/* Participated Voting Power */}
               <div>
                 <div className="flex justify-between mb-2">
-                  <span className="text-sm font-medium text-gray-600">Participated Voting Power</span>
-                  <span className="text-sm font-medium text-gray-900">Minimum ({quorumNumerator}%)</span>
+                  <span className="text-sm font-medium text-neutral">Participated Voting Power</span>
+                  <span className="text-sm font-medium text-neutral">Minimum ({quorumNumerator}%)</span>
                 </div>
                 <div className="relative h-4 bg-gray-100 rounded-full overflow-hidden">
                   <div
@@ -373,34 +386,38 @@ const ProposalDetail: NextPage = () => {
                 <div className="grid grid-cols-3 gap-4 mt-4">
                   <div className="text-center">
                     <div className="text-lg font-semibold text-blue-600">
-                      {proposal.forVotes} ({getPercentage(forVotesBigInt, totalVotesBigInt).toFixed(2)}%)
+                      {formatToken(proposal.forVotes).toFixed(4)} (
+                      {getPercentage(forVotesBigInt, totalVotesBigInt).toFixed(2)}%)
                     </div>
-                    <div className="text-sm text-gray-500">Yes</div>
+                    <div className="text-sm text-neutral">Yes</div>
                   </div>
                   <div className="text-center">
                     <div className="text-lg font-semibold text-red-600">
-                      {proposal.againstVotes} ({getPercentage(againstVotesBigInt, totalVotesBigInt).toFixed(2)}%)
+                      {formatToken(proposal.againstVotes).toFixed(4)} (
+                      {getPercentage(againstVotesBigInt, totalVotesBigInt).toFixed(2)}%)
                     </div>
-                    <div className="text-sm text-gray-500">No</div>
+                    <div className="text-sm text-neutral">No</div>
                   </div>
                   <div className="text-center">
                     <div className="text-lg font-semibold text-gray-600">
-                      {proposal.abstainVotes} ({getPercentage(abstainVotesBigInt, totalVotesBigInt).toFixed(2)}%)
+                      {formatToken(proposal.abstainVotes).toFixed(4)} (
+                      {getPercentage(abstainVotesBigInt, totalVotesBigInt).toFixed(2)}%)
                     </div>
-                    <div className="text-sm text-gray-500">Abstain</div>
+                    <div className="text-sm text-neutral">Abstain</div>
                   </div>
                 </div>
-                <div className="mt-4 text-sm text-gray-500">
-                  Participated / Total Voting Power (Voting Rate): {totalVotesBigInt.toString()} /{" "}
-                  {totalSupplyBigInt.toString()} ({getPercentage(totalVotesBigInt, totalSupplyBigInt).toFixed(2)}%)
+                <div className="mt-4 text-sm text-neutral">
+                  Participated / Total Voting Power (Voting Rate): {formatToken(totalVotesBigInt).toFixed(4)} /{" "}
+                  {formatToken(totalSupplyBigInt).toFixed(4)} (
+                  {getPercentage(totalVotesBigInt, totalSupplyBigInt).toFixed(2)}%)
                 </div>
               </div>
 
-              {/* GC Participation */}
+              {/* Participation */}
               <div>
                 <div className="flex justify-between mb-2">
-                  <span className="text-sm font-medium text-gray-600">GC Participation</span>
-                  <span className="text-sm font-medium text-gray-900">Minimum ({voteSuccessThreshold}%)</span>
+                  <span className="text-sm font-medium text-neutral">Participation Rate</span>
+                  <span className="text-sm font-medium text-neutral">Minimum ({voteSuccessThreshold}%)</span>
                 </div>
                 <div className="relative h-4 bg-gray-100 rounded-full overflow-hidden">
                   <div className="absolute h-full bg-green-400" style={{ width: `${forPercentage}%` }} />
@@ -412,19 +429,19 @@ const ProposalDetail: NextPage = () => {
 
           {/* Voting Details */}
           {shouldShowVotingDetails() && (
-            <div className="bg-white rounded-xl shadow-lg p-6">
-              <h2 className="text-xl font-bold text-gray-800 mb-6">Voting Details</h2>
+            <div className="bg-base-100 rounded-xl shadow-lg p-6">
+              <h2 className="text-xl font-bold text-neutral mb-6">Voting Details</h2>
               <div className="overflow-x-auto">
                 <table className="min-w-full">
                   <thead>
-                    <tr className="bg-gray-50">
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Voter</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Vote</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Weight</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Block</th>
+                    <tr className="bg-base-300">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-neutral uppercase">Voter</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-neutral uppercase">Vote</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-neutral uppercase">Weight</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-neutral uppercase">Block</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-200">{renderVotingDetails()}</tbody>
+                  <tbody className="divide-y bg-white divide-gray-200">{renderVotingDetails()}</tbody>
                 </table>
               </div>
             </div>
@@ -436,36 +453,50 @@ const ProposalDetail: NextPage = () => {
 
           {renderActionButtons()}
 
-          <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
-            <h2 className="text-xl font-bold text-gray-800 mb-6">Contract Information</h2>
+          <div className="bg-base-100 rounded-xl shadow-lg p-6 mb-8">
+            <h2 className="text-xl font-bold text-neutral mb-6">Contract Information</h2>
             <div className="space-y-4">
               <div>
-                <p className="text-sm text-gray-500">DAO Contract</p>
-                <a href="#" className="text-blue-600 hover:text-blue-800 text-sm break-all">
-                  0x1234567890abcdef1234567890abcdef12345678
-                </a>
+                <p className="text-sm text-neutral">DAO Contract</p>
+                <Link
+                  href={`${blockExplorerBaseURL}/address/${bcosGovernor.data?.address}`}
+                  className="text-md font-medium text-blue-500"
+                  target="_blank"
+                >
+                  <LinkOutlined />
+                  {shortenAddress(bcosGovernor.data?.address)}
+                </Link>
               </div>
               <div>
-                <p className="text-sm text-gray-500">Explorer</p>
-                <a href="#" className="text-blue-600 hover:text-blue-800 text-sm">
-                  View on Block Explorer
-                </a>
+                <p className="text-sm text-neutral">Timelock Contract</p>
+                <Link
+                  href={`${blockExplorerBaseURL}/address/${timelock.data?.address}`}
+                  className="text-md font-medium text-blue-500"
+                  target="_blank"
+                >
+                  <LinkOutlined />
+                  {shortenAddress(timelock.data?.address)}
+                </Link>
               </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-xl shadow-lg p-6">
-            <h2 className="text-xl font-bold text-gray-800 mb-6">Governance Token</h2>
+          <div className="bg-base-100 rounded-xl shadow-lg p-6">
+            <h2 className="text-xl font-bold text-neutral mb-6">Governance Token</h2>
             <div className="space-y-4">
               <div>
-                <p className="text-sm text-gray-500">Token Contract</p>
-                <a href="#" className="text-blue-600 hover:text-blue-800 text-sm break-all">
-                  0xabcdef1234567890abcdef1234567890abcdef12
-                </a>
+                <Link
+                  href={`${blockExplorerBaseURL}/address/${erc20.data?.address}`}
+                  className="text-md font-medium text-blue-500"
+                  target="_blank"
+                >
+                  <LinkOutlined />
+                  {shortenAddress(erc20.data?.address)}
+                </Link>
               </div>
               <div>
-                <p className="text-sm text-gray-500">Total Locked Value</p>
-                <p className="text-lg font-bold text-gray-900">1,234,567 BCOS</p>
+                <p className="text-sm text-neutral">Total Supply Value</p>
+                <p className="text-lg font-bold text-neutral">{formatToken(totalSupplyBigInt).toFixed(4)} EVP</p>
               </div>
             </div>
           </div>
