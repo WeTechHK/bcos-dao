@@ -27,7 +27,20 @@ export enum VoteType {
   VoteFor = 1,
   Abstain = 2,
 }
+
 // 根据状态设置颜色
+
+export const stateColorsClassName: { [key: number]: string } = {
+  0: "yellow", // Pending
+  1: "green", // Active
+  2: "gray", // Canceled
+  3: "red", // Defeated
+  4: "green", // Succeeded
+  5: "sky", // Queued
+  6: "gray", // Expired
+  7: "green", // Executed
+};
+
 export const stateColors: { [key: number]: string } = {
   0: "bg-yellow-300 text-yellow-800", // Pending
   1: "bg-green-300 text-green-800", // Active

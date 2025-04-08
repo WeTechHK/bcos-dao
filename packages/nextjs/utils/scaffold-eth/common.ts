@@ -6,7 +6,7 @@ export const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
 
 export const isZeroAddress = (address: string) => address === ZERO_ADDRESS;
 
-export const shortenAddress = (address: string) => {
+export const shortenAddress = (address: string | undefined) => {
   if (!address) return "";
   return `${address.slice(0, 8)}...${address.slice(-6)}`;
 };

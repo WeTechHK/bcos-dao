@@ -154,7 +154,7 @@ export const Header = () => {
                 <span className="text-sm font-semibold">{formatVotePower(votePowerData).toFixed(4)}</span>
                 <span className="text-[0.8em] font-bold ml-1">{symbol ? symbol : "EVP"}</span>
               </div>
-              <div className="text-xs text-gray-600">Voting Power</div>
+              <div className="text-xs ">Voting Power</div>
             </div>
             <button
               onClick={() => setShowDelegateOptions(true)}

@@ -7,7 +7,6 @@ import "@mdxeditor/editor/style.css";
 import { Popover } from "antd";
 import { message } from "antd";
 import { ClipboardIcon } from "@heroicons/react/24/outline";
-import deployedContracts from "~~/contracts/deployedContracts";
 import { type ProposalAllInfo } from "~~/hooks/blockchain/BCOSGovernor";
 import { useTransactionsByAddress } from "~~/hooks/blockchain/useTransactionByAddress";
 import { useDeployedContractInfo, useTargetNetwork } from "~~/hooks/scaffold-eth";
@@ -83,7 +82,7 @@ export const ProposalOverview = ({ proposal, isPreview = false }: ProposalOvervi
   const blockExplorerBaseURL = targetNetwork.blockExplorers?.default?.url;
 
   return (
-    <div className="bg-white rounded-xl shadow-lg">
+    <div className="bg-base-100 rounded-xl shadow-lg">
       {/*Header*/}
       {!isPreview && (
         <div className={`flex rounded-t-xl justify-between items-center p-4 ${stateColor}`}>
@@ -99,7 +98,7 @@ export const ProposalOverview = ({ proposal, isPreview = false }: ProposalOvervi
         <div className="mb-8">
           <Popover content={proposal.title} trigger="hover" placement="topLeft" overlayStyle={{ maxWidth: "50%" }}>
             <h1
-              className={`text-2xl font-bold text-gray-800 truncate cursor-pointer ${
+              className={`text-2xl font-bold text-base-content truncate cursor-pointer ${
                 isPreview ? "w-full" : "w-[calc(100%-100px)]"
               }`}
             >
@@ -110,20 +109,20 @@ export const ProposalOverview = ({ proposal, isPreview = false }: ProposalOvervi
           <div className="grid grid-cols-2 gap-6 mt-6">
             {etaTime !== undefined ? (
               <div>
-                <h2 className="text-xl font-bold text-gray-800">Executable Time</h2>
+                <h2 className="text-xl font-bold text-neutral">Executable Time</h2>
                 <div className="flex justify-start">
-                  <p className="text-md font-medium text-gray-500">{etaTime}</p>
+                  <p className="text-md font-medium text-neutral">{etaTime}</p>
                   <p className="text-md text-emerald-500">{timeSuffix}</p>
                 </div>
               </div>
             ) : (
               <div>
-                <h2 className="text-xl font-bold text-gray-800">Voting Period</h2>
-                <p className="text-md font-medium text-gray-500">{timeRange}</p>
+                <h2 className="text-xl font-bold text-neutral">Voting Period</h2>
+                <p className="text-md font-medium text-neutral">{timeRange}</p>
               </div>
             )}
             <div>
-              <h2 className="text-xl font-bold text-gray-800">Proposer</h2>
+              <h2 className="text-xl font-bold text-neutral">Proposer</h2>
               <Link
                 href={`${blockExplorerBaseURL}/address/${proposal.proposer}`}
                 className="text-md font-medium text-blue-500"
@@ -136,7 +135,7 @@ export const ProposalOverview = ({ proposal, isPreview = false }: ProposalOvervi
 
             {txHash && (
               <div>
-                <h2 className="text-xl font-bold text-gray-800">Transaction</h2>
+                <h2 className="text-xl font-bold text-neutral">Transaction</h2>
                 <Link
                   href={`${blockExplorerBaseURL}/tx/${txHash}`}
                   className="text-md font-medium text-blue-500"
@@ -152,32 +151,32 @@ export const ProposalOverview = ({ proposal, isPreview = false }: ProposalOvervi
 
         {/* Actions */}
         <div className="mb-8">
-          <h2 className="text-xl font-bold text-gray-800 mb-4">Actions</h2>
+          <h2 className="text-xl font-bold text-neutral mb-4">Actions</h2>
           <div className="overflow-x-auto">
             <table className="w-full divide-y divide-gray-200 table-fixed">
-              <thead className="bg-gray-50">
+              <thead className="bg-base-300">
                 <tr>
                   <th
                     scope="col"
-                    className="w-[10%] px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    className="w-[10%] px-6 py-3 text-left text-xs font-medium text-neutral uppercase tracking-wider"
                   >
                     Type
                   </th>
                   <th
                     scope="col"
-                    className="w-[20%] px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    className="w-[20%] px-6 py-3 text-left text-xs font-medium text-neutral uppercase tracking-wider"
                   >
                     Address
                   </th>
                   <th
                     scope="col"
-                    className="w-[10%] px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    className="w-[10%] px-6 py-3 text-left text-xs font-medium text-neutral uppercase tracking-wider"
                   >
                     Value
                   </th>
                   <th
                     scope="col"
-                    className="w-[60%] px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    className="w-[60%] px-6 py-3 text-left text-xs font-medium text-neutral uppercase tracking-wider"
                   >
                     CallData
                   </th>
@@ -216,13 +215,13 @@ export const ProposalOverview = ({ proposal, isPreview = false }: ProposalOvervi
 
         {/* Description */}
         <div>
-          <h2 className="text-xl font-bold text-gray-800 mb-4">Description</h2>
-          <div className="prose max-w-none bg-gray-50 p-4 rounded-lg">
+          <h2 className="text-xl font-bold text-neutral mb-4">Description</h2>
+          <div className="prose max-w-none bg-base-200 p-4 rounded-lg text-neutral">
             {typeof window !== "undefined" && (
               <MDXEditor
                 markdown={proposal.description}
                 readOnly
-                contentEditableClassName="!bg-transparent"
+                contentEditableClassName="!bg-transparent text-neutral"
                 plugins={[linkPlugin(), listsPlugin(), quotePlugin(), headingsPlugin(), codeBlockPlugin()]}
               />
             )}
