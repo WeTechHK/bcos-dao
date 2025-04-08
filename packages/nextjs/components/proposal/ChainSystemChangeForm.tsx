@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Abi, AbiFunction } from "abitype";
-import { Form, Input, Select, Space, Switch } from "antd";
+import { Form, Input, Select, Switch } from "antd";
 import { ABIFunctionForm } from "~~/components/proposal/ABIFunctionForm";
 import CommitteeManagerABI from "~~/contracts/abi/CommitteeManager.json";
 
@@ -100,7 +100,7 @@ export const ChainSystemChangeForm = ({
         <Form
           layout={"vertical"}
           form={sysForm}
-          onValuesChange={(e: any) => {
+          onValuesChange={() => {
             onChange(sysForm.getFieldsValue());
           }}
         >

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { ReactElement, createElement, useReducer, useState } from "react";
+import React, { ReactElement } from "react";
 import dynamic from "next/dynamic";
 import {
   BankFilled,
@@ -8,45 +8,20 @@ import {
   CaretRightFilled,
   CloseSquareFilled,
   EditFilled,
-  FileMarkdownFilled,
   FormOutlined,
-  InboxOutlined,
-  InfoCircleFilled,
   PayCircleFilled,
-  PlusCircleFilled,
   RocketFilled,
   ToolFilled,
 } from "@ant-design/icons";
 import "@mdxeditor/editor/style.css";
-import { uuidv4 } from "@walletconnect/utils";
-import {
-  Button,
-  Card,
-  Col,
-  Divider,
-  Flex,
-  Form,
-  FormInstance,
-  Input,
-  Row,
-  Select,
-  Switch,
-  Tag,
-  Typography,
-  UploadProps,
-  message,
-} from "antd";
+import { Button, Card, Divider, Flex, Form, Input, Tag, Typography, message } from "antd";
 import { default as FormItem } from "antd/es/form/FormItem";
 import { default as FormList } from "antd/es/form/FormList";
-import Dragger from "antd/es/upload/Dragger";
 import type { NextPage } from "next";
-import { erc20Abi } from "viem";
 import { ChainSystemChangeForm } from "~~/components/proposal/ChainSystemChangeForm";
-import CustomActionForm, { actionSelectOptions } from "~~/components/proposal/CustomActionForm";
+import CustomActionForm from "~~/components/proposal/CustomActionForm";
 import GovernorSettingsForm from "~~/components/proposal/GovernorSettingsForm";
-import ProposalTextForm from "~~/components/proposal/ProposalTextForm";
 import TransferTokenForm from "~~/components/proposal/TransferTokenForm";
-import deployedContracts from "~~/contracts/deployedContracts";
 import { useProposeProposal } from "~~/hooks/blockchain/BCOSGovernor";
 
 type ProposalAction = {

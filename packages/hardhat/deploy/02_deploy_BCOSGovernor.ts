@@ -28,7 +28,7 @@ const deployBCOSGovernor: DeployFunction = async function (hre: HardhatRuntimeEn
   const proposalThreshold: bigint = 10000000000000000n; // 10e16
   const minDelay = 24n * 60n * 60n; // 1 day
   const initTokenPool: bigint = 1000000000000000000n; // 10e18
-  const unit: bigint = process.env.TIMER_UNIT ? BigInt(process.env.TIMER_UNIT) : 1000n;
+  const unit: bigint = process.env.TIMER_UNIT ? BigInt(process.env.TIMER_UNIT) : 1n;
 
   // print all args
   console.log("deployer", deployer);

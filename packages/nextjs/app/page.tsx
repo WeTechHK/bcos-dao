@@ -2,7 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
-import { BlockOutlined, ContainerOutlined, FileDoneOutlined, PlusCircleOutlined } from "@ant-design/icons";
+import { ContainerOutlined, FileDoneOutlined, PlusCircleOutlined } from "@ant-design/icons";
 import { Button } from "antd";
 import type { NextPage } from "next";
 import { useAccount } from "wagmi";

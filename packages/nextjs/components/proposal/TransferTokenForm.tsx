@@ -1,14 +1,12 @@
 "use client";
 
-import React, { ReactElement, useState } from "react";
-import { InfoCircleFilled } from "@ant-design/icons";
-import { Button, Card, Form, Input, Select, Switch } from "antd";
+import React, { useState } from "react";
+import { Button, Form, Input, Select } from "antd";
 import { erc20Abi } from "viem";
-import { useBalance, useDeployContract, useReadContract } from "wagmi";
-import { Balance } from "~~/components/scaffold-eth";
+import { useBalance, useReadContract } from "wagmi";
 import { useDeployedContractInfo } from "~~/hooks/scaffold-eth";
 
-const TransferTokenForm = ({ index, onChange }: { parentForm?: any; field?: any; index?: any; onChange: any }) => {
+const TransferTokenForm = ({ onChange }: { parentForm?: any; field?: any; index?: any; onChange: any }) => {
   const FormItem = Form.Item;
   const parentForm = Form.useFormInstance();
   const [transferForm] = Form.useForm();
