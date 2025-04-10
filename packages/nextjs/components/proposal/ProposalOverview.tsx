@@ -55,8 +55,10 @@ export const ProposalOverview = ({ proposal, isPreview = false }: ProposalOvervi
       let timeSuffix = "";
       let diffDate;
       if (now < eta) {
-        diffDate = new Date(now.getTime() - eta.getTime());
-        timeSuffix = " (ends in " + diffDate.getUTCDate() + " days " + diffDate.getUTCHours() + " hours)";
+        diffDate = new Date(eta.getTime() - now.getTime());
+        console.log("diffDate", diffDate);
+        /// FIXME)): this diff date will be error in 1 day
+        timeSuffix = " (ends in " + diffDate.getDate() + " days " + diffDate.getHours() + " hours)";
       } else {
         // eta <= now
         timeSuffix = " (Ready to go!)";

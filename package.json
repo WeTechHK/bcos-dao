@@ -8,6 +8,7 @@
     ]
   },
   "scripts": {
+    "build": "yarn next:build",
     "account": "yarn hardhat:account",
     "account:generate": "yarn workspace @bcos-dao/hardhat account:generate",
     "account:import": "yarn workspace @bcos-dao/hardhat account:import",
