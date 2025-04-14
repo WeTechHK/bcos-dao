@@ -6,11 +6,12 @@ import { codeBlockPlugin, headingsPlugin, linkPlugin, listsPlugin, quotePlugin }
 import "@mdxeditor/editor/style.css";
 import { Popover } from "antd";
 import { message } from "antd";
+import classNames from "classnames";
 import { ClipboardIcon } from "@heroicons/react/24/outline";
 import { type ProposalAllInfo } from "~~/hooks/blockchain/BCOSGovernor";
 import { useTransactionsByAddress } from "~~/hooks/blockchain/useTransactionByAddress";
 import { useDeployedContractInfo, useTargetNetwork } from "~~/hooks/scaffold-eth";
-import { ProposalState, stateColors } from "~~/services/store/store";
+import { ProposalState, stateColorsClassName } from "~~/services/store/store";
 import { formatUTCDate } from "~~/utils/TimeFormatter";
 import { shortenAddress } from "~~/utils/scaffold-eth/common";
 
@@ -33,7 +34,7 @@ export const ProposalOverview = ({ proposal, isPreview = false }: ProposalOvervi
   const bcosGovernor = useDeployedContractInfo({
     contractName: "BCOSGovernor",
   });
-  const stateColor = stateColors[Number(proposal.state)];
+  const stateColor = stateColorsClassName[Number(proposal.state)];
   const [timeRange, setTimeRange] = useState<string>();
   const [etaTime, setEtaTime] = useState<string>();
   const [timeSuffix, setTimeSuffix] = useState<string>("");
@@ -87,7 +88,13 @@ export const ProposalOverview = ({ proposal, isPreview = false }: ProposalOvervi
     <div className="bg-base-100 rounded-xl shadow-lg">
       {/*Header*/}
       {!isPreview && (
-        <div className={`flex rounded-t-xl justify-between items-center p-4 ${stateColor}`}>
+        <div
+          className={classNames(
+            "flex rounded-t-xl justify-between items-center p-4",
+            `bg-${stateColor}-300`,
+            `text-${stateColor}-800`,
+          )}
+        >
           <span className={`px-3 py-1 text-sm font-semibold rounded-full bg-white`}>
             {ProposalState[Number(proposal.state)]}
           </span>

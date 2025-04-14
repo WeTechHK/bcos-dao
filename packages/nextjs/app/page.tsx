@@ -3,7 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import { ContainerOutlined, FileDoneOutlined, PlusCircleOutlined } from "@ant-design/icons";
-import { Button } from "antd";
+import { Button, Spin } from "antd";
 import type { NextPage } from "next";
 import { useAccount } from "wagmi";
 import { ProposalCard } from "~~/components/ProposalCard";
@@ -31,37 +31,37 @@ const Home: NextPage = () => {
     decimals === undefined ||
     votingPeriod === undefined
   ) {
-    return <div className="container mx-auto px-4 py-6">loading....</div>;
+    return <Spin spinning={true} size="large" tip="Loading" fullscreen></Spin>;
   }
   console.log("proposalList: ", proposalList);
   return (
     <>
       <div className="container mx-auto px-4 py-6">
         {/*Stats Section*/}
-        {/* <div className="grid grid-cols-4 gap-6 mb-6">
-          <div id="userStats" className="contents">
-            <div className="bg-white rounded-xl p-6 shadow-lg">
-              <h3 className="text-gray-600 text-sm">Active Proposals</h3>
-              <p className="text-2xl font-bold text-blue-900 mt-2">12</p>
-              <p className="text-green-600 text-sm mt-1">+2 this week</p>
-            </div>
-            <div className="bg-white rounded-xl p-6 shadow-lg">
-              <h3 className="text-gray-600 text-sm">Total Votes</h3>
-              <p className="text-2xl font-bold text-blue-900 mt-2">1,458</p>
-              <p className="text-green-600 text-sm mt-1">+126 this week</p>
-            </div>
-            <div className="bg-white rounded-xl p-6 shadow-lg">
-              <h3 className="text-gray-600 text-sm">Participation Rate</h3>
-              <p className="text-2xl font-bold text-blue-900 mt-2">76.5%</p>
-              <p className="text-green-600 text-sm mt-1">+5.2% this month</p>
-            </div>
-            <div className="bg-white rounded-xl p-6 shadow-lg">
-              <h3 className="text-gray-600 text-sm">Executed Proposals</h3>
-              <p className="text-2xl font-bold text-blue-900 mt-2">89</p>
-              <p className="text-green-600 text-sm mt-1">+3 this week</p>
-            </div>
-          </div>
-        </div> */}
+        {/*<div className="grid grid-cols-4 gap-6 mb-6">*/}
+        {/*  <div className="contents">*/}
+        {/*    <div className="bg-white rounded-xl p-4 shadow-lg">*/}
+        {/*      <h3 className="text-gray-600 text-sm">Proposals</h3>*/}
+        {/*      <p className="text-2xl font-bold text-blue-900 mt-2">12</p>*/}
+        {/*      <p className="text-sm mt-1">No active proposals</p>*/}
+        {/*    </div>*/}
+        {/*    <div className="bg-white rounded-xl p-6 shadow-lg">*/}
+        {/*      <h3 className="text-gray-600 text-sm">Delegates</h3>*/}
+        {/*      <p className="text-2xl font-bold text-blue-900 mt-2">1,458</p>*/}
+        {/*      <p className="text-sm mt-1">361.02K token holders</p>*/}
+        {/*    </div>*/}
+        {/*    <div className="bg-white rounded-xl p-6 shadow-lg">*/}
+        {/*      <h3 className="text-gray-600 text-sm">Total Supply</h3>*/}
+        {/*      <p className="text-2xl font-bold text-blue-900 mt-2">123,567</p>*/}
+        {/*      <p className="text-green-600 text-sm mt-1">+5.2% this month</p>*/}
+        {/*    </div>*/}
+        {/*    <div className="bg-white rounded-xl p-6 shadow-lg">*/}
+        {/*      <h3 className="text-gray-600 text-sm">Executed Proposals</h3>*/}
+        {/*      <p className="text-2xl font-bold text-blue-900 mt-2">89</p>*/}
+        {/*      <p className="text-green-600 text-sm mt-1">+3 this week</p>*/}
+        {/*    </div>*/}
+        {/*  </div>*/}
+        {/*</div>*/}
 
         {/*Proposal Section*/}
         <div>
@@ -122,6 +122,7 @@ const Home: NextPage = () => {
               </div>
             </div>
           ) : (
+            !loading &&
             proposalList.length > 0 && (
               <>
                 <div className="flex justify-between items-center mb-6">

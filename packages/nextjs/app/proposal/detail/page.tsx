@@ -1,10 +1,10 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import React, { Suspense, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { LinkOutlined } from "@ant-design/icons";
-import { message } from "antd";
+import { Spin, message } from "antd";
 import type { NextPage } from "next";
 import { useAccount } from "wagmi";
 import { CheckCircleIcon } from "@heroicons/react/24/outline";
@@ -65,7 +65,7 @@ const ProposalDetail: NextPage = () => {
   });
 
   if (!proposal || !bcosGovernor || !timelock || !erc20) {
-    return <div className="container mx-auto px-4 py-8">Loading...</div>;
+    return <Spin spinning={true} size="large" tip="Loading" fullscreen></Spin>;
   }
 
   // Convert values to BigInt for calculations
@@ -447,7 +447,6 @@ const ProposalDetail: NextPage = () => {
             </div>
           )}
         </div>
-
         <div className="w-1/3">
           {renderVotingButtons()}
 
@@ -508,7 +507,7 @@ const ProposalDetail: NextPage = () => {
 
 const ProposalDetailPage = () => {
   return (
-    <Suspense fallback={<div className="container mx-auto px-4 py-8">Loading...</div>}>
+    <Suspense fallback={<Spin spinning={true} size="large" tip="Loading" fullscreen></Spin>}>
       <ProposalDetail />
     </Suspense>
   );
