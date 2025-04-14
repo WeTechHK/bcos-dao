@@ -1,7 +1,8 @@
 import { useRef, useState } from "react";
 import { NetworkOptions } from "./NetworkOptions";
+import { WalletOutlined } from "@ant-design/icons";
 import CopyToClipboard from "react-copy-to-clipboard";
-import { getAddress } from "viem";
+import { formatEther, getAddress } from "viem";
 import { Address } from "viem";
 import { useDisconnect } from "wagmi";
 import {
@@ -14,7 +15,7 @@ import {
   QrCodeIcon,
 } from "@heroicons/react/24/outline";
 import { BlockieAvatar, isENS } from "~~/components/scaffold-eth";
-import { useOutsideClick } from "~~/hooks/scaffold-eth";
+import { useOutsideClick, useTargetNetwork, useWatchBalance } from "~~/hooks/scaffold-eth";
 import { getTargetNetworks } from "~~/utils/scaffold-eth";
 
 const allowedNetworks = getTargetNetworks();
@@ -44,6 +45,16 @@ export const AddressInfoDropdown = ({
     dropdownRef.current?.removeAttribute("open");
   };
   useOutsideClick(dropdownRef, closeDropdown);
+  const {
+    data: balance,
+    isError,
+    isLoading,
+  } = useWatchBalance({
+    address,
+  });
+
+  const { targetNetwork } = useTargetNetwork();
+  const formattedBalance = balance ? Number(formatEther(balance.value)) : 0;
 
   return (
     <>
@@ -60,6 +71,13 @@ export const AddressInfoDropdown = ({
           className="dropdown-content menu z-[2] p-2 mt-2 shadow-center shadow-accent bg-base-200 rounded-box gap-1"
         >
           <NetworkOptions hidden={!selectingNetwork} />
+          <li className={selectingNetwork ? "hidden" : ""}>
+            <div className="btn-sm !rounded-xl flex gap-3 py-3">
+              <WalletOutlined />
+              <span>{formattedBalance.toFixed(4)}</span>
+              <span className="whitespace-nowrap">{targetNetwork.nativeCurrency.symbol}</span>
+            </div>
+          </li>
           <li className={selectingNetwork ? "hidden" : ""}>
             {addressCopied ? (
               <div className="btn-sm !rounded-xl flex gap-3 py-3">

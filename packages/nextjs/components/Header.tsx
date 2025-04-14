@@ -165,7 +165,6 @@ export const Header = () => {
             </button>
           </div>
           <RainbowKitCustomConnectButton />
-          {isLocalNetwork && <FaucetButton />}
         </div>
       </div>
 

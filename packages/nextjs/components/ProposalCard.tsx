@@ -8,6 +8,7 @@ import { useProposalVotes, useQuorumNumerator } from "~~/hooks/blockchain/BCOSGo
 import { useTotalSupply } from "~~/hooks/blockchain/ERC20VotePower";
 import { ProposalState, stateColorsClassName } from "~~/services/store/store";
 import { formatUTCDate } from "~~/utils/TimeFormatter";
+import { formatToken } from "~~/utils/TokenFormatter";
 
 interface ProposalCardProps {
   id: number;
@@ -24,13 +25,27 @@ interface ProposalCardProps {
   againstVotes: number;
   abstainVotes: number;
   title: string;
+  executedBlock: number;
+  canceledBlock: number;
 }
 
 function truncateWords(text: string, maxWords = 25) {
+  const maxLength = maxWords * 6;
   const regex = new RegExp(`^(\\s*\\S+){${maxWords}}|.+$`, "g");
   const matched = text.match(regex);
-  if (!matched) return text.slice(0, maxWords) + "...";
-  return matched[0].replace(/(\s+\S*)$/, "...");
+  if (!matched) {
+    if (text.length > maxLength) {
+      return text.slice(0, maxWords) + "...";
+    } else {
+      return text;
+    }
+  }
+  const result = matched[0].replace(/(\s+\S*)$/, "...");
+  if (result.length > maxLength) {
+    return result.slice(0, maxLength) + "...";
+  } else {
+    return result;
+  }
 }
 
 function CardHeader(props: { state: string | ProposalState; id: number }) {
@@ -43,6 +58,7 @@ function CardHeader(props: { state: string | ProposalState; id: number }) {
       className={classNames(
         "flex p-4 justify-between items-center",
         `bg-${colorClassName}-300`,
+        `border-${colorClassName}-300`,
         `text-${colorClassName}-800`,
       )}
     >
@@ -50,6 +66,108 @@ function CardHeader(props: { state: string | ProposalState; id: number }) {
         {typeof props.state === "string" ? props.state : ProposalState[Number(props.state)]}
       </span>
       <span className="text-lg font-bold text-white">No. {props.id}</span>
+    </div>
+  );
+}
+
+function CardFooter(props: {
+  state: string | ProposalState;
+  totalVotes: any;
+  progressFixed: number;
+  progress: number;
+  eta: number;
+  startTime: number;
+  endTime: number;
+  id: number;
+  executedBlock: number;
+  canceledBlock: number;
+}) {
+  const [timeRange, setTimeRange] = useState<string>();
+  const [etaTime, setEtaTime] = useState<string>();
+
+  useEffect(() => {
+    if (props.startTime && props.endTime) {
+      const startTimeString = formatUTCDate(props.startTime * 1000);
+      const endTimeString = formatUTCDate(props.endTime * 1000);
+      setTimeRange(`${startTimeString} - ${endTimeString}`);
+    }
+  }, [props.startTime, props.endTime]);
+
+  useEffect(() => {
+    if (props.eta && props.eta !== 0) {
+      const etaString = formatUTCDate(props.eta * 1000);
+      setEtaTime(etaString);
+    }
+  }, [props.eta]);
+  return (
+    <div className="mt-4">
+      {props.state === ProposalState.Pending && (
+        <div className="flex justify-between text-sm">
+          <span className="text-sm text-base-content">{"Pending to be approved by maintainer."}</span>
+          <Link
+            href={{ pathname: "/proposal/detail", query: { id: props.id } }}
+            className="text-blue-600 hover:text-blue-800"
+          >
+            View Details →
+          </Link>
+        </div>
+      )}
+      {(props.state === ProposalState.Active ||
+        props.state === ProposalState.Defeated ||
+        props.state === ProposalState.Succeeded ||
+        props.state === ProposalState.Queued) && (
+        <>
+          <div className="space-y-2 mb-3">
+            <div className="flex justify-between items-center text-sm">
+              <span className=" text-base-content">Total Votes: {formatToken(props.totalVotes).toFixed(4)} EVP</span>
+              {props.progressFixed === 100 ? (
+                <span className="text-base-content font-medium">Reach Quorum!</span>
+              ) : (
+                <span className="text-base-content font-medium">{props.progress.toFixed(1)}%</span>
+              )}
+            </div>
+            <div className="w-full bg-base-content rounded-full h-2">
+              <div className="bg-blue-600 h-2 rounded-full" style={{ width: `${props.progressFixed}%` }}></div>
+            </div>
+          </div>
+          <div className="flex justify-between text-sm">
+            {props.eta === 0 ? (
+              <span className="text-sm text-base-content">{timeRange ? timeRange : ""}</span>
+            ) : (
+              <span className="text-sm text-base-content">Executable Time : {etaTime}</span>
+            )}
+            <Link
+              href={{ pathname: "/proposal/detail", query: { id: props.id } }}
+              className="text-blue-600 hover:text-blue-800"
+            >
+              View Details →
+            </Link>
+          </div>
+        </>
+      )}
+      {/*show time range*/}
+      {props.state === ProposalState.Canceled && (
+        <div className="flex justify-between text-sm">
+          <span className="text-base-content font-medium">Canceled in block #{props.canceledBlock.toString()}</span>
+          <Link
+            href={{ pathname: "/proposal/detail", query: { id: props.id } }}
+            className="text-blue-600 hover:text-blue-800"
+          >
+            View Details →
+          </Link>
+        </div>
+      )}
+      {props.state === ProposalState.Executed && (
+        <div className="flex justify-between text-sm">
+          <span className="text-base-content font-medium">Executed in block #{props.executedBlock.toString()}</span>
+          <Link
+            href={{ pathname: "/proposal/detail", query: { id: props.id } }}
+            className="text-blue-600 hover:text-blue-800"
+          >
+            View Details →
+          </Link>
+        </div>
+      )}
     </div>
   );
 }
@@ -63,6 +181,8 @@ export const ProposalCard = ({
   eta,
   state,
   description,
+  executedBlock,
+  canceledBlock,
 }: ProposalCardProps) => {
   const {
     forVotes: forVotesFromContract,
@@ -75,24 +195,6 @@ export const ProposalCard = ({
   const totalVotes = forVotesFromContract + againstVotesFromContract + abstainVotesFromContract;
   const progress = Number(quorum > 0 ? (totalVotes / quorum) * 100n : 0);
   const progressFixed = progress >= 100 ? 100 : progress;
-
-  const [timeRange, setTimeRange] = useState<string>();
-  const [etaTime, setEtaTime] = useState<string>();
-
-  useEffect(() => {
-    if (startTime && endTime) {
-      const startTimeString = formatUTCDate(startTime * 1000);
-      const endTimeString = formatUTCDate(endTime * 1000);
-      setTimeRange(`${startTimeString} - ${endTimeString}`);
-    }
-  }, [startTime, endTime]);
-
-  useEffect(() => {
-    if (eta && eta !== 0) {
-      const etaString = formatUTCDate(eta * 1000);
-      setEtaTime(etaString);
-    }
-  }, [eta]);
 
   return (
     <div className="flex-col bg-base-100 rounded-xl shadow-lg overflow-hidden hover:-translate-y-1.5 duration-300">
@@ -113,43 +215,22 @@ export const ProposalCard = ({
               By: {proposer.slice(0, 6)}...{proposer.slice(-4)}
             </span>
           </div>
-          <div className="flex items-center gap-2 text-base-content">{truncateWords(description)}...</div>
+          <div className="flex items-center gap-2 text-base-content">{truncateWords(description)}</div>
         </div>
 
         {/* Footer */}
-        <div className="mt-4">
-          {state !== ProposalState.Pending && state !== ProposalState.Canceled && (
-            <div className="space-y-2 mb-3">
-              <div className="flex justify-between items-center text-sm">
-                <span className=" text-base-content">Total Votes: {(totalVotes / 10n ** 18n).toString()}</span>
-                {progressFixed === 100 ? (
-                  <span className="text-base-content font-medium">Reach Quorum!</span>
-                ) : (
-                  <span className="text-base-content font-medium">{progress.toFixed(1)}%</span>
-                )}
-              </div>
-              <div className="w-full bg-base-content rounded-full h-2">
-                <div className="bg-blue-600 h-2 rounded-full" style={{ width: `${progressFixed}%` }}></div>
-              </div>
-            </div>
-          )}
-          {/*show time range*/}
-          {state === ProposalState.Canceled && (
-            <div className="flex justify-between text-sm">
-              <span className="text-base-content font-medium">Canceled</span>
-            </div>
-          )}
-          <div className="flex justify-between text-sm">
-            {eta === 0 ? (
-              <span className="text-sm text-base-content">{timeRange ? timeRange : ""}</span>
-            ) : (
-              <span className="text-sm text-base-content">Executable Time : {etaTime}</span>
-            )}
-            <Link href={{ pathname: "/proposal/detail", query: { id } }} className="text-blue-600 hover:text-blue-800">
-              View Details →
-            </Link>
-          </div>
-        </div>
+        <CardFooter
+          state={state}
+          totalVotes={totalVotes}
+          progressFixed={progressFixed}
+          progress={progress}
+          eta={eta}
+          startTime={startTime}
+          endTime={endTime}
+          id={id}
+          executedBlock={executedBlock}
+          canceledBlock={canceledBlock}
+        />
       </div>
     </div>
   );
