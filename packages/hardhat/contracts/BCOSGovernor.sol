@@ -16,6 +16,7 @@ import "./ERC20VotePower.sol";
 import "./CustomTimelockControllerUpgradeable.sol";
 
 using EnumerableSet for EnumerableSet.AddressSet;
+using EnumerableSet for EnumerableSet.UintSet;
 
 struct ProposalVoteCore {
     uint256 forVotes;
@@ -48,6 +49,7 @@ contract BCOSGovernor is
         uint256 executedBlockNumber;
         uint256 canceledBlockNumber;
     }
+
     struct ProposalInfo {
         uint256 proposalId;
         address proposer;
@@ -95,7 +97,8 @@ contract BCOSGovernor is
 
         _timelock.initialize(_minDelay, address(this), address(this), _msgSender(), _timer);
         _grantRole(MAINTAINER_ROLE, _msgSender());
-        _token.mint(_msgSender(), _initTokenPool);
+        _token.mint(address(_timelock), _initTokenPool - _initialProposalThreshold);
+        _token.mint(_msgSender(), _initialProposalThreshold);
     }
 
     modifier onlyMaintainer() {
@@ -103,14 +106,30 @@ contract BCOSGovernor is
         _;
     }
 
-    mapping(uint256 proposalHash => uint256 proposalId) private _proposalIds;
-    mapping(uint256 proposalId => uint256 proposalHash) private _proposalHashes;
-    mapping(uint256 proposalId => ProposalExtraStorage) private _proposalExtra;
-    uint256 private _latestProposalId;
-    // proposalId => vote
-    mapping(uint256 proposalId => ProposalVote) private _proposalVotes;
-    // proposalId => vote
-    mapping(uint256 proposalId => ProposalApprovalFlow) private _proposalApprovalFlow;
+    struct BCOSGovernorStorage {
+        // for proposal storage and index
+        mapping(uint256 proposalHash => uint256 proposalId) _proposalIds;
+        mapping(uint256 proposalId => uint256 proposalHash) _proposalHashes;
+        mapping(uint256 proposalId => ProposalExtraStorage) _proposalExtra;
+        // proposalId => vote
+        mapping(uint256 proposalId => ProposalVote) _proposalVotes;
+        // proposalId => approval
+        mapping(uint256 proposalId => ProposalApprovalFlow) _proposalApprovalFlow;
+        // only save the final status proposal
+        EnumerableSet.UintSet canceledProposals;
+        EnumerableSet.UintSet executedProposals;
+    }
+
+    // keccak256(abi.encode(uint256(keccak256("bcos-dao.contracts.BCOSGovernorStorage")) - 1)) & ~bytes32(uint256(0xff));
+    bytes32 private constant BCOS_GOVERNOR_STORAGE_POSITION =
+        0xea816ad03356230ef5ef5fd2e2bd3bec292a96e42e2c6aafb1da0b68271da000;
+
+    function _getBCOSGovernorStorage() private pure returns (BCOSGovernorStorage storage $) {
+        assembly {
+            $.slot := BCOS_GOVERNOR_STORAGE_POSITION
+        }
+    }
+
     /**
      * @dev See {IGovernor-COUNTING_MODE}.
      */
@@ -133,7 +152,8 @@ contract BCOSGovernor is
     }
 
     function getProposalHashById(uint256 proposalId) public view returns (uint256) {
-        uint256 storedProposalHash = _proposalHashes[proposalId];
+        BCOSGovernorStorage storage $ = _getBCOSGovernorStorage();
+        uint256 storedProposalHash = $._proposalHashes[proposalId];
         if (storedProposalHash == 0) {
             revert GovernorNonexistentProposal(0);
         }
@@ -141,11 +161,13 @@ contract BCOSGovernor is
     }
 
     function getProposalApprovalFlow(uint256 proposalId) public view returns (ProposalApprovalFlow memory) {
-        return _proposalApprovalFlow[proposalId];
+        BCOSGovernorStorage storage $ = _getBCOSGovernorStorage();
+        return $._proposalApprovalFlow[proposalId];
     }
 
     function getProposalAllInfo(uint256 proposalId) public view returns (ProposalInfo memory info) {
-        uint256 proposalHash = _proposalHashes[proposalId];
+        BCOSGovernorStorage storage $ = _getBCOSGovernorStorage();
+        uint256 proposalHash = $._proposalHashes[proposalId];
         (
             info.proposalDetail.targets,
             info.proposalDetail.values,
@@ -162,14 +184,14 @@ contract BCOSGovernor is
         info.endTime = proposalDeadline(proposalHash);
         info.eta = proposalEta(proposalHash);
         info.proposer = proposalProposer(proposalHash);
-        info.extra = _proposalExtra[proposalId];
+        info.extra = $._proposalExtra[proposalId];
     }
 
     function getProposalInfoPage(
         uint256 offset,
         uint256 pageSize
     ) public view returns (ProposalInfo[] memory infoList) {
-        uint256 latestIndex = _latestProposalId;
+        uint256 latestIndex = proposalCount();
         if (offset >= latestIndex) {
             return infoList;
         }
@@ -184,17 +206,11 @@ contract BCOSGovernor is
     }
 
     /**
-     * @dev Returns the latest proposal id. A return value of 0 means no proposals have been created yet.
-     */
-    function latestProposalId() public view virtual returns (uint256) {
-        return _latestProposalId;
-    }
-
-    /**
      * @dev See {IGovernor-hasVoted}.
      */
     function hasVoted(uint256 proposalId, address account) public view virtual override returns (bool) {
-        return _proposalVotes[proposalId].hasVoted[account] > 0;
+        BCOSGovernorStorage storage $ = _getBCOSGovernorStorage();
+        return $._proposalVotes[proposalId].hasVoted[account] > 0;
     }
 
     /**
@@ -203,12 +219,14 @@ contract BCOSGovernor is
     function proposalVotes(
         uint256 proposalId
     ) public view virtual returns (uint256 againstVotes, uint256 forVotes, uint256 abstainVotes) {
-        ProposalVote storage proposalVote = _proposalVotes[proposalId];
+        BCOSGovernorStorage storage $ = _getBCOSGovernorStorage();
+        ProposalVote storage proposalVote = $._proposalVotes[proposalId];
         return (proposalVote.forVotes, proposalVote.againstVotes, proposalVote.abstainVotes);
     }
 
     function proposalVoters(uint256 proposalId) public view returns (address[] memory) {
-        ProposalVote storage proposalVote = _proposalVotes[proposalId];
+        BCOSGovernorStorage storage $ = _getBCOSGovernorStorage();
+        ProposalVote storage proposalVote = $._proposalVotes[proposalId];
         return proposalVote.voters.values();
     }
 
@@ -216,7 +234,8 @@ contract BCOSGovernor is
         uint256 proposalId,
         address voter
     ) public view returns (uint256 weight, uint8 voteType, uint256 number) {
-        ProposalVote storage proposalVote = _proposalVotes[proposalId];
+        BCOSGovernorStorage storage $ = _getBCOSGovernorStorage();
+        ProposalVote storage proposalVote = $._proposalVotes[proposalId];
         weight = proposalVote.hasVoted[voter];
         voteType = proposalVote.voteType[voter];
         number = proposalVote.voteBlock[voter];
@@ -227,24 +246,26 @@ contract BCOSGovernor is
     }
 
     function stateById(uint256 proposalId) public view virtual returns (ProposalState) {
-        uint256 proposalHash = _proposalHashes[proposalId];
+        BCOSGovernorStorage storage $ = _getBCOSGovernorStorage();
+        uint256 proposalHash = $._proposalHashes[proposalId];
         return state(proposalHash);
     }
 
     function state(
         uint256 proposalHash
     ) public view virtual override(GovernorUpgradeable, GovernorTimelockControlUpgradeable) returns (ProposalState) {
-        uint256 proposalId = _proposalIds[proposalHash];
+        BCOSGovernorStorage storage $ = _getBCOSGovernorStorage();
+        uint256 proposalId = $._proposalIds[proposalHash];
         ProposalState proposalState = super.state(proposalHash);
         if (proposalState == ProposalState.Pending) {
             // turn into active status when approved immediately
-            ProposalApprovalFlow storage approvalFlow = _proposalApprovalFlow[proposalId];
+            ProposalApprovalFlow storage approvalFlow = $._proposalApprovalFlow[proposalId];
             if (approvalFlow.approved) {
                 return ProposalState.Active;
             }
         }
         if (proposalState == ProposalState.Active) {
-            ProposalApprovalFlow storage approvalFlow = _proposalApprovalFlow[proposalId];
+            ProposalApprovalFlow storage approvalFlow = $._proposalApprovalFlow[proposalId];
             if (!approvalFlow.approved) {
                 return ProposalState.Pending;
             }
@@ -266,6 +287,16 @@ contract BCOSGovernor is
         return true;
     }
 
+    function getCancelledProposals() public view returns (uint256[] memory) {
+        BCOSGovernorStorage storage $ = _getBCOSGovernorStorage();
+        return $.canceledProposals.values();
+    }
+
+    function getExecutedProposals() public view returns (uint256[] memory) {
+        BCOSGovernorStorage storage $ = _getBCOSGovernorStorage();
+        return $.executedProposals.values();
+    }
+
     /***************************
      * DAO procedure functions
      ****************************/
@@ -278,7 +309,8 @@ contract BCOSGovernor is
         string memory description
     ) public returns (uint256) {
         uint proposalHash = super.propose(targets, values, calldatas, description);
-        ProposalExtraStorage storage extra = _proposalExtra[_latestProposalId];
+        BCOSGovernorStorage storage $ = _getBCOSGovernorStorage();
+        ProposalExtraStorage storage extra = $._proposalExtra[proposalCount()];
         extra.createBlockNumber = block.number;
         extra.title = title;
         extra.description = description;
@@ -286,7 +318,8 @@ contract BCOSGovernor is
     }
 
     function approveProposal(uint256 proposalId) public onlyMaintainer {
-        uint256 proposalHash = _proposalHashes[proposalId];
+        BCOSGovernorStorage storage $ = _getBCOSGovernorStorage();
+        uint256 proposalHash = $._proposalHashes[proposalId];
         ProposalState proposalState = state(proposalHash);
         if (proposalState != ProposalState.Pending) {
             revert GovernorUnexpectedProposalState(
@@ -295,7 +328,7 @@ contract BCOSGovernor is
                 _encodeStateBitmap(ProposalState.Pending)
             );
         }
-        ProposalApprovalFlow storage approvalFlow = _proposalApprovalFlow[proposalId];
+        ProposalApprovalFlow storage approvalFlow = $._proposalApprovalFlow[proposalId];
         approvalFlow.approvers.push(_msgSender());
         if (approvalFlow.approvers.length >= approveThreshold()) {
             approvalFlow.approved = true;
@@ -303,25 +336,30 @@ contract BCOSGovernor is
     }
 
     function vote(uint256 proposalId, uint8 support, string calldata reason) public returns (uint256) {
-        uint256 proposalHash = _proposalHashes[proposalId];
+        BCOSGovernorStorage storage $ = _getBCOSGovernorStorage();
+        uint256 proposalHash = $._proposalHashes[proposalId];
         return super.castVoteWithReason(proposalHash, support, reason);
     }
 
     function queueById(uint256 proposalId) public {
-        uint256 proposalHash = _proposalHashes[proposalId];
+        BCOSGovernorStorage storage $ = _getBCOSGovernorStorage();
+        uint256 proposalHash = $._proposalHashes[proposalId];
         super.queue(proposalHash);
     }
 
     function executeById(uint256 proposalId) public payable onlyMaintainer {
-        uint256 proposalHash = _proposalHashes[proposalId];
+        BCOSGovernorStorage storage $ = _getBCOSGovernorStorage();
+        uint256 proposalHash = $._proposalHashes[proposalId];
         super.execute(proposalHash);
-        ProposalExtraStorage storage extra = _proposalExtra[proposalId];
+        ProposalExtraStorage storage extra = $._proposalExtra[proposalId];
         extra.executedBlockNumber = block.number;
         extra.canceledBlockNumber = 0;
+        $.executedProposals.add(proposalId);
     }
 
     function emergencyShutdownProposal(uint256 proposalId) public onlyMaintainer {
-        uint256 proposalHash = _proposalHashes[proposalId];
+        BCOSGovernorStorage storage $ = _getBCOSGovernorStorage();
+        uint256 proposalHash = $._proposalHashes[proposalId];
         ProposalState proposalState = state(proposalHash);
         if (proposalState != ProposalState.Active) {
             revert GovernorUnexpectedProposalState(
@@ -337,14 +375,17 @@ contract BCOSGovernor is
             bytes32 descriptionHash
         ) = proposalDetails(proposalHash);
         _cancel(targets, values, calldatas, descriptionHash);
+        $.canceledProposals.add(proposalId);
     }
 
     function cancelById(uint256 proposalId) public onlyMaintainer {
-        uint256 proposalHash = _proposalHashes[proposalId];
+        BCOSGovernorStorage storage $ = _getBCOSGovernorStorage();
+        uint256 proposalHash = $._proposalHashes[proposalId];
         super.cancel(proposalHash);
-        ProposalExtraStorage storage extra = _proposalExtra[proposalId];
+        ProposalExtraStorage storage extra = $._proposalExtra[proposalId];
         extra.canceledBlockNumber = block.number;
         extra.executedBlockNumber = 0;
+        $.canceledProposals.add(proposalId);
     }
 
     /***************************
@@ -408,23 +449,25 @@ contract BCOSGovernor is
         bytes[] memory calldatas,
         string memory description,
         address proposer
-    ) internal override(GovernorUpgradeable, GovernorStorageUpgradeable) returns (uint256) {
+    ) internal override(GovernorUpgradeable, GovernorStorageUpgradeable) returns (uint256 proposalId) {
+        proposalId = super._propose(targets, values, calldatas, description, proposer);
         uint256 proposalHash = hashProposal(targets, values, calldatas, keccak256(bytes(description)));
-        uint256 storedProposalId = _proposalIds[proposalHash];
+        BCOSGovernorStorage storage $ = _getBCOSGovernorStorage();
+        uint256 storedProposalId = $._proposalIds[proposalHash];
         if (storedProposalId == 0) {
-            _latestProposalId++;
-            _proposalIds[proposalHash] = _latestProposalId;
-            _proposalHashes[_latestProposalId] = proposalHash;
+            uint256 id = proposalCount();
+            $._proposalIds[proposalHash] = id;
+            $._proposalHashes[id] = proposalHash;
         }
-        return super._propose(targets, values, calldatas, description, proposer);
     }
 
     /**
      * @dev See {Governor-_quorumReached}.
      */
     function _quorumReached(uint256 proposalHash) internal view virtual override returns (bool) {
-        uint256 proposalId = _proposalIds[proposalHash];
-        ProposalVote storage proposalVote = _proposalVotes[proposalId];
+        BCOSGovernorStorage storage $ = _getBCOSGovernorStorage();
+        uint256 proposalId = $._proposalIds[proposalHash];
+        ProposalVote storage proposalVote = $._proposalVotes[proposalId];
 
         return
             quorum(proposalSnapshot(proposalHash)) <=
@@ -435,8 +478,9 @@ contract BCOSGovernor is
      * @dev See {Governor-_voteSucceeded}. In this module, the forVotes must be strictly over the againstVotes.
      */
     function _voteSucceeded(uint256 proposalHash) internal view virtual override returns (bool) {
-        uint256 proposalId = _proposalIds[proposalHash];
-        ProposalVote storage proposalVote = _proposalVotes[proposalId];
+        BCOSGovernorStorage storage $ = _getBCOSGovernorStorage();
+        uint256 proposalId = $._proposalIds[proposalHash];
+        ProposalVote storage proposalVote = $._proposalVotes[proposalId];
         return isVoteSuccessful(proposalVote.forVotes, proposalVote.againstVotes, proposalVote.abstainVotes);
     }
 
@@ -450,8 +494,9 @@ contract BCOSGovernor is
         uint256 weight,
         bytes memory // params
     ) internal virtual override returns (uint256) {
-        uint256 proposalId = _proposalIds[proposalHash];
-        ProposalVote storage proposalVote = _proposalVotes[proposalId];
+        BCOSGovernorStorage storage $ = _getBCOSGovernorStorage();
+        uint256 proposalId = $._proposalIds[proposalHash];
+        ProposalVote storage proposalVote = $._proposalVotes[proposalId];
 
         if (weight == 0) {
             revert GovernorInvalidVoteType();

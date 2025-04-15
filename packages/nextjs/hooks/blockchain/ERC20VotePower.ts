@@ -31,6 +31,15 @@ export const useDelegates = (address: string) => {
   return delegatesData;
 };
 
+export const useDelegatees = () => {
+  const { data: delegateesData } = useScaffoldReadContract({
+    contractName: "ERC20VotePower",
+    functionName: "getDelegatees",
+  });
+
+  return delegateesData;
+};
+
 export const useDelegate = () => {
   const { writeContractAsync: delegateAsync } = useScaffoldWriteContract({
     contractName: "ERC20VotePower",

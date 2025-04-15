@@ -7,7 +7,7 @@ import { GenericContractsDeclaration } from "~~/utils/scaffold-eth/contract";
 const deployedContracts = {
   30303: {
     BCOSGovernor: {
-      address: "0x3a973Ced67Ab1CC95B89B29b9f8c29A1Ec7A20e7",
+      address: "0x3bCaF3910eb0F41D374430eEE0554422918ABD7c",
       abi: [
         {
           anonymous: false,
@@ -1267,6 +1267,32 @@ const deployedContracts = {
           type: "function",
         },
         {
+          inputs: [],
+          name: "getCancelledProposals",
+          outputs: [
+            {
+              internalType: "uint256[]",
+              name: "",
+              type: "uint256[]",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [],
+          name: "getExecutedProposals",
+          outputs: [
+            {
+              internalType: "uint256[]",
+              name: "",
+              type: "uint256[]",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
           inputs: [
             {
               internalType: "uint256",
@@ -1852,19 +1878,6 @@ const deployedContracts = {
               internalType: "bool",
               name: "",
               type: "bool",
-            },
-          ],
-          stateMutability: "view",
-          type: "function",
-        },
-        {
-          inputs: [],
-          name: "latestProposalId",
-          outputs: [
-            {
-              internalType: "uint256",
-              name: "",
-              type: "uint256",
             },
           ],
           stateMutability: "view",
@@ -2910,7 +2923,7 @@ const deployedContracts = {
       inheritedFunctions: {},
     },
     CustomTimelockControllerUpgradeable: {
-      address: "0xE5ecC4CC95e8d2eFcD0bF64f68359fF3a5bEB9aA",
+      address: "0x65c42914190A2E7F6284fF838De996458aDcfFC7",
       abi: [
         {
           anonymous: false,
@@ -4020,7 +4033,7 @@ const deployedContracts = {
       inheritedFunctions: {},
     },
     ERC20VotePower: {
-      address: "0xbD6eb0D850B71E6c0cF01FFF18A2d935407693A3",
+      address: "0xeAFe33166416173BE72fa1Da2b5Af799b958f20E",
       abi: [
         {
           anonymous: false,
@@ -4793,6 +4806,19 @@ const deployedContracts = {
           type: "function",
         },
         {
+          inputs: [],
+          name: "getDelegatees",
+          outputs: [
+            {
+              internalType: "address[]",
+              name: "",
+              type: "address[]",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
           inputs: [
             {
               internalType: "uint256",
@@ -5161,7 +5187,7 @@ const deployedContracts = {
       inheritedFunctions: {},
     },
     TimeSetting: {
-      address: "0x1D063B5c45390138a59c5D401208d709880AF965",
+      address: "0xF4B80A46571AF3Dd12E3B88B7ec21D73586bEFf2",
       abi: [
         {
           inputs: [],

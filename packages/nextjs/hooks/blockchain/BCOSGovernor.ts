@@ -108,7 +108,7 @@ const useLatestProposalId = () => {
   const [latestId, setLatestId] = useState<number>(0);
   const { data: latestProposalId } = useScaffoldReadContract({
     contractName: "BCOSGovernor",
-    functionName: "latestProposalId",
+    functionName: "proposalCount",
   });
 
   useEffect(() => {
@@ -207,7 +207,7 @@ function useProposalVoters(proposalId: number): { voters: string[] } {
 function useProposeProposal() {
   const { writeContractAsync: proposeProposalAsync } = useScaffoldWriteContract({ contractName: "BCOSGovernor" });
   return async (title: string, targets: string[], values: bigint[], calldatas: string[], description: string) => {
-    await proposeProposalAsync({
+    return await proposeProposalAsync({
       functionName: "proposeWithTitle",
       args: [title, targets, values, calldatas as `0x{string}`[], description],
     });
@@ -409,6 +409,16 @@ export const useVotingPeriod = () => {
   }
   console.log("useVotingPeriod useScaffoldReadContract: ", proposalDuration);
   return Number(proposalDuration);
+};
+
+export const useExecutedProposal = () => {
+  const { data: executedProposal } = useScaffoldReadContract({
+    contractName: "BCOSGovernor",
+    functionName: "getExecutedProposals",
+    args: [] as never,
+  });
+
+  return executedProposal;
 };
 
 export {

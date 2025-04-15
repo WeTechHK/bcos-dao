@@ -1,15 +1,18 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.26;
+import { ECDSA } from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import { ERC20PermitUpgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20PermitUpgradeable.sol";
 import { ERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 import { ERC20VotesUpgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20VotesUpgradeable.sol";
-import { ERC20PermitUpgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20PermitUpgradeable.sol";
-import { PausableUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
-import { NoncesUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/NoncesUpgradeable.sol";
-import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import { ECDSA } from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import { NoncesUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/NoncesUpgradeable.sol";
+
+import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import { PausableUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
+import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
 import "./TimeSetting.sol";
+using EnumerableSet for EnumerableSet.AddressSet;
 
 /**
  * @title ERC20VotePower
@@ -24,14 +27,24 @@ contract ERC20VotePower is
     PausableUpgradeable,
     OwnableUpgradeable
 {
-    TimeSetting private timer;
     bytes32 private constant DELEGATION_TYPEHASH =
         keccak256("Delegation(address delegatee,uint256 nonce,uint256 expiry)");
 
     function initialize(string memory name, string memory symbol, TimeSetting _timer) public initializer {
         __ERC20VotePower_init(name, symbol, _timer);
     }
-
+    struct ERC20VotePowerStorage {
+        TimeSetting _timer;
+        EnumerableSet.AddressSet _delegates;
+    }
+    // keccak256(abi.encode(uint256(keccak256("bcos-dao.contracts.ERC20VotePowerStorage")) - 1)) & ~bytes32(uint256(0xff));
+    bytes32 private constant ERC20_VOTE_POWER_STORAGE_POSITION =
+        0x8748f413af8995b219d7537f98b1d17b74849147369f06e6db8cbd69f093d800;
+    function _getERC20VotePowerStorage() private pure returns (ERC20VotePowerStorage storage $) {
+        assembly {
+            $.slot := ERC20_VOTE_POWER_STORAGE_POSITION
+        }
+    }
     function __ERC20VotePower_init(
         string memory name,
         string memory symbol,
@@ -42,7 +55,15 @@ contract ERC20VotePower is
         __ERC20_init(name, symbol);
         __Ownable_init(msg.sender);
         __Pausable_init();
-        timer = _timer;
+        ERC20VotePowerStorage storage $ = _getERC20VotePowerStorage();
+        $._timer = _timer;
+    }
+
+    function delegate(address delegatee) public virtual override {
+        address account = _msgSender();
+        ERC20VotePowerStorage storage $ = _getERC20VotePowerStorage();
+        $._delegates.add(delegatee);
+        _delegate(account, delegatee);
     }
 
     function delegateBySig(
@@ -63,7 +84,14 @@ contract ERC20VotePower is
             s
         );
         _useCheckedNonce(signer, nonce);
+        ERC20VotePowerStorage storage $ = _getERC20VotePowerStorage();
+        $._delegates.add(delegatee);
         _delegate(signer, delegatee);
+    }
+
+    function getDelegatees() public view returns (address[] memory) {
+        ERC20VotePowerStorage storage $ = _getERC20VotePowerStorage();
+        return $._delegates.values();
     }
 
     function _update(
@@ -97,14 +125,17 @@ contract ERC20VotePower is
     }
 
     function clock() public view override returns (uint48) {
-        return timer.clock();
+        ERC20VotePowerStorage storage $ = _getERC20VotePowerStorage();
+        return $._timer.clock();
     }
 
     function CLOCK_MODE() public view override returns (string memory) {
-        return timer.CLOCK_MODE();
+        ERC20VotePowerStorage storage $ = _getERC20VotePowerStorage();
+        return $._timer.CLOCK_MODE();
     }
 
     function resetUint(uint256 _unit) public onlyOwner {
-        timer.resetUnit(_unit);
+        ERC20VotePowerStorage storage $ = _getERC20VotePowerStorage();
+        $._timer.resetUnit(_unit);
     }
 }

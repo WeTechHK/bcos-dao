@@ -1,6 +1,6 @@
 "use client";
 
-import React, { ReactElement } from "react";
+import React, { ReactElement, useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import {
   BankFilled,
@@ -14,15 +14,31 @@ import {
   ToolFilled,
 } from "@ant-design/icons";
 import "@mdxeditor/editor/style.css";
-import { Button, Card, Divider, Flex, Form, Input, Tag, Typography, message } from "antd";
+import {
+  Button,
+  Card,
+  Divider,
+  Flex,
+  FloatButton,
+  Form,
+  Input,
+  Popconfirm,
+  Spin,
+  Tag,
+  Typography,
+  message,
+  notification,
+} from "antd";
 import { default as FormItem } from "antd/es/form/FormItem";
 import { default as FormList } from "antd/es/form/FormList";
 import type { NextPage } from "next";
+import { useAccount } from "wagmi";
 import { ChainSystemChangeForm } from "~~/components/proposal/ChainSystemChangeForm";
 import CustomActionForm from "~~/components/proposal/CustomActionForm";
 import GovernorSettingsForm from "~~/components/proposal/GovernorSettingsForm";
 import TransferTokenForm from "~~/components/proposal/TransferTokenForm";
-import { useProposeProposal } from "~~/hooks/blockchain/BCOSGovernor";
+import { useProposalThreshold, useProposeProposal } from "~~/hooks/blockchain/BCOSGovernor";
+import { useVotePower } from "~~/hooks/blockchain/ERC20VotePower";
 
 type ProposalAction = {
   key: string;
@@ -89,12 +105,91 @@ type ProposalStorage = {
 
 const ProposalCreation: NextPage = () => {
   const [form] = Form.useForm();
-  const [messageApi, contextHolder] = message.useMessage();
+  const [messageApi, messageContextHolder] = message.useMessage();
+  const [notifyApi, notifyContextHolder] = notification.useNotification();
 
   const submitter = useProposeProposal();
+  const { address } = useAccount();
+  const { votePowerData, refetchVotePower } = useVotePower(address || "");
+  const proposalThreshold = useProposalThreshold();
+  const [canSubmitProposal, setCanSubmitProposal] = useState<boolean>(false);
+  const [openConfirmSubmit, setOpenConfirmSubmit] = useState<boolean>(false);
+  const [submitting, setSubmitting] = useState(false);
+  useEffect(() => {
+    refetchVotePower();
+  }, [address, refetchVotePower]);
+  useEffect(() => {
+    if (votePowerData && proposalThreshold) {
+      if (votePowerData >= proposalThreshold) {
+        setCanSubmitProposal(true);
+      }
+      console.log("votePowerData", votePowerData);
+      console.log("proposalThreshold", proposalThreshold);
+    }
+  }, [proposalThreshold, votePowerData]);
+
+  function submitProposal() {
+    return async (values: ProposalStorage) => {
+      try {
+        console.log("onFinish", values);
+        const title = values.title;
+        const description = values.description;
+        if (!values.actions || values.actions.length === 0) {
+          notifyApi.error({
+            message: "Please add at least one action",
+            description: "Action is required for submit proposal.",
+          });
+          return;
+        }
+        const targets: string[] = [];
+        const valuesArray: bigint[] = [];
+        const calldatas: string[] = [];
+        for (let i = 0; i < values.actions.length; i++) {
+          const action = values.actions[i];
+          if (!action.calldata || !action.address || action.value === undefined || action.value === null) {
+            messageApi.error("Please fill in all fields for Action#" + (i + 1));
+            form.scrollToField(["actions", i]);
+            return;
+          }
+          targets.push(action.address);
+          valuesArray.push(action.value);
+          calldatas.push(action.calldata);
+        }
+        setSubmitting(true);
+        submitter(title, targets, valuesArray, calldatas, description)
+          .then(
+            () => {
+              notifyApi.open({
+                type: "success",
+                message: "Proposal created successfully",
+              });
+              window.location.href = "/";
+            },
+            error => {
+              console.error("Error creating proposal", error);
+              messageApi.error("Failed to create proposal");
+            },
+          )
+          .catch(error => {
+            console.error("Error creating proposal", error);
+            messageApi.error("Failed to create proposal");
+          })
+          .finally(() => {
+            setSubmitting(false);
+          });
+      } catch (error) {
+        notifyApi.open({
+          type: "error",
+          message: "Failed to create proposal",
+        });
+      }
+    };
+  }
 
   return (
     <main className="container mx-auto w-full px-4 py-6">
+      <FloatButton tooltip={<div>DAO Parameters</div>} onClick={() => console.log("click")}></FloatButton>
+      <Spin spinning={submitting} fullscreen size={"large"}></Spin>
       <div className="flex justify-between">
         <div className="inline-grid grid-cols-2 gap-4">
           <Button icon={<EditFilled />} size="large" color="default" variant="filled">
@@ -104,70 +199,47 @@ const ProposalCreation: NextPage = () => {
             Preview
           </Button>
         </div>
-        <div className="inline-grid grid-cols-2 gap-4">
-          <Button icon={<FormOutlined />} size="large" color="default" variant="filled">
-            Save Draft
-          </Button>
-          <Button
-            icon={<RocketFilled />}
-            size="large"
-            color="primary"
-            variant="filled"
-            ghost
-            htmlType={"submit"}
-            onClick={() => {
+        <div>
+          <Popconfirm
+            title="Submit the proposal"
+            description={
+              <div>
+                <div>{"You don't have enough voting power to submit the proposal."}</div>
+                <div>{"Are you sure you want to submit?"}</div>
+              </div>
+            }
+            open={openConfirmSubmit}
+            onOpenChange={(newOpen: boolean) => {
+              if (!newOpen) {
+                setOpenConfirmSubmit(newOpen);
+                return;
+              }
+              if (canSubmitProposal) {
+                form.submit();
+              } else {
+                setOpenConfirmSubmit(newOpen);
+              }
+            }}
+            onConfirm={async () => {
+              setOpenConfirmSubmit(false);
               form.submit();
             }}
+            onCancel={() => {
+              setOpenConfirmSubmit(false);
+            }}
+            okText="Yes"
+            cancelText="No"
           >
-            Submit
-          </Button>
+            <Button icon={<RocketFilled />} size="large" color="primary" variant="filled" ghost htmlType={"submit"}>
+              Submit
+            </Button>
+          </Popconfirm>
         </div>
       </div>
       <Divider />
-      <div>{contextHolder}</div>
-      <Form
-        form={form}
-        layout="vertical"
-        size="large"
-        onFinish={async (values: ProposalStorage) => {
-          try {
-            console.log("onFinish", values);
-            const title = values.title;
-            const description = values.description;
-            if (!values.actions || values.actions.length === 0) {
-              messageApi.error("Please add at least one action");
-              return;
-            }
-            const targets: string[] = [];
-            const valuesArray: bigint[] = [];
-            const calldatas: string[] = [];
-            for (let i = 0; i < values.actions.length; i++) {
-              const action = values.actions[i];
-              if (!action.calldata || !action.address || action.value === undefined || action.value === null) {
-                messageApi.error("Please fill in all fields for Action#" + (i + 1));
-                form.scrollToField(["actions", i]);
-                return;
-              }
-              targets.push(action.address);
-              valuesArray.push(action.value);
-              calldatas.push(action.calldata);
-            }
-            await submitter(title, targets, valuesArray, calldatas, description);
-            messageApi.open({
-              type: "success",
-              content: "Proposal created successfully",
-              onClose: () => {
-                window.location.href = "/";
-              },
-            });
-          } catch (error) {
-            messageApi.open({
-              type: "error",
-              content: "Failed to create proposal",
-            });
-          }
-        }}
-      >
+      <div>{messageContextHolder}</div>
+      <div>{notifyContextHolder}</div>
+      <Form form={form} layout="vertical" size="large" onFinish={submitProposal()}>
         <Card>
           <Tag color="blue" bordered={false} className="text-lg font-bold content-center mb-4">
             Main Information
