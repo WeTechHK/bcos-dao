@@ -6,6 +6,7 @@ import {
   CarryOutTwoTone,
   ContactsTwoTone,
   ContainerOutlined,
+  CopyTwoTone,
   FileAddTwoTone,
   FileDoneOutlined,
   HourglassTwoTone,
@@ -121,6 +122,13 @@ const Home: NextPage = () => {
                     <Space>
                       <LinkOutlined />
                       {formatAddress(timelock.data?.address)}
+                      <button
+                        // onClick={() => copyToClipboard(proposal.calldatas[index])}
+                        className="ml-2 p-1 hover:bg-gray-100 rounded-md flex-shrink-0"
+                        title="Copy calldata"
+                      >
+                        <CopyTwoTone />
+                      </button>
                     </Space>
                   </Link>
                 </span>
@@ -185,7 +193,7 @@ const Home: NextPage = () => {
                   </Popover>
                 </span>
                 <span className="font-medium">
-                  {quorum} % / {formatToken((totalSupply * BigInt(quorum)) / 100n)} EVP
+                  {quorum} % of {formatToken(totalSupply)} EVP
                 </span>
               </div>
               <div className="flex justify-between">
@@ -206,7 +214,7 @@ const Home: NextPage = () => {
                     </Space>
                   </Popover>
                 </span>
-                <span className="font-medium">{successThreshold} %</span>
+                <span className="font-medium">{successThreshold} % of voted power weight</span>
               </div>
             </div>
           </div>

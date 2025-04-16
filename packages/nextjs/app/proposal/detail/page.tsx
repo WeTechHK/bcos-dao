@@ -78,11 +78,13 @@ const ProposalDetail: NextPage = () => {
   // Calculate percentages
   const getPercentage = (value: bigint, total: bigint) => {
     if (total === 0n) return 0;
-    return Number((value * 100n) / total);
+    return (Number(value) * 100) / Number(total);
   };
 
   // Use BigInt calculations instead
   const forPercentage = getPercentage(forVotesBigInt, totalVotesBigInt);
+  const againstPercentage = getPercentage(againstVotesBigInt, totalVotesBigInt);
+  const abstainPercentage = getPercentage(abstainVotesBigInt, totalVotesBigInt);
 
   const handleQueue = async () => {
     try {
@@ -326,7 +328,7 @@ const ProposalDetail: NextPage = () => {
           </span>
         </td>
         <td className="px-6 py-4">
-          <div className="text-sm text-gray-900">{Number(weight)}</div>
+          <div className="text-sm text-gray-900">{formatToken(weight).toFixed(4)}</div>
         </td>
         <td className="px-6 py-4">
           <div className="text-sm text-gray-900">{Number(blockNumber)}</div>
@@ -365,13 +367,63 @@ const ProposalDetail: NextPage = () => {
             <div className="space-y-8">
               {/* Participated Voting Power */}
               <div>
-                <div className="flex justify-between mb-2">
-                  <span className="text-sm font-medium text-neutral">Participated Voting Power</span>
-                  <span className="text-sm font-medium text-neutral">Minimum ({quorumNumerator}%)</span>
+                <div>
+                  <div className="flex justify-between mb-2">
+                    <span className="text-sm font-medium text-neutral">Participated Voting Power</span>
+                  </div>
+                  <div className="relative h-8 bg-gray-100 rounded-full overflow-hidden">
+                    <div className="absolute h-full bg-blue-400" style={{ width: `${forPercentage}%` }} />
+                    <div className="absolute h-full bg-red-400" style={{ width: `${againstPercentage}%` }} />
+                    <div className="absolute h-full bg-gray-400" style={{ width: `${abstainPercentage}%` }} />
+                    <div className="absolute h-full w-px bg-black" style={{ left: `${voteSuccessThreshold}%` }} />
+                  </div>
+                  <div className="relative h-8">
+                    <div className="absolute h-full w-px bg-black" style={{ left: `${voteSuccessThreshold}%` }} />
+                    <div
+                      className="absolute text-sm font-medium text-black"
+                      style={{
+                        left: `calc(${voteSuccessThreshold}% + 5px)`,
+                        top: "50%",
+                        transform: "translateY(-50%)",
+                      }}
+                    >
+                      Minimum ({voteSuccessThreshold}%)
+                    </div>
+                  </div>
                 </div>
-                <div className="relative h-4 bg-gray-100 rounded-full overflow-hidden">
+                <div className="grid grid-cols-3 gap-4 mt-4">
+                  <div className="flex rounded-3xl items-center p-4 text-base font-semibold  text-blue-400 bg-gray-200 justify-between">
+                    <div>Yes</div>
+                    <div>
+                      {formatToken(proposal.forVotes).toFixed(4)} (
+                      {getPercentage(forVotesBigInt, totalVotesBigInt).toFixed(2)}%)
+                    </div>
+                  </div>
+                  <div className="flex rounded-3xl items-center p-4 text-base font-semibold  text-red-400 bg-gray-200 justify-between">
+                    <div>No</div>
+                    <div>
+                      {formatToken(proposal.againstVotes).toFixed(4)} (
+                      {getPercentage(againstVotesBigInt, totalVotesBigInt).toFixed(2)}%)
+                    </div>
+                  </div>
+                  <div className="flex rounded-3xl items-center p-4 text-base font-semibold  text-gray-400 bg-gray-200 justify-between">
+                    <div>Abstain</div>
+                    <div>
+                      {formatToken(proposal.abstainVotes).toFixed(4)} (
+                      {getPercentage(abstainVotesBigInt, totalVotesBigInt).toFixed(2)}%)
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Participation */}
+              <div>
+                <div className="flex justify-between mb-2">
+                  <span className="text-sm font-medium text-neutral">Participation Rate</span>
+                </div>
+                <div className="relative h-8 bg-gray-100 rounded-full overflow-hidden">
                   <div
-                    className="absolute h-full bg-blue-400"
+                    className="absolute h-full bg-emerald-400"
                     style={{ width: `${getPercentage(forVotesBigInt, totalSupplyBigInt)}%` }}
                   />
                   <div
@@ -383,45 +435,25 @@ const ProposalDetail: NextPage = () => {
                   />
                   <div className="absolute h-full w-px bg-black" style={{ left: `${quorumNumerator}%` }} />
                 </div>
-                <div className="grid grid-cols-3 gap-4 mt-4">
-                  <div className="text-center">
-                    <div className="text-lg font-semibold text-blue-600">
-                      {formatToken(proposal.forVotes).toFixed(4)} (
-                      {getPercentage(forVotesBigInt, totalVotesBigInt).toFixed(2)}%)
-                    </div>
-                    <div className="text-sm text-neutral">Yes</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-lg font-semibold text-red-600">
-                      {formatToken(proposal.againstVotes).toFixed(4)} (
-                      {getPercentage(againstVotesBigInt, totalVotesBigInt).toFixed(2)}%)
-                    </div>
-                    <div className="text-sm text-neutral">No</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-lg font-semibold text-gray-600">
-                      {formatToken(proposal.abstainVotes).toFixed(4)} (
-                      {getPercentage(abstainVotesBigInt, totalVotesBigInt).toFixed(2)}%)
-                    </div>
-                    <div className="text-sm text-neutral">Abstain</div>
+                <div className="relative h-8">
+                  <div className="absolute h-full w-px bg-black" style={{ left: `${quorumNumerator}%` }} />
+                  <div
+                    className="absolute text-sm font-medium text-black"
+                    style={{
+                      left: `calc(${quorumNumerator}% + 5px)`,
+                      top: "50%",
+                      transform: "translateY(-50%)",
+                    }}
+                  >
+                    Minimum ({quorumNumerator}%)
                   </div>
                 </div>
-                <div className="mt-4 text-sm text-neutral">
-                  Participated / Total Voting Power (Voting Rate): {formatToken(totalVotesBigInt).toFixed(4)} /{" "}
-                  {formatToken(totalSupplyBigInt).toFixed(4)} (
-                  {getPercentage(totalVotesBigInt, totalSupplyBigInt).toFixed(2)}%)
-                </div>
-              </div>
-
-              {/* Participation */}
-              <div>
-                <div className="flex justify-between mb-2">
-                  <span className="text-sm font-medium text-neutral">Participation Rate</span>
-                  <span className="text-sm font-medium text-neutral">Minimum ({voteSuccessThreshold}%)</span>
-                </div>
-                <div className="relative h-4 bg-gray-100 rounded-full overflow-hidden">
-                  <div className="absolute h-full bg-green-400" style={{ width: `${forPercentage}%` }} />
-                  <div className="absolute h-full w-px bg-black" style={{ left: `${voteSuccessThreshold}%` }} />
+                <div className="flex rounded-3xl items-center p-4 text-base  text-base-content bg-gray-200 justify-between mt-4">
+                  <div>Participated / Total Voting Power (Participated Rate):</div>
+                  <div>
+                    {formatToken(totalVotesBigInt).toFixed(4)} / {formatToken(totalSupplyBigInt).toFixed(4)} (
+                    {getPercentage(totalVotesBigInt, totalSupplyBigInt).toFixed(2)}%)
+                  </div>
                 </div>
               </div>
             </div>

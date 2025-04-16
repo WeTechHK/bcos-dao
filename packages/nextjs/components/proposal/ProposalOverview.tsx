@@ -4,7 +4,7 @@ import Link from "next/link";
 import { LinkOutlined } from "@ant-design/icons";
 import { codeBlockPlugin, headingsPlugin, linkPlugin, listsPlugin, quotePlugin } from "@mdxeditor/editor";
 import "@mdxeditor/editor/style.css";
-import { Popover } from "antd";
+import { Popover, Space } from "antd";
 import { message } from "antd";
 import classNames from "classnames";
 import { ClipboardIcon } from "@heroicons/react/24/outline";
@@ -12,7 +12,7 @@ import { type ProposalAllInfo } from "~~/hooks/blockchain/BCOSGovernor";
 import { useTransactionsByAddress } from "~~/hooks/blockchain/useTransactionByAddress";
 import { useDeployedContractInfo, useTargetNetwork } from "~~/hooks/scaffold-eth";
 import { ProposalState, stateColorsClassName } from "~~/services/store/store";
-import { formatUTCDate } from "~~/utils/TimeFormatter";
+import { formatDuration, formatUTCDate } from "~~/utils/TimeFormatter";
 import { shortenAddress } from "~~/utils/scaffold-eth/common";
 
 const MDXEditor = dynamic(() => import("@mdxeditor/editor").then(mod => mod.MDXEditor), { ssr: false });
@@ -59,7 +59,7 @@ export const ProposalOverview = ({ proposal, isPreview = false }: ProposalOvervi
         diffDate = new Date(eta.getTime() - now.getTime());
         console.log("diffDate", diffDate);
         /// FIXME)): this diff date will be error in 1 day
-        timeSuffix = " (ends in " + diffDate.getDate() + " days " + diffDate.getHours() + " hours)";
+        timeSuffix = " (ends in " + formatDuration(diffDate.getTime() / 1000) + ")";
       } else {
         // eta <= now
         timeSuffix = " (Ready to go!)";
@@ -120,8 +120,10 @@ export const ProposalOverview = ({ proposal, isPreview = false }: ProposalOvervi
               <div>
                 <h2 className="text-xl font-bold text-neutral">Executable Time</h2>
                 <div className="flex justify-start">
-                  <p className="text-md font-medium text-neutral">{etaTime}</p>
-                  <p className="text-md text-emerald-500">{timeSuffix}</p>
+                  <Space>
+                    <p className="text-md font-medium text-neutral">{etaTime}</p>
+                    <p className="text-md text-emerald-500">{timeSuffix}</p>
+                  </Space>
                 </div>
               </div>
             ) : (

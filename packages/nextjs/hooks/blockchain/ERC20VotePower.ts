@@ -66,6 +66,20 @@ export const useTotalSupply = () => {
   return totalSupplyData;
 };
 
+export const usePastTotalSupply = (timePoint: number | bigint) => {
+  const { data: pastTotalSupplyData } = useScaffoldReadContract({
+    contractName: "ERC20VotePower",
+    functionName: "getPastTotalSupply",
+    args: [BigInt(timePoint)],
+  });
+
+  if (pastTotalSupplyData === undefined) {
+    return 0n;
+  }
+
+  return pastTotalSupplyData;
+};
+
 export const useBalanceOf = (address: string) => {
   const { data: balanceData } = useScaffoldReadContract({
     contractName: "ERC20VotePower",
