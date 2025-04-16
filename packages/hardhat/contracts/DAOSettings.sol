@@ -8,9 +8,20 @@ import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/I
 import "./VoteSuccessLogic.sol";
 
 abstract contract DAOSettings is Initializable, GovernorSettingsUpgradeable, GovernorVotesQuorumFractionUpgradeable {
-    IVoteSuccessLogic private _voteSuccessLogic;
-    uint256 private _voteSuccessThreshold;
-    uint256 private _approveThreshold = 0;
+    struct DAOSettingsStorage {
+        IVoteSuccessLogic _voteSuccessLogic;
+        uint256 _voteSuccessThreshold;
+        uint256 _approveThreshold;
+    }
+
+    // keccak256(abi.encode(uint256(keccak256("bcos-dao.contracts.DAOSettingsStorage")) - 1)) & ~bytes32(uint256(0xff));
+    bytes32 private constant DAO_SETTINGS_STORAGE_POSITION =
+        0x3ff949ad3020a4405d4cf7e74b1fe5dffa976db27d2dfb620c9716a7eb7f4400;
+    function _getDAOSettingsStorage() private pure returns (DAOSettingsStorage storage $) {
+        assembly {
+            $.slot := DAO_SETTINGS_STORAGE_POSITION
+        }
+    }
 
     function __DAOSettings_init(
         uint256 quorumNumeratorValue,
@@ -20,8 +31,10 @@ abstract contract DAOSettings is Initializable, GovernorSettingsUpgradeable, Gov
     ) internal onlyInitializing {
         __GovernorSettings_init(initialVotingDelay, initialVotingPeriod, initialProposalThreshold);
         __GovernorVotesQuorumFraction_init(quorumNumeratorValue);
-        _voteSuccessLogic = new VoteSuccessLogic();
-        _voteSuccessThreshold = 50;
+        DAOSettingsStorage storage $ = _getDAOSettingsStorage();
+        $._voteSuccessLogic = new VoteSuccessLogic();
+        $._voteSuccessThreshold = 50;
+        $._approveThreshold = 0;
     }
 
     function proposalThreshold()
@@ -35,20 +48,24 @@ abstract contract DAOSettings is Initializable, GovernorSettingsUpgradeable, Gov
     }
 
     function approveThreshold() public view virtual returns (uint256) {
-        return _approveThreshold;
+        DAOSettingsStorage storage $ = _getDAOSettingsStorage();
+        return $._approveThreshold;
     }
 
     function voteSuccessThreshold() public view returns (uint256) {
-        return _voteSuccessThreshold;
+        DAOSettingsStorage storage $ = _getDAOSettingsStorage();
+        return $._voteSuccessThreshold;
     }
 
     function setVoteSuccessThreshold(uint256 threshold) public onlyGovernance {
         require(threshold > 0 && threshold <= 100, "Invalid threshold");
-        _voteSuccessThreshold = threshold;
+        DAOSettingsStorage storage $ = _getDAOSettingsStorage();
+        $._voteSuccessThreshold = threshold;
     }
 
     function setApproveThreshold(uint256 threshold) public onlyGovernance {
-        _approveThreshold = threshold;
+        DAOSettingsStorage storage $ = _getDAOSettingsStorage();
+        $._approveThreshold = threshold;
     }
 
     function updateVoteSuccessLogic(IVoteSuccessLogic newVoteSuccessLogic) public onlyGovernance {
@@ -56,10 +73,12 @@ abstract contract DAOSettings is Initializable, GovernorSettingsUpgradeable, Gov
             newVoteSuccessLogic.supportsInterface(type(IVoteSuccessLogic).interfaceId),
             "Invalid IVoteSuccessLogic implementation"
         );
-        _voteSuccessLogic = newVoteSuccessLogic;
+        DAOSettingsStorage storage $ = _getDAOSettingsStorage();
+        $._voteSuccessLogic = newVoteSuccessLogic;
     }
 
     function isVoteSuccessful(uint256 forVotes, uint256 againstVotes, uint256 abstainVotes) public view returns (bool) {
-        return _voteSuccessLogic.isVoteSuccessful(forVotes, againstVotes, abstainVotes, _voteSuccessThreshold);
+        DAOSettingsStorage storage $ = _getDAOSettingsStorage();
+        return $._voteSuccessLogic.isVoteSuccessful(forVotes, againstVotes, abstainVotes, $._voteSuccessThreshold);
     }
 }

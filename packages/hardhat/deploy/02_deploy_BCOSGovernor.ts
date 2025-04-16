@@ -1,5 +1,6 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { DeployFunction } from "hardhat-deploy/types";
+import { WeiPerEther } from "ethers";
 
 /**
  * Deploys a contract named "BCOSGovernor" using the deployer account and
@@ -22,12 +23,13 @@ const deployBCOSGovernor: DeployFunction = async function (hre: HardhatRuntimeEn
   const erc20VotePower = await get("ERC20VotePower");
   const tcProxy = await get("CustomTimelockControllerUpgradeable");
   const timer = await get("TimeSetting");
-  const quorumNumerator = 30n;
   const votingDelay = 0n; // no delay
   const votingPeriod = 7n * 24n * 60n * 60n; // 7 days
-  const proposalThreshold: bigint = 10000000000000000n; // 10e16
-  const minDelay = 24n * 60n * 60n; // 1 day
-  const initTokenPool: bigint = 1000000000000000000n; // 10e18
+  const proposalThreshold: bigint = 30n * WeiPerEther; // 30 ether
+
+  const minDelay = 30n * 60n; // 30 minutes
+  const initTokenPool: bigint = 100n * WeiPerEther; // 100 ether
+  const quorumNumerator = (proposalThreshold * 100n) / initTokenPool;
   const unit: bigint = process.env.TIMER_UNIT ? BigInt(process.env.TIMER_UNIT) : 1n;
 
   // print all args

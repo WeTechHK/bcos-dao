@@ -72,7 +72,6 @@ export const Header = () => {
   const balance = useBalanceOf(address || "");
   const symbol = useSymbol();
   const delegate = useDelegate();
-  const isLocalNetwork = targetNetwork.id === hardhat.id;
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [showDelegateOptions, setShowDelegateOptions] = useState(false);
   const [showAddressModal, setShowAddressModal] = useState(false);
