@@ -1,6 +1,6 @@
 "use client";
 
-import React, { ReactElement, useState } from "react";
+import React, { ReactElement, useEffect, useState } from "react";
 import { InboxOutlined, InfoCircleFilled } from "@ant-design/icons";
 import { Abi, AbiFunction } from "abitype";
 import { Form, Input, Select, Switch, Upload, UploadProps, message } from "antd";
@@ -94,24 +94,44 @@ const CustomActionForm = ({ field, index, onChange }: { field?: any; index?: any
   );
   const [method, setMethod] = useState<{ fn: AbiFunction }>();
 
+  useEffect(() => {
+    if (abi !== undefined && abi !== null) {
+      const functions = abi.filter(
+        (part, index, array) =>
+          part.type === "function" &&
+          part.stateMutability !== "pure" &&
+          part.stateMutability !== "view" &&
+          array.findIndex(value => {
+            return value.type === "function" && value.name === part.name;
+          }) === index,
+      ) as AbiFunction[];
+      setMethodList(functions);
+    }
+  }, [abi]);
+
+  useEffect(() => {
+    if (methodList !== undefined && methodList !== null) {
+      const methodOptions = methodList.map(fn => ({ label: <div>{fn.name}</div>, value: fn.name }));
+      setMethodOptions(methodOptions);
+    }
+  }, [methodList]);
+
   const onABIChange = (value: string) => {
+    console.log(value);
     if (value === "pureCalldata") {
+      setDraggerVisible(false);
       setPureCallData(true);
+      setAbi(undefined);
     } else if (value === "uploadABI") {
       setDraggerVisible(true);
       setPureCallData(false);
+      setAbi(undefined);
     } else {
       setDraggerVisible(false);
       setPureCallData(false);
       const contractAbi = actionSelectOptions.find(option => option.value === value);
       const abi = contractAbi?.abi as Abi;
       setAbi(abi);
-      const functions = abi?.filter(
-        part => part.type === "function" && part.stateMutability !== "pure" && part.stateMutability !== "view",
-      ) as AbiFunction[];
-      setMethodList(functions);
-      const methodOptions = functions.map(fn => ({ label: <div>{fn.name}</div>, value: fn.name }));
-      setMethodOptions(methodOptions);
     }
   };
 

@@ -67,7 +67,7 @@ contract BCOSGovernor is
         Abstain
     }
     struct ProposalApprovalFlow {
-        address[] approvers;
+        EnumerableSet.AddressSet approvers;
         bool approved;
     }
 
@@ -160,9 +160,12 @@ contract BCOSGovernor is
         return storedProposalHash;
     }
 
-    function getProposalApprovalFlow(uint256 proposalId) public view returns (ProposalApprovalFlow memory) {
+    function getProposalApprovalFlow(
+        uint256 proposalId
+    ) public view returns (address[] memory approvers, bool approved) {
         BCOSGovernorStorage storage $ = _getBCOSGovernorStorage();
-        return $._proposalApprovalFlow[proposalId];
+        approvers = $._proposalApprovalFlow[proposalId].approvers.values();
+        approved = $._proposalApprovalFlow[proposalId].approved;
     }
 
     function getProposalAllInfo(uint256 proposalId) public view returns (ProposalInfo memory info) {
@@ -329,8 +332,8 @@ contract BCOSGovernor is
             );
         }
         ProposalApprovalFlow storage approvalFlow = $._proposalApprovalFlow[proposalId];
-        approvalFlow.approvers.push(_msgSender());
-        if (approvalFlow.approvers.length >= approveThreshold()) {
+        approvalFlow.approvers.add(_msgSender());
+        if (approvalFlow.approvers.length() >= approveThreshold()) {
             approvalFlow.approved = true;
         }
     }
@@ -394,6 +397,10 @@ contract BCOSGovernor is
 
     function grantMaintainer(address account) public onlyGovernance {
         _grantRole(MAINTAINER_ROLE, account);
+    }
+
+    function revokeMaintainer(address account) public onlyGovernance {
+        _revokeRole(MAINTAINER_ROLE, account);
     }
 
     function grantRole(bytes32 role, address account) public override onlyGovernance {

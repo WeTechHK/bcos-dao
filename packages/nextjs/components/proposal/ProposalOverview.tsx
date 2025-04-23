@@ -8,8 +8,8 @@ import { Popover, Space } from "antd";
 import { message } from "antd";
 import classNames from "classnames";
 import { ClipboardIcon } from "@heroicons/react/24/outline";
-import { type ProposalAllInfo } from "~~/hooks/blockchain/BCOSGovernor";
-import { useTransactionsByAddress } from "~~/hooks/blockchain/useTransactionByAddress";
+import { type ProposalAllInfo, decodeData } from "~~/hooks/blockchain/BCOSGovernor";
+import { useTransactionsByAddress, useTransactionsFilterByTo } from "~~/hooks/blockchain/useTransactionByAddress";
 import { useDeployedContractInfo, useTargetNetwork } from "~~/hooks/scaffold-eth";
 import { ProposalState, stateColorsClassName } from "~~/services/store/store";
 import { formatDuration, formatUTCDate } from "~~/utils/TimeFormatter";
@@ -38,8 +38,10 @@ export const ProposalOverview = ({ proposal, isPreview = false }: ProposalOvervi
   const [timeRange, setTimeRange] = useState<string>();
   const [etaTime, setEtaTime] = useState<string>();
   const [timeSuffix, setTimeSuffix] = useState<string>("");
-  const [txHash, setTxHash] = useState<string>();
+  const [txSubmitProposalHash, setTxSubmitProposalHash] = useState<string>();
+  const [txExecutedProposalHash, setTxExecutedProposalHash] = useState<string>();
   const txsByProposer = useTransactionsByAddress(proposal.createBlock, proposal.proposer);
+  const executedTx = useTransactionsFilterByTo(proposal.executedBlock, bcosGovernor.data?.address);
   useEffect(() => {
     if (proposal.startTime && proposal.endTime) {
       const startTimeString = formatUTCDate(proposal.startTime * 1000);
@@ -64,22 +66,50 @@ export const ProposalOverview = ({ proposal, isPreview = false }: ProposalOvervi
         // eta <= now
         timeSuffix = " (Ready to go!)";
       }
+      if (proposal.executedBlock > 0) {
+        timeSuffix = " (Executed in block #" + proposal.executedBlock + ")";
+      }
       setEtaTime(etaString);
       setTimeSuffix(timeSuffix);
     }
-  }, [proposal.eta]);
+  }, [proposal.eta, proposal.executedBlock]);
 
   useEffect(() => {
     if (txsByProposer && bcosGovernor) {
       console.log("txsByProposer", txsByProposer);
       const txhash = txsByProposer.filter(tx => {
-        return tx.to === bcosGovernor.data?.address && tx.input.startsWith("0xb7fb511b");
+        if (tx.to !== bcosGovernor.data?.address) {
+          return false;
+        }
+        const txData = decodeData(tx.input, bcosGovernor.data?.abi);
+        return txData?.functionName === "proposeWithTitle";
       });
       if (txhash.length === 1) {
-        setTxHash(txhash[0].hash);
+        setTxSubmitProposalHash(txhash[0].hash);
       }
     }
   }, [txsByProposer]);
+
+  useEffect(() => {
+    if (executedTx && bcosGovernor) {
+      console.log("executedTx", executedTx);
+      const txhash = executedTx.filter(tx => {
+        if (tx.to !== bcosGovernor.data?.address) {
+          return false;
+        }
+        const txData = decodeData(tx.input, bcosGovernor.data?.abi);
+        return (
+          txData?.functionName === "executeById" &&
+          txData.args?.find(value => {
+            return value === BigInt(proposal.id);
+          })
+        );
+      });
+      if (txhash.length === 1) {
+        setTxExecutedProposalHash(txhash[0].hash);
+      }
+    }
+  }, [executedTx]);
 
   const { targetNetwork } = useTargetNetwork();
   const blockExplorerBaseURL = targetNetwork.blockExplorers?.default?.url;
@@ -144,11 +174,25 @@ export const ProposalOverview = ({ proposal, isPreview = false }: ProposalOvervi
               </Link>
             </div>
 
-            {txHash && (
+            {txSubmitProposalHash && (
               <div>
-                <h2 className="text-xl font-bold text-neutral">Transaction</h2>
+                <h2 className="text-xl font-bold text-neutral">Submit Proposal Transaction</h2>
                 <Link
-                  href={`${blockExplorerBaseURL}/tx/${txHash}`}
+                  href={`${blockExplorerBaseURL}/tx/${txSubmitProposalHash}`}
+                  className="text-md font-medium text-blue-500"
+                  target={`_blank`}
+                >
+                  <LinkOutlined />
+                  View on Explorer →
+                </Link>
+              </div>
+            )}
+
+            {txExecutedProposalHash && (
+              <div>
+                <h2 className="text-xl font-bold text-neutral">Executed Transaction</h2>
+                <Link
+                  href={`${blockExplorerBaseURL}/tx/${txExecutedProposalHash}`}
                   className="text-md font-medium text-blue-500"
                   target={`_blank`}
                 >

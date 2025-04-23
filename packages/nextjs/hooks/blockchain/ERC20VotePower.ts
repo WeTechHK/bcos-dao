@@ -12,6 +12,16 @@ export const useVotePower = (address: string) => {
   return { votePowerData, refetchVotePower };
 };
 
+export const usePastVotePower = (address: string, timePoint: number | bigint) => {
+  const { data: pastVotePowerData } = useScaffoldReadContract({
+    contractName: "ERC20VotePower",
+    functionName: "getPastVotes",
+    args: [address, BigInt(timePoint)],
+  });
+
+  return pastVotePowerData;
+};
+
 export const useVotePowerDecimal = () => {
   const { data: decimals } = useScaffoldReadContract({
     contractName: "ERC20VotePower",

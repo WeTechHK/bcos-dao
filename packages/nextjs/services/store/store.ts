@@ -28,6 +28,19 @@ export enum VoteType {
   Abstain = 2,
 }
 
+export const voteTypeToString = (voteType: VoteType): string => {
+  switch (voteType) {
+    case VoteType.Against:
+      return "Against";
+    case VoteType.VoteFor:
+      return "Vote For";
+    case VoteType.Abstain:
+      return "Abstain";
+    default:
+      return "Unknown";
+  }
+};
+
 // 根据状态设置颜色
 
 export const stateColorsClassName: { [key: number]: string } = {
