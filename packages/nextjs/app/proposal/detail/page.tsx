@@ -52,7 +52,10 @@ const ProposalDetail: NextPage = () => {
   const cancelProposal = useCancelProposal(Number(id));
   const emergencyShutdown = useEmergencyShutdownProposal(Number(id));
   const executeProposal = useExecuteProposal(Number(id));
-  const pastVotePower = usePastVotePower(String(address), proposal?.startTime ? proposal.startTime : 0);
+  const { pastVotePowerData: pastVotePower, refetchPastVotePower } = usePastVotePower(
+    String(address),
+    proposal?.startTime ? proposal.startTime : 0,
+  );
   const voters = useProposalVoters(Number(id));
   const castVote = useCastVote(Number(id), voteOption ? voteOption : VoteType.Abstain, voteReason);
   const voteSuccessThreshold = useVoteSuccessThreshold();
@@ -96,6 +99,7 @@ const ProposalDetail: NextPage = () => {
       message.success("Proposal queued for execution");
       refetch();
       refetchHasVoted();
+      refetchPastVotePower();
     } catch (error) {
       console.error("Error queueing proposal:", error);
       message.error("Failed to queue proposal");
@@ -108,6 +112,7 @@ const ProposalDetail: NextPage = () => {
       message.success("Proposal approved");
       refetch();
       refetchHasVoted();
+      refetchPastVotePower();
     } catch (error) {
       console.error("Error approving proposal:", error);
       message.error("Failed to approve proposal");
@@ -180,6 +185,7 @@ const ProposalDetail: NextPage = () => {
       message.success("Vote success: " + voteOption);
       refetch();
       refetchHasVoted();
+      refetchPastVotePower();
     } catch (error) {
       console.error("Error casting vote:", error);
       message.error("Failed to cast vote");
