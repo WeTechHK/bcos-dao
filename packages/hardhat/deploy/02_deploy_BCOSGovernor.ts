@@ -24,11 +24,11 @@ const deployBCOSGovernor: DeployFunction = async function (hre: HardhatRuntimeEn
   const tcProxy = await get("CustomTimelockControllerUpgradeable");
   const timer = await get("TimeSetting");
   const votingDelay = 0n; // no delay
-  const votingPeriod = 7n * 24n * 60n * 60n; // 7 days
-  const proposalThreshold: bigint = 30n * WeiPerEther; // 30 ether
+  const votingPeriod = 12n * 60n * 60n; // 12 hours
+  const proposalThreshold: bigint = 3000n * WeiPerEther; // 3000 ether
 
-  const minDelay = 30n * 60n; // 30 minutes
-  const initTokenPool: bigint = 100n * WeiPerEther; // 100 ether
+  const minDelay = 10n * 60n; // 10 minutes
+  const initTokenPool: bigint = 10000n * WeiPerEther; // 10000 ether
   const quorumNumerator = (proposalThreshold * 100n) / initTokenPool;
   const unit: bigint = process.env.TIMER_UNIT ? BigInt(process.env.TIMER_UNIT) : 1n;
 

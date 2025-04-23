@@ -4,34 +4,44 @@ import React, { useCallback, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LinkOutlined } from "@ant-design/icons";
+import { BankOutlined, LinkOutlined } from "@ant-design/icons";
 import { Input, Modal, message } from "antd";
+import dotenv from "dotenv";
 import { formatEther } from "viem";
-import { hardhat } from "viem/chains";
 import { useAccount } from "wagmi";
-import { ArrowPathIcon, Bars3Icon, BugAntIcon } from "@heroicons/react/24/outline";
-import { FaucetButton, RainbowKitCustomConnectButton } from "~~/components/scaffold-eth";
+import { ArrowPathIcon, Bars3Icon, BookOpenIcon, BugAntIcon, HomeIcon } from "@heroicons/react/24/outline";
+import { RainbowKitCustomConnectButton } from "~~/components/scaffold-eth";
 import { useIsMaintainer } from "~~/hooks/blockchain/BCOSGovernor";
 import { useBalanceOf, useDelegate, useDelegates, useSymbol, useVotePower } from "~~/hooks/blockchain/ERC20VotePower";
 import { useOutsideClick, useTargetNetwork } from "~~/hooks/scaffold-eth";
 import { shortenAddress } from "~~/utils/scaffold-eth/common";
 
+dotenv.config();
+
 type HeaderMenuLink = {
   label: string;
   href: string;
   icon?: React.ReactNode;
+  target?: string;
 };
 
 export const menuLinks: HeaderMenuLink[] = [
   {
     label: "Home",
     href: "/",
+    icon: <HomeIcon className="h-4 w-4" />,
   },
   {
-    label: "Debug Contracts",
-    href: "/debug",
-    icon: <BugAntIcon className="h-4 w-4" />,
+    label: "Docs",
+    href: process.env.NEXT_PUBLIC_DOCS_URL || "https://docs.potos.hk",
+    icon: <BookOpenIcon className="h-4 w-4" />,
+    target: "_blank",
   },
+  // {
+  //   label: "Debug Contracts",
+  //   href: "/debug",
+  //   icon: <BugAntIcon className="h-4 w-4" />,
+  // },
 ];
 
 export const HeaderMenuLinks = () => {
@@ -39,7 +49,7 @@ export const HeaderMenuLinks = () => {
 
   return (
     <>
-      {menuLinks.map(({ label, href, icon }) => {
+      {menuLinks.map(({ label, href, icon, target }) => {
         const isActive = pathname === href;
         return (
           <li key={href}>
@@ -49,6 +59,7 @@ export const HeaderMenuLinks = () => {
               className={`${
                 isActive ? "bg-secondary shadow-md" : ""
               } hover:bg-secondary hover:shadow-md focus:!bg-secondary active:!text-neutral py-1.5 px-3 text-sm rounded-full gap-2 grid grid-flow-col`}
+              target={target}
             >
               {icon}
               <span>{label}</span>

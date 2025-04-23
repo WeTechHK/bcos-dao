@@ -7,7 +7,7 @@ import { GenericContractsDeclaration } from "~~/utils/scaffold-eth/contract";
 const deployedContracts = {
   30303: {
     BCOSGovernor: {
-      address: "0x3bCaF3910eb0F41D374430eEE0554422918ABD7c",
+      address: "0x468423fd4878C6afdB1f19A63c0c2138D1265BAE",
       abi: [
         {
           anonymous: false,
@@ -1435,21 +1435,14 @@ const deployedContracts = {
           name: "getProposalApprovalFlow",
           outputs: [
             {
-              components: [
-                {
-                  internalType: "address[]",
-                  name: "approvers",
-                  type: "address[]",
-                },
-                {
-                  internalType: "bool",
-                  name: "approved",
-                  type: "bool",
-                },
-              ],
-              internalType: "struct BCOSGovernor.ProposalApprovalFlow",
-              name: "",
-              type: "tuple",
+              internalType: "address[]",
+              name: "approvers",
+              type: "address[]",
+            },
+            {
+              internalType: "bool",
+              name: "approved",
+              type: "bool",
             },
           ],
           stateMutability: "view",
@@ -2595,6 +2588,19 @@ const deployedContracts = {
         {
           inputs: [
             {
+              internalType: "address",
+              name: "account",
+              type: "address",
+            },
+          ],
+          name: "revokeMaintainer",
+          outputs: [],
+          stateMutability: "nonpayable",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
               internalType: "bytes32",
               name: "role",
               type: "bytes32",
@@ -2923,7 +2929,7 @@ const deployedContracts = {
       inheritedFunctions: {},
     },
     CustomTimelockControllerUpgradeable: {
-      address: "0x65c42914190A2E7F6284fF838De996458aDcfFC7",
+      address: "0xc0FB74D18B965cB9593b1F3FEA4F83606533DeDC",
       abi: [
         {
           anonymous: false,
@@ -4033,7 +4039,7 @@ const deployedContracts = {
       inheritedFunctions: {},
     },
     ERC20VotePower: {
-      address: "0xeAFe33166416173BE72fa1Da2b5Af799b958f20E",
+      address: "0x1c2C506e733B34E765A753b861013A90Ad807250",
       abi: [
         {
           anonymous: false,
@@ -5187,7 +5193,7 @@ const deployedContracts = {
       inheritedFunctions: {},
     },
     TimeSetting: {
-      address: "0xF4B80A46571AF3Dd12E3B88B7ec21D73586bEFf2",
+      address: "0xe1c721177aA23FC51E5163468470038f4657DEf7",
       abi: [
         {
           inputs: [],

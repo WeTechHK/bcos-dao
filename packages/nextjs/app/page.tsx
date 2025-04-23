@@ -6,6 +6,7 @@ import {
   CarryOutTwoTone,
   ContactsTwoTone,
   ContainerOutlined,
+  CopyTwoTone,
   FileAddTwoTone,
   FileDoneOutlined,
   HourglassTwoTone,
@@ -13,9 +14,9 @@ import {
   PlusCircleOutlined,
   ThunderboltTwoTone,
 } from "@ant-design/icons";
-import { Button, Popover, Space, Spin } from "antd";
+import { Button, Popover, Space, Spin, Table, message } from "antd";
 import type { NextPage } from "next";
-import { useAccount } from "wagmi";
+import { useAccount, useBalance } from "wagmi";
 import { ProposalCard } from "~~/components/ProposalCard";
 import {
   useExecutedProposal,
@@ -25,7 +26,13 @@ import {
   useVotingPeriod,
 } from "~~/hooks/blockchain/BCOSGovernor";
 import { useLatestProposalId, useProposalList } from "~~/hooks/blockchain/BCOSGovernor";
-import { useDelegatees, useTotalSupply, useVotePower, useVotePowerDecimal } from "~~/hooks/blockchain/ERC20VotePower";
+import {
+  useBalanceOf,
+  useDelegatees,
+  useTotalSupply,
+  useVotePower,
+  useVotePowerDecimal,
+} from "~~/hooks/blockchain/ERC20VotePower";
 import { useMinDelay } from "~~/hooks/blockchain/useTimelock";
 import { useDeployedContractInfo, useTargetNetwork } from "~~/hooks/scaffold-eth";
 import { formatDuration } from "~~/utils/TimeFormatter";
@@ -33,7 +40,7 @@ import { formatAddress, formatToken } from "~~/utils/TokenFormatter";
 
 const Home: NextPage = () => {
   const { address } = useAccount();
-  const pageSize = 9;
+  const pageSize = 6;
   const latestProposal = useLatestProposalId();
   const votingPower = useVotePower(address || "");
   const decimals = useVotePowerDecimal();
@@ -47,6 +54,11 @@ const Home: NextPage = () => {
   const timelock = useDeployedContractInfo({
     contractName: "CustomTimelockControllerUpgradeable",
   });
+  const evp = useDeployedContractInfo({
+    contractName: "ERC20VotePower",
+  });
+  const governanceEvp = useBalanceOf(timelock.data?.address || "");
+  const governanceEvpPOT = useBalance({ address: timelock.data?.address });
   const totoalDelegatees = useDelegatees();
   const executedProposal = useExecutedProposal();
   const { targetNetwork } = useTargetNetwork();
@@ -57,20 +69,36 @@ const Home: NextPage = () => {
     proposalThreshold === undefined ||
     decimals === undefined ||
     votingPeriod === undefined ||
-    timelock === undefined ||
     blockExplorerBaseURL === undefined ||
+    evp === undefined ||
+    governanceEvp === undefined ||
+    governanceEvpPOT === undefined ||
     minDelay === undefined
   ) {
     return <Spin spinning={true} size="large" tip="Loading" fullscreen></Spin>;
   }
   console.log("proposalList: ", proposalList);
+
+  const treasuryDataSource: { asset: any; balance: any; link: string }[] = [
+    {
+      asset: "EVP",
+      balance: formatToken(governanceEvp).toFixed(2),
+      link: blockExplorerBaseURL + "/address/" + evp.data?.address,
+    },
+    {
+      asset: governanceEvpPOT.data?.symbol,
+      balance: formatToken(governanceEvpPOT.data?.value).toFixed(2),
+      link: blockExplorerBaseURL + "/address/" + timelock.data?.address,
+    },
+  ];
+
   return (
     <>
       <div className="container mx-auto px-4 py-6">
         <section className="grid md:grid-cols-2 gap-6 mb-6">
           <div className="bg-base-100 shadow-lg rounded-xl p-6">
             <h2 className="text-xl font-semibold mb-4 text-base-content">DAO Statistics</h2>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-3 gap-4">
               <div className="bg-blue-50 p-4 rounded-lg">
                 <div className="text-sm text-gray-800">All Proposals</div>
                 <div className="text-2xl font-bold text-blue-600">{latestProposal}</div>
@@ -83,9 +111,35 @@ const Home: NextPage = () => {
                 <div className="text-sm text-gray-800">Total Delegates</div>
                 <div className="text-2xl font-bold text-purple-600">{totoalDelegatees?.length}</div>
               </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4 mt-4">
               <div className="bg-orange-50 p-4 rounded-lg">
                 <div className="text-sm text-gray-800">Total Governance Token Supply</div>
                 <div className="text-2xl font-bold text-orange-600">{formatToken(totalSupply).toFixed(4)} EVP</div>
+              </div>
+              <div className="bg-rose-50 p-4 rounded-lg">
+                <div className="text-sm text-gray-800">Governance Treasury</div>
+                <Popover
+                  title="Governance Treasury"
+                  trigger="hover"
+                  content={
+                    <Table dataSource={treasuryDataSource} pagination={false}>
+                      <Table.Column title="Asset" dataIndex="asset" key="token" />
+                      <Table.Column title="Balance" dataIndex="balance" key="amount" />
+                      <Table.Column
+                        title="Link"
+                        key="link"
+                        render={value => (
+                          <Link href={value.link} target="_blank" className="text-blue-600 hover:text-blue-800">
+                            Explorer more
+                          </Link>
+                        )}
+                      />
+                    </Table>
+                  }
+                >
+                  <div className="text-2xl font-bold text-rose-600">2 Tokens</div>
+                </Popover>
               </div>
             </div>
           </div>
@@ -112,17 +166,31 @@ const Home: NextPage = () => {
                   </Popover>
                 </span>
                 <span className="font-medium">
-                  <Link
-                    href={blockExplorerBaseURL + "/address/" + timelock.data?.address}
-                    target="_blank"
-                    className="text-blue-600 hover:text-blue-800"
-                    rel="noopener noreferrer"
-                  >
-                    <Space>
+                  <Space>
+                    <Link
+                      href={blockExplorerBaseURL + "/address/" + timelock.data?.address}
+                      target="_blank"
+                      className="text-blue-600 hover:text-blue-800"
+                      rel="noopener noreferrer"
+                    >
                       <LinkOutlined />
                       {formatAddress(timelock.data?.address)}
-                    </Space>
-                  </Link>
+                    </Link>
+                    <button
+                      onClick={async () => {
+                        try {
+                          await navigator.clipboard.writeText(timelock.data?.address?.toString() || "");
+                          message.success("Copied to clipboard");
+                        } catch (err) {
+                          message.error("Failed to copy");
+                        }
+                      }}
+                      className="ml-2 p-1 hover:bg-gray-100 rounded-md flex-shrink-0"
+                      title="Copy calldata"
+                    >
+                      <CopyTwoTone />
+                    </button>
+                  </Space>
                 </span>
               </div>
               <div className="flex justify-between border-b pb-1">
@@ -185,7 +253,7 @@ const Home: NextPage = () => {
                   </Popover>
                 </span>
                 <span className="font-medium">
-                  {quorum} % / {formatToken((totalSupply * BigInt(quorum)) / 100n)} EVP
+                  {quorum} % of {formatToken(totalSupply)} EVP
                 </span>
               </div>
               <div className="flex justify-between">
@@ -206,7 +274,7 @@ const Home: NextPage = () => {
                     </Space>
                   </Popover>
                 </span>
-                <span className="font-medium">{successThreshold} %</span>
+                <span className="font-medium">{successThreshold} % of voted power weight</span>
               </div>
             </div>
           </div>

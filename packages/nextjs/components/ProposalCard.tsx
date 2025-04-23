@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Popover } from "antd";
 import classNames from "classnames";
 import { useProposalVotes, useQuorumNumerator } from "~~/hooks/blockchain/BCOSGovernor";
-import { useTotalSupply } from "~~/hooks/blockchain/ERC20VotePower";
+import { usePastTotalSupply, useTotalSupply } from "~~/hooks/blockchain/ERC20VotePower";
 import { ProposalState, stateColorsClassName } from "~~/services/store/store";
 import { formatUTCDate } from "~~/utils/TimeFormatter";
 import { formatToken } from "~~/utils/TokenFormatter";
@@ -30,7 +30,7 @@ interface ProposalCardProps {
 }
 
 function truncateWords(text: string, maxWords = 25) {
-  const maxLength = maxWords * 6;
+  const maxLength = maxWords * 5;
   const regex = new RegExp(`^(\\s*\\S+){${maxWords}}|.+$`, "g");
   const matched = text.match(regex);
   if (!matched) {
@@ -72,9 +72,8 @@ function CardHeader(props: { state: string | ProposalState; id: number }) {
 
 function CardFooter(props: {
   state: string | ProposalState;
-  totalVotes: any;
-  progressFixed: number;
-  progress: number;
+  totalVotes: bigint;
+  quorum: bigint;
   eta: number;
   startTime: number;
   endTime: number;
@@ -84,7 +83,8 @@ function CardFooter(props: {
 }) {
   const [timeRange, setTimeRange] = useState<string>();
   const [etaTime, setEtaTime] = useState<string>();
-
+  const progress = props.quorum > 0 ? (Number(props.totalVotes) / Number(props.quorum)) * 100 : 0;
+  const progressFixed = progress >= 100 ? 100 : progress;
   useEffect(() => {
     if (props.startTime && props.endTime) {
       const startTimeString = formatUTCDate(props.startTime * 1000);
@@ -120,14 +120,14 @@ function CardFooter(props: {
           <div className="space-y-2 mb-3">
             <div className="flex justify-between items-center text-sm">
               <span className=" text-base-content">Total Votes: {formatToken(props.totalVotes).toFixed(4)} EVP</span>
-              {props.progressFixed === 100 ? (
+              {progressFixed === 100 ? (
                 <span className="text-base-content font-medium">Reach Quorum!</span>
               ) : (
-                <span className="text-base-content font-medium">{props.progress.toFixed(1)}%</span>
+                <span className="text-base-content font-medium">{progress.toFixed(1)}%</span>
               )}
             </div>
-            <div className="w-full bg-base-content rounded-full h-2">
-              <div className="bg-blue-600 h-2 rounded-full" style={{ width: `${props.progressFixed}%` }}></div>
+            <div className="w-full bg-base-300 rounded-full h-2">
+              <div className="bg-blue-600 h-2 rounded-full" style={{ width: `${progressFixed}%` }}></div>
             </div>
           </div>
           <div className="flex justify-between text-sm">
@@ -190,11 +190,9 @@ export const ProposalCard = ({
     abstainVotes: abstainVotesFromContract,
   } = useProposalVotes(id);
   const quorumNumerator = useQuorumNumerator();
-  const totalSupply = useTotalSupply();
+  const totalSupply = usePastTotalSupply(startTime);
   const quorum = (BigInt(quorumNumerator) * totalSupply) / 100n;
   const totalVotes = forVotesFromContract + againstVotesFromContract + abstainVotesFromContract;
-  const progress = Number(quorum > 0 ? (totalVotes / quorum) * 100n : 0);
-  const progressFixed = progress >= 100 ? 100 : progress;
 
   return (
     <div className="flex-col bg-base-100 rounded-xl shadow-lg overflow-hidden hover:-translate-y-1.5 duration-300">
@@ -210,20 +208,21 @@ export const ProposalCard = ({
               {title}
             </h3>
           </Popover>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 mb-2">
             <span className="bg-base-200 text-neutral px-2 py-1 rounded text-sm">
               By: {proposer.slice(0, 6)}...{proposer.slice(-4)}
             </span>
           </div>
-          <div className="flex items-center gap-2 text-base-content">{truncateWords(description)}</div>
+          <div className="text-base-content h-24 max-h-24 bordered bg-gray-100 rounded-lg p-3">
+            {truncateWords(description)}
+          </div>
         </div>
 
         {/* Footer */}
         <CardFooter
           state={state}
           totalVotes={totalVotes}
-          progressFixed={progressFixed}
-          progress={progress}
+          quorum={quorum}
           eta={eta}
           startTime={startTime}
           endTime={endTime}

@@ -12,6 +12,16 @@ export const useVotePower = (address: string) => {
   return { votePowerData, refetchVotePower };
 };
 
+export const usePastVotePower = (address: string, timePoint: number | bigint) => {
+  const { data: pastVotePowerData } = useScaffoldReadContract({
+    contractName: "ERC20VotePower",
+    functionName: "getPastVotes",
+    args: [address, BigInt(timePoint)],
+  });
+
+  return pastVotePowerData;
+};
+
 export const useVotePowerDecimal = () => {
   const { data: decimals } = useScaffoldReadContract({
     contractName: "ERC20VotePower",
@@ -64,6 +74,20 @@ export const useTotalSupply = () => {
   }
 
   return totalSupplyData;
+};
+
+export const usePastTotalSupply = (timePoint: number | bigint) => {
+  const { data: pastTotalSupplyData } = useScaffoldReadContract({
+    contractName: "ERC20VotePower",
+    functionName: "getPastTotalSupply",
+    args: [BigInt(timePoint)],
+  });
+
+  if (pastTotalSupplyData === undefined) {
+    return 0n;
+  }
+
+  return pastTotalSupplyData;
 };
 
 export const useBalanceOf = (address: string) => {

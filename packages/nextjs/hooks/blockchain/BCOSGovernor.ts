@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import * as dotenv from "dotenv";
+import { Abi, decodeFunctionData } from "viem";
 import { useScaffoldReadContract, useScaffoldWriteContract } from "~~/hooks/scaffold-eth";
 
 dotenv.config();
@@ -159,7 +160,11 @@ const useProposalList = (page: number, totalNumber: number) => {
         handledData.map((v: { id: any }) => v.id),
       );
       setLoading(false);
-      setData(prevData => [...prevData, ...handledData]);
+
+      setData(prevData => {
+        const newData = [...prevData, ...handledData];
+        return Array.from(new Map(newData.map(item => [item.id, item])).values());
+      });
     }
   }, [proposalInfosData, totalNumber]);
 
@@ -174,19 +179,15 @@ const useProposalList = (page: number, totalNumber: number) => {
   return { data, loadMore, hasMoreProposals, loading };
 };
 
-function useHasVoted(proposalId: number, voter: string): boolean {
-  const { data: hasVoted } = useScaffoldReadContract({
+function useHasVoted(proposalId: number, voter: string) {
+  const { data: hasVoted, refetch: refetchHasVoted } = useScaffoldReadContract({
     contractName: "BCOSGovernor",
     functionName: "hasVoted",
     args: [BigInt(proposalId), voter],
   });
 
-  if (hasVoted === undefined) {
-    return false;
-    // throw new Error("Invalid proposal has voted data");
-  }
   console.log("useHasVoted useScaffoldReadContract: ", hasVoted);
-  return Boolean(hasVoted);
+  return { hasVoted, refetchHasVoted };
 }
 
 function useProposalVoters(proposalId: number): { voters: string[] } {
@@ -249,12 +250,13 @@ function useProposalApprovalFlow(proposalId: number): ProposalApprovalFlow {
   if (latestProposalApprovalFlow === undefined) {
     throw new Error("Invalid proposal approval flow data");
   }
+  const [approvers, approved] = latestProposalApprovalFlow;
   console.log("useProposalApprovalFlow useScaffoldReadContract: ", latestProposalApprovalFlow);
   return {
     proposalId: proposalId,
     approvalFlow: {
-      approvers: [...latestProposalApprovalFlow.approvers] || [],
-      approved: latestProposalApprovalFlow?.approved || false,
+      approvers: [...approvers] || [],
+      approved: approved || false,
     },
   };
 }
@@ -419,6 +421,18 @@ export const useExecutedProposal = () => {
   });
 
   return executedProposal;
+};
+
+export const decodeData = (data: `0x${string}`, abi: Abi) => {
+  try {
+    const decodedData = decodeFunctionData({ abi, data });
+    console.log("方法名:", decodedData.functionName);
+    console.log("参数:", decodedData.args);
+    return decodedData;
+  } catch (e) {
+    console.error("解析失败:", e);
+    return undefined;
+  }
 };
 
 export {
