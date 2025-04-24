@@ -63,12 +63,8 @@ const governorSettings = [
         value: "grantMaintainer",
       },
       {
-        label: <div>Revoke Role</div>,
-        value: "revokeRole",
-      },
-      {
-        label: <div>Renounce Role</div>,
-        value: "renounceRole",
+        label: <div>Revoke Maintainer</div>,
+        value: "revokeMaintainer",
       },
     ],
   },
