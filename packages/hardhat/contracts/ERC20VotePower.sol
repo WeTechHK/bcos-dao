@@ -33,6 +33,7 @@ contract ERC20VotePower is
     function initialize(string memory name, string memory symbol, TimeSetting _timer) public initializer {
         __ERC20VotePower_init(name, symbol, _timer);
     }
+
     struct ERC20VotePowerStorage {
         TimeSetting _timer;
         EnumerableSet.AddressSet _delegates;
@@ -45,6 +46,7 @@ contract ERC20VotePower is
             $.slot := ERC20_VOTE_POWER_STORAGE_POSITION
         }
     }
+
     function __ERC20VotePower_init(
         string memory name,
         string memory symbol,
@@ -134,8 +136,8 @@ contract ERC20VotePower is
         return $._timer.CLOCK_MODE();
     }
 
-    function resetUint(uint256 _unit) public onlyOwner {
+    function timer() public view returns (TimeSetting t){
         ERC20VotePowerStorage storage $ = _getERC20VotePowerStorage();
-        $._timer.resetUnit(_unit);
+        t = $._timer;
     }
 }

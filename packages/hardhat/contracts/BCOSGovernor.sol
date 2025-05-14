@@ -2,45 +2,45 @@
 
 pragma solidity ^0.8.26;
 
-import { GovernorUpgradeable } from "@openzeppelin/contracts-upgradeable/governance/GovernorUpgradeable.sol";
-import { GovernorVotesUpgradeable } from "@openzeppelin/contracts-upgradeable/governance/extensions/GovernorVotesUpgradeable.sol";
-import { GovernorTimelockControlUpgradeable } from "./GovernorTimelockControlUpgradeable.sol";
-import { GovernorStorageUpgradeable } from "@openzeppelin/contracts-upgradeable/governance/extensions/GovernorStorageUpgradeable.sol";
-import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
-import { AccessControlUpgradeable } from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
-import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import {GovernorUpgradeable} from "@openzeppelin/contracts-upgradeable/governance/GovernorUpgradeable.sol";
+import {GovernorVotesUpgradeable} from "@openzeppelin/contracts-upgradeable/governance/extensions/GovernorVotesUpgradeable.sol";
+import {GovernorTimelockControlUpgradeable} from "./GovernorTimelockControlUpgradeable.sol";
+import {GovernorStorageUpgradeable} from "@openzeppelin/contracts-upgradeable/governance/extensions/GovernorStorageUpgradeable.sol";
+import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import {AccessControlUpgradeable} from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "./DAOSettings.sol";
 import "./ERC20VotePower.sol";
 
 import "./CustomTimelockControllerUpgradeable.sol";
 
-using EnumerableSet for EnumerableSet.AddressSet;
-using EnumerableSet for EnumerableSet.UintSet;
+    using EnumerableSet for EnumerableSet.AddressSet;
+    using EnumerableSet for EnumerableSet.UintSet;
 
-struct ProposalVoteCore {
-    uint256 forVotes;
-    uint256 againstVotes;
-    uint256 abstainVotes;
-}
+    struct ProposalVoteCore {
+        uint256 forVotes;
+        uint256 againstVotes;
+        uint256 abstainVotes;
+    }
 
-struct ProposalVote {
-    uint256 againstVotes;
-    uint256 forVotes;
-    uint256 abstainVotes;
-    EnumerableSet.AddressSet voters;
-    mapping(address voter => uint256) hasVoted;
-    mapping(address voter => uint8) voteType;
-    mapping(address voter => uint256) voteBlock;
-}
+    struct ProposalVote {
+        uint256 againstVotes;
+        uint256 forVotes;
+        uint256 abstainVotes;
+        EnumerableSet.AddressSet voters;
+        mapping(address voter => uint256) hasVoted;
+        mapping(address voter => uint8) voteType;
+        mapping(address voter => uint256) voteBlock;
+    }
 
 contract BCOSGovernor is
-    GovernorVotesUpgradeable,
-    GovernorTimelockControlUpgradeable,
-    GovernorStorageUpgradeable,
-    DAOSettings,
-    AccessControlUpgradeable,
-    UUPSUpgradeable
+GovernorVotesUpgradeable,
+GovernorTimelockControlUpgradeable,
+GovernorStorageUpgradeable,
+DAOSettings,
+AccessControlUpgradeable,
+UUPSUpgradeable
 {
     struct ProposalExtraStorage {
         string title;
@@ -122,7 +122,7 @@ contract BCOSGovernor is
 
     // keccak256(abi.encode(uint256(keccak256("bcos-dao.contracts.BCOSGovernorStorage")) - 1)) & ~bytes32(uint256(0xff));
     bytes32 private constant BCOS_GOVERNOR_STORAGE_POSITION =
-        0xea816ad03356230ef5ef5fd2e2bd3bec292a96e42e2c6aafb1da0b68271da000;
+    0xea816ad03356230ef5ef5fd2e2bd3bec292a96e42e2c6aafb1da0b68271da000;
 
     function _getBCOSGovernorStorage() private pure returns (BCOSGovernorStorage storage $) {
         assembly {
@@ -155,7 +155,7 @@ contract BCOSGovernor is
         BCOSGovernorStorage storage $ = _getBCOSGovernorStorage();
         uint256 storedProposalHash = $._proposalHashes[proposalId];
         if (storedProposalHash == 0) {
-            revert GovernorNonexistentProposal(0);
+            revert GovernorNonexistentProposal(proposalId);
         }
         return storedProposalHash;
     }
@@ -441,9 +441,12 @@ contract BCOSGovernor is
      * timer functions
      ****************************/
 
-    function resetUint(uint256 _unit) public onlyGovernance {
+    function resetUint(uint256 _unit) public onlyMaintainer {
+        uint256 finalStateProposal = getExecutedProposals().length + getCancelledProposals().length;
+        require(finalStateProposal == proposalCount(), "BCOSGovernor: not all proposals are finalized");
         ERC20VotePower token = ERC20VotePower(address(token()));
-        token.resetUint(_unit);
+        TimeSetting t = token.timer();
+        t.resetUnit(_unit);
     }
 
     /***************************
@@ -558,10 +561,10 @@ contract BCOSGovernor is
     }
 
     function _executor()
-        internal
-        view
-        override(GovernorUpgradeable, GovernorTimelockControlUpgradeable)
-        returns (address)
+    internal
+    view
+    override(GovernorUpgradeable, GovernorTimelockControlUpgradeable)
+    returns (address)
     {
         return super._executor();
     }
