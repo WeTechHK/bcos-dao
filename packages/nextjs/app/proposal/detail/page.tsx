@@ -56,7 +56,7 @@ const ProposalDetail: NextPage = () => {
     String(address),
     proposal?.startTime ? proposal.startTime : 0,
   );
-  const voters = useProposalVoters(Number(id));
+  const { voters, refetchVoters } = useProposalVoters(Number(id));
   const castVote = useCastVote(Number(id), voteOption ? voteOption : VoteType.Abstain, voteReason);
   const voteSuccessThreshold = useVoteSuccessThreshold();
   const quorumNumerator = useQuorumNumerator();
@@ -71,7 +71,7 @@ const ProposalDetail: NextPage = () => {
     contractName: "ERC20VotePower",
   });
 
-  if (!proposal || !bcosGovernor || !timelock || !erc20) {
+  if (!proposal || !bcosGovernor || !timelock || !erc20 || voters === undefined) {
     return <Spin spinning={true} size="large" tip="Loading" fullscreen></Spin>;
   }
 
@@ -100,6 +100,7 @@ const ProposalDetail: NextPage = () => {
       refetch();
       refetchHasVoted();
       refetchPastVotePower();
+      refetchVoters();
     } catch (error) {
       console.error("Error queueing proposal:", error);
       message.error("Failed to queue proposal");
@@ -113,6 +114,7 @@ const ProposalDetail: NextPage = () => {
       refetch();
       refetchHasVoted();
       refetchPastVotePower();
+      refetchVoters();
     } catch (error) {
       console.error("Error approving proposal:", error);
       message.error("Failed to approve proposal");
@@ -186,6 +188,7 @@ const ProposalDetail: NextPage = () => {
       refetch();
       refetchHasVoted();
       refetchPastVotePower();
+      refetchVoters();
     } catch (error) {
       console.error("Error casting vote:", error);
       message.error("Failed to cast vote");
@@ -506,7 +509,7 @@ const ProposalDetail: NextPage = () => {
 
   const renderVotingDetails = () => {
     if (!voters) return null;
-    return voters.voters.map((voter: string) => <VoterRow key={voter} voter={voter} proposalId={Number(id)} />);
+    return voters.map((voter: string) => <VoterRow key={voter} voter={voter} proposalId={Number(id)} />);
   };
 
   const shouldShowVotingDetails = () => {

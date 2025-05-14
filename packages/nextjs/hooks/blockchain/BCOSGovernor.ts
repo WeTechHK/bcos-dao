@@ -190,19 +190,19 @@ function useHasVoted(proposalId: number, voter: string) {
   return { hasVoted, refetchHasVoted };
 }
 
-function useProposalVoters(proposalId: number): { voters: string[] } {
-  const { data: voters } = useScaffoldReadContract({
+function useProposalVoters(proposalId: number) {
+  const { data: voters, refetch: refetchVoters } = useScaffoldReadContract({
     contractName: "BCOSGovernor",
     functionName: "proposalVoters",
     args: [BigInt(proposalId)],
   });
 
   if (voters === undefined) {
-    return { voters: [] };
+    return { voters: [], refetchVoters: refetchVoters };
     // throw new Error("Invalid proposal voters data");
   }
   console.log("useProposalVoters useScaffoldReadContract: ", voters);
-  return { voters: [...voters] };
+  return { voters: [...voters], refetchVoters: refetchVoters };
 }
 
 function useProposeProposal() {

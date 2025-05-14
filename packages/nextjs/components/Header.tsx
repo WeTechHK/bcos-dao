@@ -4,16 +4,16 @@ import React, { useCallback, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BankOutlined, LinkOutlined } from "@ant-design/icons";
+import { LinkOutlined } from "@ant-design/icons";
 import { Input, Modal, message } from "antd";
 import dotenv from "dotenv";
 import { formatEther } from "viem";
 import { useAccount } from "wagmi";
-import { ArrowPathIcon, Bars3Icon, BookOpenIcon, BugAntIcon, HomeIcon } from "@heroicons/react/24/outline";
+import { ArrowPathIcon, Bars3Icon, BookOpenIcon, HomeIcon } from "@heroicons/react/24/outline";
 import { RainbowKitCustomConnectButton } from "~~/components/scaffold-eth";
 import { useIsMaintainer } from "~~/hooks/blockchain/BCOSGovernor";
 import { useBalanceOf, useDelegate, useDelegates, useSymbol, useVotePower } from "~~/hooks/blockchain/ERC20VotePower";
-import { useOutsideClick, useTargetNetwork } from "~~/hooks/scaffold-eth";
+import { useDeployedContractInfo, useOutsideClick, useTargetNetwork } from "~~/hooks/scaffold-eth";
 import { shortenAddress } from "~~/utils/scaffold-eth/common";
 
 dotenv.config();
@@ -92,7 +92,9 @@ export const Header = () => {
     burgerMenuRef,
     useCallback(() => setIsDrawerOpen(false), []),
   );
-
+  const erc20 = useDeployedContractInfo({
+    contractName: "ERC20VotePower",
+  });
   const handleDelegateToSelf = async () => {
     try {
       await delegate(address || "");
@@ -186,6 +188,18 @@ export const Header = () => {
         onCancel={() => setShowDelegateOptions(false)}
       >
         <div className="py-4">
+          {erc20 && (
+            <div className="p-3 flex justify-between items-center bg-gray-50 rounded-lg">
+              <p className="text-sm text-gray-600">Governance Token</p>
+              <Link
+                className="font-medium"
+                href={`${blockExplorerBaseURL}/address/${erc20.data?.address}`}
+                target="_blank"
+              >
+                {shortenAddress(erc20.data?.address)}
+              </Link>
+            </div>
+          )}
           {currentDelegate && (
             <div className="mb-4 p-3 bg-gray-50 rounded-lg grid grid-cols-2 gap-6">
               <div>
