@@ -5,7 +5,7 @@ import * as AddressUtils from "@ethersproject/address";
 import { BigNumber } from "@ethersproject/bignumber";
 import { WeiPerEther } from "@ethersproject/constants";
 import { BigIntDecimal } from "@rc-component/mini-decimal";
-import { Button, Form, Input, Select } from "antd";
+import { Button, ConfigProvider, Form, Input, Select } from "antd";
 import { erc20Abi } from "viem";
 import { Abi, encodeFunctionData } from "viem";
 import { useBalance, useReadContract } from "wagmi";
@@ -119,7 +119,7 @@ const TransferTokenForm = ({ index, onChange }: { parentForm?: any; field?: any;
       >
         <FormItem
           name="to"
-          label={<div className="text-lg font-bold mb-1">Transfer to</div>}
+          label={<div className="text-lg font-bold mb-1 text-base-content">Transfer to</div>}
           rules={[
             {
               required: true,
@@ -133,10 +133,13 @@ const TransferTokenForm = ({ index, onChange }: { parentForm?: any; field?: any;
             },
           ]}
         >
-          <Input className="h-12" placeholder="0x..."></Input>
+          <input
+            className="text-base w-full h-12 rounded-xl bg-base-100 text-base-content/70 p-4 border-2 border-base-300 focus:border-primary focus:outline-none"
+            placeholder="0x..."
+          ></input>
         </FormItem>
-        <FormItem label={<div className="text-lg font-bold mb-1">Transfer Amount</div>}>
-          <div className="h-32 text-4xl font-bold border-2 border-b-gray-100 border-solid rounded-lg">
+        <FormItem label={<div className="text-lg font-bold mb-1 text-base-content">Transfer Amount</div>}>
+          <div className="h-32 text-4xl font-bold border-2 border-base-300 bg-base-100 text-base-content border-solid rounded-lg">
             <div className="flex justify-between items-center">
               <FormItem
                 name="amount"
@@ -156,15 +159,40 @@ const TransferTokenForm = ({ index, onChange }: { parentForm?: any; field?: any;
                   },
                 ]}
               >
-                <Input className="h-20 text-4xl font-bold w-2/3" variant="borderless" placeholder="0"></Input>
+                <Input
+                  className="h-20 text-4xl font-bold w-2/3 text-base-content/70 placeholder:text-base-content/70"
+                  variant="borderless"
+                  placeholder="0"
+                ></Input>
               </FormItem>
-              <FormItem name="currency" className="w-1/6 mr-4 mb-0">
-                <Select size="large" options={currencies} onChange={handleSelect}></Select>
-              </FormItem>
+              <ConfigProvider
+                theme={{
+                  components: {
+                    Select: {
+                      colorText: "var(--fallback-bc,oklch(var(--bc)/var(--tw-text-opacity, 1)))",
+                      colorBgElevated: "var(--fallback-bc,oklch(var(--bc)/var(--tw-text-opacity, 1)))",
+                      colorTextPlaceholder: "var(--fallback-bc,oklch(var(--bc)/var(--tw-text-opacity, 1)))",
+                      colorBorder: "var(--fallback-bc,oklch(var(--bc)/var(--tw-text-opacity, 1)))",
+                      selectorBg: "var(--fallback-b1,oklch(var(--b1)/var(--tw-bg-opacity, 1)))",
+                      optionActiveBg: "var(--fallback-b1,oklch(var(--b1)/var(--tw-bg-opacity, 1)))",
+                      optionSelectedBg: "var(--fallback-b3,oklch(var(--b3)/var(--tw-border-opacity, 1)))",
+                    },
+                  },
+                }}
+              >
+                <FormItem name="currency" className="w-1/6 mr-4 mb-0">
+                  <Select
+                    dropdownStyle={{ backgroundColor: "var(--fallback-b1,oklch(var(--b1)/var(--tw-bg-opacity, 1)))" }}
+                    size="large"
+                    options={currencies}
+                    onChange={handleSelect}
+                  ></Select>
+                </FormItem>
+              </ConfigProvider>
             </div>
             <div className="flex justify-between h-8 items-center">
-              <div className="text-sm text-gray-500 ml-3">Balance: {formatToken(balance).toFixed(4)}</div>
-              <Button color="default" type="link" className="mr-1" onClick={handleUseMax}>
+              <div className="text-sm text-base-content/70 ml-3">Balance: {formatToken(balance).toFixed(4)}</div>
+              <Button color="default" type="link" className="mr-1 text-primary" onClick={handleUseMax}>
                 Use Max
               </Button>
             </div>

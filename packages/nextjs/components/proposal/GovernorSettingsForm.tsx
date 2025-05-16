@@ -2,14 +2,15 @@
 
 import React, { useState } from "react";
 import { Abi, AbiFunction } from "abitype";
-import { Card, Form, Input, Select, Switch } from "antd";
+import { Card, ConfigProvider, Form, Input, Select, Switch } from "antd";
 import { ABIFunctionForm } from "~~/components/proposal/ABIFunctionForm";
+import { IntegerInput } from "~~/components/scaffold-eth";
 import { useDeployedContractInfo } from "~~/hooks/scaffold-eth";
 import { GenericContract, InheritedFunctions } from "~~/utils/scaffold-eth/contract";
 
 const governorSettings = [
   {
-    label: <div>DAO Settings</div>,
+    label: <div className="text-base-content">DAO Settings</div>,
     title: "DAO Settings",
     options: [
       {
@@ -48,14 +49,10 @@ const governorSettings = [
         label: <div>Upgrade DAO Contract</div>,
         value: "upgradeToAndCall",
       },
-      {
-        label: <div>Change Timestamp Unit</div>,
-        value: "resetUint",
-      },
     ],
   },
   {
-    label: <div>DAO Role Changing</div>,
+    label: <div className="text-base-content">DAO Role Changing</div>,
     title: "DAO Role Changing",
     options: [
       {
@@ -69,7 +66,7 @@ const governorSettings = [
     ],
   },
   {
-    label: <div>EVP Token Changing</div>,
+    label: <div className="text-base-content">EVP Token Changing</div>,
     title: "EVP Token Changing",
     options: [
       {
@@ -152,21 +149,45 @@ const GovernorSettingsForm = ({ field, index, onChange }: { field?: any; index?:
         >
           <FormItem
             name="address"
-            label={<div className="text-lg font-bold mb-1">Target Contract Address</div>}
+            label={<div className="text-lg font-bold mb-1 text-base-content">Target Contract Address</div>}
             rules={[{ required: true, message: "Please input the target contract address" }]}
           >
-            <Input className="h-12" disabled></Input>
+            <input
+              className="text-base w-full h-12 rounded-xl bg-base-100 text-base-content p-4 border-2 border-base-300 focus:border-primary focus:outline-none"
+              disabled
+            ></input>
           </FormItem>
-          <FormItem
-            name="method"
-            label={<div className="text-lg font-bold mb-1">Contract Method</div>}
-            rules={[{ required: true, message: "Please input the method address" }]}
+          <ConfigProvider
+            theme={{
+              components: {
+                Select: {
+                  colorText: "var(--fallback-bc,oklch(var(--bc)/var(--tw-text-opacity, 1)))",
+                  colorBgElevated: "var(--fallback-bc,oklch(var(--bc)/var(--tw-text-opacity, 1)))",
+                  colorTextPlaceholder: "var(--fallback-bc,oklch(var(--bc)/var(--tw-text-opacity, 1)))",
+                  colorBorder: "var(--fallback-b3,oklch(var(--b3)/var(--tw-border-opacity, 1)))",
+                  selectorBg: "var(--fallback-b1,oklch(var(--b1)/var(--tw-bg-opacity, 1)))",
+                  optionActiveBg: "var(--fallback-b1,oklch(var(--b1)/var(--tw-bg-opacity, 1)))",
+                  optionSelectedBg: "var(--fallback-b3,oklch(var(--b3)/var(--tw-border-opacity, 1)))",
+                },
+              },
+            }}
           >
-            <Select options={governorSettings} onSelect={handleChange} className="h-12"></Select>
-          </FormItem>
+            <FormItem
+              name="method"
+              label={<div className="text-lg font-bold mb-1 text-base-content">Contract Method</div>}
+              rules={[{ required: true, message: "Please input the method address" }]}
+            >
+              <Select
+                options={governorSettings}
+                dropdownStyle={{ backgroundColor: "var(--fallback-b1,oklch(var(--b1)/var(--tw-bg-opacity, 1)))" }}
+                onSelect={handleChange}
+                className="!h-12"
+              ></Select>
+            </FormItem>
+          </ConfigProvider>
 
           {method && (
-            <FormItem label={<div className="text-lg font-bold mb-1">Method arguments</div>}>
+            <FormItem label={<div className="text-lg font-bold mb-1 text-base-content">Method arguments</div>}>
               <div>
                 {deployedContractData && method && (
                   <ABIFunctionForm
@@ -184,7 +205,7 @@ const GovernorSettingsForm = ({ field, index, onChange }: { field?: any; index?:
           )}
 
           {method && (
-            <div className="mb-4 inline-flex gap-2">
+            <div className="mb-4 inline-flex gap-2 text-base-content">
               <div>Also send TOKEN to the target address? (this is not common)</div>
               <Switch
                 onChange={() => {
@@ -197,13 +218,13 @@ const GovernorSettingsForm = ({ field, index, onChange }: { field?: any; index?:
           )}
 
           {valueVisible && (
-            <FormItem name="value" label={<div className="text-lg font-bold mb-1">Value</div>}>
-              <Input
-                className="h-12"
+            <FormItem name="value" label={<div className="text-lg font-bold mb-1 text-base-content">Value</div>}>
+              <input
+                className="text-base w-full h-12 rounded-xl bg-base-100 text-base-content/70 p-4 border-2 border-base-300 focus:border-primary focus:outline-none"
                 placeholder={
                   "The amount of Balance you wish to send the target address (External Account or Smart Contract)"
                 }
-              ></Input>
+              ></input>
             </FormItem>
           )}
         </Form>

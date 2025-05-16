@@ -7,6 +7,7 @@ import "@mdxeditor/editor/style.css";
 import { Popover, Space } from "antd";
 import { message } from "antd";
 import classNames from "classnames";
+import { useTheme } from "next-themes";
 import { ClipboardIcon } from "@heroicons/react/24/outline";
 import { type ProposalAllInfo, decodeData } from "~~/hooks/blockchain/BCOSGovernor";
 import { useTransactionsByAddress, useTransactionsFilterByTo } from "~~/hooks/blockchain/useTransactionByAddress";
@@ -42,6 +43,7 @@ export const ProposalOverview = ({ proposal, isPreview = false }: ProposalOvervi
   const [txExecutedProposalHash, setTxExecutedProposalHash] = useState<string>();
   const txsByProposer = useTransactionsByAddress(proposal.createBlock, proposal.proposer);
   const executedTx = useTransactionsFilterByTo(proposal.executedBlock, bcosGovernor.data?.address);
+  const { resolvedTheme } = useTheme();
   useEffect(() => {
     if (proposal.startTime && proposal.endTime) {
       const startTimeString = formatUTCDate(proposal.startTime * 1000);
@@ -113,24 +115,39 @@ export const ProposalOverview = ({ proposal, isPreview = false }: ProposalOvervi
 
   const { targetNetwork } = useTargetNetwork();
   const blockExplorerBaseURL = targetNetwork.blockExplorers?.default?.url;
+  const isDarkMode = resolvedTheme === "dark";
 
   return (
-    <div className="bg-base-100 rounded-xl shadow-lg">
+    <div className="bg-base-200 rounded-xl shadow-lg">
       {/*Header*/}
-      {!isPreview && (
-        <div
-          className={classNames(
-            "flex rounded-t-xl justify-between items-center p-4",
-            `bg-${stateColor}-300`,
-            `text-${stateColor}-800`,
-          )}
-        >
-          <span className={`px-3 py-1 text-sm font-semibold rounded-full bg-white`}>
-            {ProposalState[Number(proposal.state)]}
-          </span>
-          <span className="text-lg font-bold text-white">No. {proposal.id}</span>
-        </div>
-      )}
+      {!isPreview &&
+        (isDarkMode ? (
+          <div
+            className={classNames(
+              "flex rounded-t-xl justify-between items-center p-4",
+              `bg-base-300/50`,
+              `text-${stateColor}-800`,
+            )}
+          >
+            <span className={`px-3 py-1 text-sm font-semibold rounded-full bg-${stateColor}-400`}>
+              {ProposalState[Number(proposal.state)]}
+            </span>
+            <span className="text-lg font-bold text-white">No. {proposal.id}</span>
+          </div>
+        ) : (
+          <div
+            className={classNames(
+              "flex rounded-t-xl justify-between items-center p-4",
+              `bg-${stateColor}-200`,
+              `text-${stateColor}-800`,
+            )}
+          >
+            <span className={`px-3 py-1 text-sm font-semibold rounded-full bg-white`}>
+              {ProposalState[Number(proposal.state)]}
+            </span>
+            <span className="text-lg font-bold text-white">No. {proposal.id}</span>
+          </div>
+        ))}
       {/*Body*/}
       <div className="p-6">
         {/* General Info */}
@@ -148,25 +165,25 @@ export const ProposalOverview = ({ proposal, isPreview = false }: ProposalOvervi
           <div className="grid grid-cols-2 gap-6 mt-6">
             {etaTime !== undefined ? (
               <div>
-                <h2 className="text-xl font-bold text-neutral">Executable Time</h2>
+                <h2 className="text-xl font-bold text-base-content">Executable Time</h2>
                 <div className="flex justify-start">
                   <Space>
-                    <p className="text-md font-medium text-neutral">{etaTime}</p>
+                    <p className="text-md font-medium text-base-content">{etaTime}</p>
                     <p className="text-md text-emerald-500">{timeSuffix}</p>
                   </Space>
                 </div>
               </div>
             ) : (
               <div>
-                <h2 className="text-xl font-bold text-neutral">Voting Period</h2>
-                <p className="text-md font-medium text-neutral">{timeRange}</p>
+                <h2 className="text-xl font-bold text-base-content">Voting Period</h2>
+                <p className="text-md font-medium text-base-content">{timeRange}</p>
               </div>
             )}
             <div>
-              <h2 className="text-xl font-bold text-neutral">Proposer</h2>
+              <h2 className="text-xl font-bold text-base-content">Proposer</h2>
               <Link
                 href={`${blockExplorerBaseURL}/address/${proposal.proposer}`}
-                className="text-md font-medium text-blue-500"
+                className="text-md font-medium text-primary"
                 target="_blank"
               >
                 <LinkOutlined />
@@ -176,10 +193,10 @@ export const ProposalOverview = ({ proposal, isPreview = false }: ProposalOvervi
 
             {txSubmitProposalHash && (
               <div>
-                <h2 className="text-xl font-bold text-neutral">Submit Proposal Transaction</h2>
+                <h2 className="text-xl font-bold text-base-content">Submit Proposal Transaction</h2>
                 <Link
                   href={`${blockExplorerBaseURL}/tx/${txSubmitProposalHash}`}
-                  className="text-md font-medium text-blue-500"
+                  className="text-md font-medium text-primary"
                   target={`_blank`}
                 >
                   <LinkOutlined />
@@ -190,10 +207,10 @@ export const ProposalOverview = ({ proposal, isPreview = false }: ProposalOvervi
 
             {txExecutedProposalHash && (
               <div>
-                <h2 className="text-xl font-bold text-neutral">Executed Transaction</h2>
+                <h2 className="text-xl font-bold text-base-content">Executed Transaction</h2>
                 <Link
                   href={`${blockExplorerBaseURL}/tx/${txExecutedProposalHash}`}
-                  className="text-md font-medium text-blue-500"
+                  className="text-md font-medium text-primary"
                   target={`_blank`}
                 >
                   <LinkOutlined />
@@ -206,32 +223,32 @@ export const ProposalOverview = ({ proposal, isPreview = false }: ProposalOvervi
 
         {/* Actions */}
         <div className="mb-8">
-          <h2 className="text-xl font-bold text-neutral mb-4">Actions</h2>
+          <h2 className="text-xl font-bold text-base-content mb-4">Actions</h2>
           <div className="overflow-x-auto">
             <table className="w-full divide-y divide-gray-200 table-fixed">
               <thead className="bg-base-300">
                 <tr>
                   <th
                     scope="col"
-                    className="w-[10%] px-6 py-3 text-left text-xs font-medium text-neutral uppercase tracking-wider"
+                    className="w-[10%] px-6 py-3 text-left text-xs font-medium text-base-content uppercase tracking-wider"
                   >
                     Type
                   </th>
                   <th
                     scope="col"
-                    className="w-[20%] px-6 py-3 text-left text-xs font-medium text-neutral uppercase tracking-wider"
+                    className="w-[20%] px-6 py-3 text-left text-xs font-medium text-base-content uppercase tracking-wider"
                   >
                     Address
                   </th>
                   <th
                     scope="col"
-                    className="w-[10%] px-6 py-3 text-left text-xs font-medium text-neutral uppercase tracking-wider"
+                    className="w-[10%] px-6 py-3 text-left text-xs font-medium text-base-content uppercase tracking-wider"
                   >
                     Value
                   </th>
                   <th
                     scope="col"
-                    className="w-[60%] px-6 py-3 text-left text-xs font-medium text-neutral uppercase tracking-wider"
+                    className="w-[60%] px-6 py-3 text-left text-xs font-medium text-base-content uppercase tracking-wider"
                   >
                     CallData
                   </th>
@@ -270,13 +287,13 @@ export const ProposalOverview = ({ proposal, isPreview = false }: ProposalOvervi
 
         {/* Description */}
         <div>
-          <h2 className="text-xl font-bold text-neutral mb-4">Description</h2>
-          <div className="prose max-w-none bg-base-200 p-4 rounded-lg text-neutral">
+          <h2 className="text-xl font-bold text-base-content mb-4">Description</h2>
+          <div className="prose max-w-none bg-base-100 p-4 rounded-lg text-base-content">
             {typeof window !== "undefined" && (
               <MDXEditor
                 markdown={proposal.description}
                 readOnly
-                contentEditableClassName="!bg-transparent text-neutral"
+                contentEditableClassName="!bg-transparent !text-base-content"
                 plugins={[linkPlugin(), listsPlugin(), quotePlugin(), headingsPlugin(), codeBlockPlugin()]}
               />
             )}

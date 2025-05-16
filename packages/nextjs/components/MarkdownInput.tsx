@@ -66,8 +66,8 @@ const MarkdownInput = ({
   return (
     <MDXEditor
       markdown={markdown}
-      className="full-demo-mdxeditor bordered border-2"
-      contentEditableClassName="prose max-w-full font-sans"
+      className="bg-base-100 full-demo-mdxeditor border-l-2 border-r-2 border-t-2 border-b-2 border-base-300 rounded-lg focus:border-primary"
+      contentEditableClassName="!text-base-content prose max-w-full font-sans"
       plugins={allPlugins()}
       onChange={onChange}
     />
