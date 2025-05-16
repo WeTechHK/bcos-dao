@@ -472,7 +472,7 @@ const ProposalDetail: NextPage = () => {
           <div className="text-sm text-gray-900">
             <Link
               href={`${blockExplorerBaseURL}/address/${voter}`}
-              className="text-md font-medium text-blue-500"
+              className="text-md font-medium text-primary"
               target={`_blank`}
             >
               <div>{shortenAddress(voter)}</div>
@@ -495,7 +495,7 @@ const ProposalDetail: NextPage = () => {
             {
               <Link
                 href={`${blockExplorerBaseURL}/tx/${voteTxHash}`}
-                className="text-md font-medium text-blue-500"
+                className="text-md font-medium text-primary"
                 target={`_blank`}
               >
                 <div>{voteTxHash?.substring(0, 25) + "..."}</div>
@@ -524,7 +524,7 @@ const ProposalDetail: NextPage = () => {
           <ProposalOverview proposal={proposal} isPreview={false} />
           {notifyContextHolder}
           {/* Voting Overview */}
-          <div className="bg-base-100 rounded-xl shadow-lg p-6 mb-8 mt-8">
+          <div className="bg-base-200 rounded-xl shadow-lg p-6 mb-8 mt-8">
             <h2 className="text-xl font-bold text-base-content mb-6">Votes</h2>
 
             {proposal.state === ProposalState.Succeeded && (
@@ -539,7 +539,7 @@ const ProposalDetail: NextPage = () => {
               <div>
                 <div>
                   <div className="flex justify-between mb-2">
-                    <span className="text-sm font-medium text-neutral">Participated Voting Power</span>
+                    <span className="text-sm font-medium text-base-content">Participated Voting Power</span>
                   </div>
                   <div className="relative h-8 bg-gray-100 rounded-full overflow-hidden">
                     <div className="absolute h-full bg-blue-400" style={{ width: `${forPercentage}%`, left: `0%` }} />
@@ -554,12 +554,18 @@ const ProposalDetail: NextPage = () => {
                         left: `${forPercentage + againstPercentage}%`,
                       }}
                     />
-                    <div className="absolute h-full w-px bg-black" style={{ left: `${voteSuccessThreshold}%` }} />
+                    <div
+                      className="absolute h-full w-px bg-base-content"
+                      style={{ left: `${voteSuccessThreshold}%` }}
+                    />
                   </div>
                   <div className="relative h-8">
-                    <div className="absolute h-full w-px bg-black" style={{ left: `${voteSuccessThreshold}%` }} />
                     <div
-                      className="absolute text-sm font-medium text-black"
+                      className="absolute h-full w-px bg-base-content"
+                      style={{ left: `${voteSuccessThreshold}%` }}
+                    />
+                    <div
+                      className="absolute text-sm font-medium text-base-content"
                       style={{
                         left: `calc(${voteSuccessThreshold}% + 5px)`,
                         top: "50%",
@@ -598,7 +604,7 @@ const ProposalDetail: NextPage = () => {
               {/* Participation */}
               <div>
                 <div className="flex justify-between mb-2">
-                  <span className="text-sm font-medium text-neutral">Participation Rate</span>
+                  <span className="text-sm font-medium text-base-content">Participation Rate</span>
                 </div>
                 <div className="relative h-8 bg-gray-100 rounded-full overflow-hidden">
                   <div
@@ -622,12 +628,12 @@ const ProposalDetail: NextPage = () => {
                       width: `${getPercentage(abstainVotesBigInt, totalSupplyBigInt)}%`,
                     }}
                   />
-                  <div className="absolute h-full w-px bg-black" style={{ left: `${quorumNumerator}%` }} />
+                  <div className="absolute h-full w-px bg-base-content" style={{ left: `${quorumNumerator}%` }} />
                 </div>
                 <div className="relative h-8">
-                  <div className="absolute h-full w-px bg-black" style={{ left: `${quorumNumerator}%` }} />
+                  <div className="absolute h-full w-px bg-base-content" style={{ left: `${quorumNumerator}%` }} />
                   <div
-                    className="absolute text-sm font-medium text-black"
+                    className="absolute text-sm font-medium text-base-content"
                     style={{
                       left: `calc(${quorumNumerator}% + 5px)`,
                       top: "50%",
@@ -637,7 +643,8 @@ const ProposalDetail: NextPage = () => {
                     Minimum ({quorumNumerator}%)
                   </div>
                 </div>
-                <div className="flex rounded-3xl items-center p-4 text-base  text-base-content bg-gray-200 justify-between mt-4">
+
+                <div className="flex rounded-3xl items-center p-4 text-base font-semibold text-gray-950 bg-gray-200 justify-between mt-4">
                   <div>Participated / Total Voting Power (Participated Rate):</div>
                   <div>
                     {formatToken(totalVotesBigInt).toFixed(4)} / {formatToken(totalSupplyBigInt).toFixed(4)} (
@@ -650,16 +657,16 @@ const ProposalDetail: NextPage = () => {
 
           {/* Voting Details */}
           {shouldShowVotingDetails() && (
-            <div className="bg-base-100 rounded-xl shadow-lg p-6">
-              <h2 className="text-xl font-bold text-neutral mb-6">Voting Details</h2>
+            <div className="bg-base-200 rounded-xl shadow-lg p-6">
+              <h2 className="text-xl font-bold text-base-content mb-6">Voting Details</h2>
               <div className="overflow-x-auto">
                 <table className="min-w-full">
                   <thead>
                     <tr className="bg-base-300">
-                      <th className="px-6 py-3 text-left text-xs font-medium text-neutral uppercase">Voter</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-neutral uppercase">Vote</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-neutral uppercase">Weight</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-neutral uppercase">Voting TX</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-base-content uppercase">Voter</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-base-content uppercase">Type</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-base-content uppercase">Weight</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-base-content uppercase">Voting TX</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y bg-white divide-gray-200">{renderVotingDetails()}</tbody>
@@ -673,14 +680,14 @@ const ProposalDetail: NextPage = () => {
 
           {renderActionButtons()}
 
-          <div className="bg-base-100 rounded-xl shadow-lg p-6 mb-8">
-            <h2 className="text-xl font-bold text-neutral mb-6">Contract Information</h2>
+          <div className="bg-base-200 rounded-xl shadow-lg p-6 mb-8">
+            <h2 className="text-xl font-bold text-base-content mb-6">Contract Information</h2>
             <div className="space-y-4">
               <div>
-                <p className="text-sm text-neutral">DAO Contract</p>
+                <p className="text-sm text-base-content">DAO Contract</p>
                 <Link
                   href={`${blockExplorerBaseURL}/address/${bcosGovernor.data?.address}`}
-                  className="text-md font-medium text-blue-500"
+                  className="text-md font-medium text-primary"
                   target="_blank"
                 >
                   <LinkOutlined />
@@ -688,10 +695,10 @@ const ProposalDetail: NextPage = () => {
                 </Link>
               </div>
               <div>
-                <p className="text-sm text-neutral">Timelock Contract</p>
+                <p className="text-sm text-base-content">Timelock Contract</p>
                 <Link
                   href={`${blockExplorerBaseURL}/address/${timelock.data?.address}`}
-                  className="text-md font-medium text-blue-500"
+                  className="text-md font-medium text-primary"
                   target="_blank"
                 >
                   <LinkOutlined />
@@ -701,13 +708,13 @@ const ProposalDetail: NextPage = () => {
             </div>
           </div>
 
-          <div className="bg-base-100 rounded-xl shadow-lg p-6">
-            <h2 className="text-xl font-bold text-neutral mb-6">Governance Token</h2>
+          <div className="bg-base-200 rounded-xl shadow-lg p-6">
+            <h2 className="text-xl font-bold text-base-content mb-6">Governance Token</h2>
             <div className="space-y-4">
               <div>
                 <Link
                   href={`${blockExplorerBaseURL}/address/${erc20.data?.address}`}
-                  className="text-md font-medium text-blue-500"
+                  className="text-md font-medium text-primary"
                   target="_blank"
                 >
                   <LinkOutlined />
@@ -715,8 +722,8 @@ const ProposalDetail: NextPage = () => {
                 </Link>
               </div>
               <div>
-                <p className="text-sm text-neutral">Total Supply Value</p>
-                <p className="text-lg font-bold text-neutral">{formatToken(totalSupplyBigInt).toFixed(4)} EVP</p>
+                <p className="text-sm text-base-content">Total Supply Value</p>
+                <p className="text-lg font-bold text-base-content">{formatToken(totalSupplyBigInt).toFixed(4)} EVP</p>
               </div>
             </div>
           </div>

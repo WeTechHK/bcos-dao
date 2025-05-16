@@ -32,6 +32,7 @@ import {
 import { default as FormItem } from "antd/es/form/FormItem";
 import { default as FormList } from "antd/es/form/FormList";
 import type { NextPage } from "next";
+import { useTheme } from "next-themes";
 import { useAccount } from "wagmi";
 import { ChainSystemChangeForm } from "~~/components/proposal/ChainSystemChangeForm";
 import CustomActionForm from "~~/components/proposal/CustomActionForm";
@@ -115,6 +116,8 @@ const ProposalCreation: NextPage = () => {
   const [canSubmitProposal, setCanSubmitProposal] = useState<boolean>(false);
   const [openConfirmSubmit, setOpenConfirmSubmit] = useState<boolean>(false);
   const [submitting, setSubmitting] = useState(false);
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === "dark";
   useEffect(() => {
     refetchVotePower();
   }, [address, refetchVotePower]);
@@ -192,10 +195,10 @@ const ProposalCreation: NextPage = () => {
       <Spin spinning={submitting} fullscreen size={"large"}></Spin>
       <div className="flex justify-between">
         <div className="inline-grid grid-cols-2 gap-4">
-          <Button icon={<EditFilled />} size="large" color="default" variant="filled">
+          <Button icon={<EditFilled />} size="large" className="bg-primary text-primary-content" variant="filled">
             Edit
           </Button>
-          <Button icon={<CaretRightFilled />} size="large" color="default" variant="filled">
+          <Button icon={<CaretRightFilled />} size="large" className="bg-primary text-primary-content" variant="filled">
             Preview
           </Button>
         </div>
@@ -230,7 +233,13 @@ const ProposalCreation: NextPage = () => {
             okText="Yes"
             cancelText="No"
           >
-            <Button icon={<RocketFilled />} size="large" color="primary" variant="filled" ghost htmlType={"submit"}>
+            <Button
+              icon={<RocketFilled />}
+              size="large"
+              className="bg-primary text-primary-content"
+              variant="filled"
+              htmlType={"submit"}
+            >
               Submit
             </Button>
           </Popconfirm>
@@ -240,13 +249,17 @@ const ProposalCreation: NextPage = () => {
       <div>{messageContextHolder}</div>
       <div>{notifyContextHolder}</div>
       <Form form={form} layout="vertical" size="large" onFinish={submitProposal()}>
-        <Card>
-          <Tag color="blue" bordered={false} className="text-lg font-bold content-center mb-4">
+        <Card className="bg-base-200 border-base-200 shadow">
+          <Tag
+            color={isDark ? "geekblue-inverse" : "geekblue"}
+            bordered={false}
+            className="text-lg font-bold content-center mb-4"
+          >
             Main Information
           </Tag>
           <FormItem
             name="title"
-            label={<h3 className="text-lg font-semibold text-gray-900 mb-2">Title</h3>}
+            label={<h3 className="text-lg font-semibold text-base-content mb-2">Title</h3>}
             rules={[
               {
                 required: true,
@@ -254,11 +267,14 @@ const ProposalCreation: NextPage = () => {
               },
             ]}
           >
-            <Input placeholder="Enter the title of your proposal"></Input>
+            <input
+              className="text-base w-full h-12 rounded-xl bg-base-100 text-base-content p-4 border-2 border-base-300 focus:border-primary focus:outline-none"
+              placeholder="Enter the title of your proposal"
+            ></input>
           </FormItem>
           <FormItem
             name="description"
-            label={<h3 className="text-lg font-semibold text-gray-900 mb-2">Description</h3>}
+            label={<h3 className="text-lg font-semibold text-base-content mb-2">Description</h3>}
             rules={[
               {
                 required: true,
@@ -289,11 +305,15 @@ const ProposalCreation: NextPage = () => {
               {fields.map((field: any, index: number) => {
                 console.log(field);
                 return (
-                  <Card key={field.key} className="mb-3 mt-3">
+                  <Card key={field.key} className="mb-3 mt-3 bg-base-200 border-base-200">
                     {/*actions and remove*/}
                     <div className="flex justify-between mb-4">
                       <div className="inline-grid grid-cols-1 gap-4">
-                        <Tag color="blue" bordered={false} className="text-lg font-bold content-center">
+                        <Tag
+                          color={isDark ? "geekblue-inverse" : "geekblue"}
+                          bordered={false}
+                          className="text-lg font-bold content-center"
+                        >
                           {"Action #" + (index + 1).toString() + ": " + form.getFieldValue(["actions", index, "name"])}
                         </Tag>
                       </div>
@@ -302,7 +322,7 @@ const ProposalCreation: NextPage = () => {
                           size="large"
                           icon={<CloseSquareFilled />}
                           color="default"
-                          variant="filled"
+                          className="bg-primary text-primary-content border-base-200"
                           onClick={() => {
                             remove(field.name);
                           }}
@@ -335,13 +355,12 @@ const ProposalCreation: NextPage = () => {
 
               {/*add actions*/}
               <FormItem noStyle>
-                <Card variant="borderless" type="inner" className="mb-3 mt-3">
+                <Card variant="borderless" type="inner" className="mb-3 mt-3 bg-base-200">
                   <Flex gap="large">
                     {proposalPresentations.map(action => (
-                      <Button
+                      <button
                         key={action.key}
-                        icon={action.icon}
-                        color="default"
+                        className="bg-base-100 border-base-200 hover:bg-base-300 rounded-xl"
                         style={{
                           fontWeight: "bold",
                           fontSize: "medium",
@@ -349,13 +368,15 @@ const ProposalCreation: NextPage = () => {
                           height: "60px",
                           justifyContent: "left",
                         }}
-                        size="large"
                         onClick={() => {
                           add({ name: action.name, value: 0, calldata: "" });
                         }}
                       >
-                        {action.name}
-                      </Button>
+                        <div className="flex gap-3 justify-start pl-4">
+                          <div className="text-base-content">{action.icon}</div>
+                          <div className="text-base-content">{action.name}</div>
+                        </div>
+                      </button>
                     ))}
                   </Flex>
                 </Card>

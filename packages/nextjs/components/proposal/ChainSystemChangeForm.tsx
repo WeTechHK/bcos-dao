@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Abi, AbiFunction } from "abitype";
-import { Form, Input, Select, Switch } from "antd";
+import { ConfigProvider, Form, Input, Select, Switch } from "antd";
 import { ABIFunctionForm } from "~~/components/proposal/ABIFunctionForm";
 import CommitteeManagerABI from "~~/contracts/abi/CommitteeManager.json";
 
@@ -35,8 +35,8 @@ const contractNameSelector = [
   {
     label: (
       <div className="flex justify-between">
-        <div className="text-neutral font-medium">CommitteeManager</div>
-        <div className="text-neutral">0x0000000000000000000000000000000000010001</div>
+        <div className="font-medium">CommitteeManager</div>
+        <div className="">0x0000000000000000000000000000000000010001</div>
       </div>
     ),
     value: "0x0000000000000000000000000000000000010001",
@@ -104,15 +104,50 @@ export const ChainSystemChangeForm = ({
             onChange(sysForm.getFieldsValue());
           }}
         >
-          <FormItem name="address" label={<div className="text-lg font-bold mb-1">Target Contract Address</div>}>
-            <Select options={contractNameSelector} onSelect={handleContractChange} className="h-12"></Select>
-          </FormItem>
-          <FormItem name="method" label={<div className="text-lg font-bold mb-1">Contract Method</div>}>
-            <Select options={contract?.selector} onSelect={handleMethodChange} className="h-12"></Select>
-          </FormItem>
+          <ConfigProvider
+            theme={{
+              components: {
+                Select: {
+                  colorText: "var(--fallback-bc,oklch(var(--bc)/var(--tw-text-opacity, 1)))",
+                  colorBgElevated: "var(--fallback-bc,oklch(var(--bc)/var(--tw-text-opacity, 1)))",
+                  colorTextPlaceholder: "var(--fallback-bc,oklch(var(--bc)/var(--tw-text-opacity, 1)))",
+                  colorBorder: "var(--fallback-b3,oklch(var(--b3)/var(--tw-border-opacity, 1)))",
+                  selectorBg: "var(--fallback-b1,oklch(var(--b1)/var(--tw-bg-opacity, 1)))",
+                  optionActiveBg: "var(--fallback-b1,oklch(var(--b1)/var(--tw-bg-opacity, 1)))",
+                  optionSelectedBg: "var(--fallback-b3,oklch(var(--b3)/var(--tw-border-opacity, 1)))",
+                },
+              },
+            }}
+          >
+            <FormItem
+              name="address"
+              label={<div className="text-lg font-bold mb-1 text-base-content">Target Contract Address</div>}
+            >
+              <Select
+                dropdownStyle={{ backgroundColor: "var(--fallback-b1,oklch(var(--b1)/var(--tw-bg-opacity, 1)))" }}
+                options={contractNameSelector}
+                onSelect={handleContractChange}
+                className="h-12"
+              ></Select>
+            </FormItem>
+            <FormItem
+              name="method"
+              label={<div className="text-lg font-bold mb-1 text-base-content">Contract Method</div>}
+            >
+              <Select
+                dropdownStyle={{ backgroundColor: "var(--fallback-b1,oklch(var(--b1)/var(--tw-bg-opacity, 1)))" }}
+                options={contract?.selector}
+                onSelect={handleMethodChange}
+                className="h-12"
+              ></Select>
+            </FormItem>
+          </ConfigProvider>
 
           {method && (
-            <FormItem name="args" label={<div className="text-lg font-bold mb-1">Method arguments</div>}>
+            <FormItem
+              name="args"
+              label={<div className="text-lg font-bold mb-1 text-base-content">Method arguments</div>}
+            >
               <div>
                 {contract && method && (
                   <ABIFunctionForm
@@ -130,7 +165,7 @@ export const ChainSystemChangeForm = ({
           )}
 
           {method && (
-            <div className="mb-4 inline-flex gap-2">
+            <div className="mb-4 inline-flex gap-2 text-base-content">
               <div>Also send TOKEN to the target address? (this is not common)</div>
               <Switch
                 onChange={() => {
@@ -143,13 +178,13 @@ export const ChainSystemChangeForm = ({
           )}
 
           {valueVisible && (
-            <FormItem name="value" label={<div className="text-lg font-bold mb-1">Value</div>}>
-              <Input
-                className="h-12"
+            <FormItem name="value" label={<div className="text-lg font-bold mb-1 text-base-content">Value</div>}>
+              <input
+                className="text-base w-full h-12 rounded-xl bg-base-100 text-base-content/70 p-4 border-2 border-base-300 focus:border-primary focus:outline-none"
                 placeholder={
                   "The amount of Balance you wish to send the target address (External Account or Smart Contract)"
                 }
-              ></Input>
+              ></input>
             </FormItem>
           )}
         </Form>

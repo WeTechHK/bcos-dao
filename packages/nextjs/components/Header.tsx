@@ -57,8 +57,8 @@ export const HeaderMenuLinks = () => {
               href={href}
               passHref
               className={`${
-                isActive ? "bg-secondary shadow-md" : ""
-              } hover:bg-secondary hover:shadow-md focus:!bg-secondary active:!text-neutral py-1.5 px-3 text-sm rounded-full gap-2 grid grid-flow-col`}
+                isActive ? "bg-primary shadow-md text-primary-content" : ""
+              } hover:bg-primary hover:shadow-md focus:!bg-primary active:!text-primary-content py-1.5 px-3 text-sm rounded-full gap-2 grid grid-flow-col`}
               target={target}
             >
               {icon}
@@ -118,7 +118,7 @@ export const Header = () => {
   };
 
   return (
-    <div className="sticky lg:static top-0 navbar bg-base-100 min-h-0 flex-shrink-0 justify-between z-20 shadow-md shadow-secondary px-0 sm:px-2">
+    <div className="sticky lg:static top-0 navbar bg-base-200 min-h-0 flex-shrink-0 justify-between z-20 shadow-md shadow-base-100/10 px-0 sm:px-2">
       <div className="navbar-start w-auto lg:w-1/2">
         <div className="lg:hidden dropdown" ref={burgerMenuRef}>
           <label
@@ -133,7 +133,7 @@ export const Header = () => {
           {isDrawerOpen && (
             <ul
               tabIndex={0}
-              className="menu menu-compact dropdown-content mt-3 p-2 shadow bg-base-100 rounded-box w-52"
+              className="menu menu-compact dropdown-content mt-3 p-2 shadow-base-100 bg-base-100 rounded-box w-52"
               onClick={() => {
                 setIsDrawerOpen(false);
               }}
@@ -159,7 +159,9 @@ export const Header = () => {
         <div className="flex gap-4 items-center">
           <div className="flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-lg">
             {isMaintainer && (
-              <span className="px-2 py-0.5 text-xs font-semibold bg-blue-500 text-white rounded-md">Maintainer</span>
+              <span className="px-2 py-0.5 text-xs font-semibold bg-primary text-primary-content rounded-md">
+                Maintainer
+              </span>
             )}
             <div className="flex-col">
               <div>
@@ -182,17 +184,26 @@ export const Header = () => {
 
       {/* First Modal: Delegate Options */}
       <Modal
-        title="Delegate to..."
+        title={<div className="bg-base-200 text-base-content">Delegate to...</div>}
         open={showDelegateOptions}
+        classNames={{
+          body: "bg-base-200",
+          content: "!bg-base-200",
+          header: "bg-base-200",
+          footer: "bg-base-200",
+        }}
+        style={{
+          content: "bg-base-200",
+        }}
         footer={null}
         onCancel={() => setShowDelegateOptions(false)}
       >
         <div className="py-4">
           {erc20 && (
-            <div className="p-3 flex justify-between items-center bg-gray-50 rounded-lg">
-              <p className="text-sm text-gray-600">Governance Token</p>
+            <div className="p-3 flex justify-between items-center bg-base-200 rounded-lg">
+              <p className="text-sm text-base-content">Governance Token</p>
               <Link
-                className="font-medium"
+                className="font-medium text-primary"
                 href={`${blockExplorerBaseURL}/address/${erc20.data?.address}`}
                 target="_blank"
               >
@@ -201,15 +212,15 @@ export const Header = () => {
             </div>
           )}
           {currentDelegate && (
-            <div className="mb-4 p-3 bg-gray-50 rounded-lg grid grid-cols-2 gap-6">
+            <div className="mb-4 p-3 bg-base-200 rounded-lg grid grid-cols-2 gap-6">
               <div>
-                <p className="text-sm text-gray-600">Balance</p>
-                <span className="text-sm font-semibold">{formatVotePower(balance).toFixed(4)}</span>
-                <span className="text-[0.8em] font-bold ml-1">{symbol ? symbol : "EVP"}</span>
+                <p className="text-sm text-base-content">Balance</p>
+                <span className="text-sm font-semibold text-base-content">{formatVotePower(balance).toFixed(4)}</span>
+                <span className="text-[0.8em] font-bold ml-1 text-base-content">{symbol ? symbol : "EVP"}</span>
               </div>
               <div>
-                <p className="text-sm text-gray-600">Delegator</p>
-                <Link className="font-medium" href={`${blockExplorerBaseURL}/address/${currentDelegate}`}>
+                <p className="text-sm text-base-content">Delegator</p>
+                <Link className="font-medium text-primary" href={`${blockExplorerBaseURL}/address/${currentDelegate}`}>
                   <LinkOutlined />
                   {shortenAddress(currentDelegate)}
                 </Link>

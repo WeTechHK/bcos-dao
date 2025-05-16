@@ -48,10 +48,10 @@ export const stateColorsClassName: { [key: number]: string } = {
   1: "emerald", // Active
   2: "gray", // Canceled
   3: "rose", // Defeated
-  4: "green", // Succeeded
+  4: "teal", // Succeeded
   5: "indigo", // Queued
   6: "amber", // Expired
-  7: "purple", // Executed
+  7: "violet", // Executed
 };
 
 type GlobalState = {

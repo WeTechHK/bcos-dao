@@ -3,7 +3,7 @@
 import React, { ReactElement, useEffect, useState } from "react";
 import { InboxOutlined, InfoCircleFilled } from "@ant-design/icons";
 import { Abi, AbiFunction } from "abitype";
-import { Form, Input, Select, Switch, Upload, UploadProps, message } from "antd";
+import { ConfigProvider, Form, Input, Select, Switch, Upload, UploadProps, message } from "antd";
 import { erc20Abi, erc721Abi, erc4626Abi } from "viem";
 import { ABIFunctionForm } from "~~/components/proposal/ABIFunctionForm";
 import ERC1155 from "~~/contracts/abi/ERC1155.json";
@@ -118,6 +118,8 @@ const CustomActionForm = ({ field, index, onChange }: { field?: any; index?: any
 
   const onABIChange = (value: string) => {
     console.log(value);
+    setMethodList(undefined);
+    setMethod(undefined);
     if (value === "pureCalldata") {
       setDraggerVisible(false);
       setPureCallData(true);
@@ -154,45 +156,87 @@ const CustomActionForm = ({ field, index, onChange }: { field?: any; index?: any
           onChange(customActionForm.getFieldsValue());
         }}
       >
-        <FormItem name="address" label={<div className="text-lg font-bold mb-1">Target Contract Address</div>}>
-          <Input className="h-12"></Input>
+        <FormItem
+          name="address"
+          label={<div className="text-lg font-bold mb-1 text-base-content">Target Contract Address</div>}
+        >
+          <input
+            className="text-base w-full h-12 rounded-xl bg-base-100 text-base-content p-4 border-2 border-base-300 focus:border-primary focus:outline-none"
+            placeholder="Enter the target contract address"
+          ></input>
         </FormItem>
-        <FormItem name="abi" label={<div className="text-lg font-bold mb-1">Use the imported ABI or upload yours</div>}>
-          <Select
-            options={actionSelectOptions}
-            className="h-12"
-            defaultActiveFirstOption={true}
-            placeholder={"Use the imported ABI"}
-            onChange={onABIChange}
-          ></Select>
-        </FormItem>
-        {draggerVisible && (
-          <div className="mb-4">
-            <Dragger {...props}>
-              <p className="ant-upload-drag-icon">
-                <InboxOutlined />
-              </p>
-              <p className="ant-upload-text">Click or drag file to this area to upload your ABI file</p>
-              <p className="ant-upload-hint">
-                Support for a single or bulk upload. Strictly prohibited from uploading company data or other banned
-                files.
-              </p>
-            </Dragger>
-          </div>
-        )}
-
-        {abi && (
-          <FormItem name="method" label={<div className="text-lg font-bold mb-1">Contract Method</div>}>
-            <Select className="h-12" options={methodOptions} onSelect={handleChange}></Select>
-            <div className="inline-flex gap-2">
-              <InfoCircleFilled style={{ color: "orange" }}></InfoCircleFilled>
-              <div> This ABI is a standard. Please, be sure the smart contract implements the method you selected.</div>
-            </div>
+        <ConfigProvider
+          theme={{
+            components: {
+              Select: {
+                colorText: "var(--fallback-bc,oklch(var(--bc)/var(--tw-text-opacity, 1)))",
+                colorBgElevated: "var(--fallback-bc,oklch(var(--bc)/var(--tw-text-opacity, 1)))",
+                colorTextPlaceholder: "var(--fallback-bc,oklch(var(--bc)/var(--tw-text-opacity, 1)))",
+                colorBorder: "var(--fallback-b3,oklch(var(--b3)/var(--tw-border-opacity, 1)))",
+                selectorBg: "var(--fallback-b1,oklch(var(--b1)/var(--tw-bg-opacity, 1)))",
+                optionActiveBg: "var(--fallback-b1,oklch(var(--b1)/var(--tw-bg-opacity, 1)))",
+                optionSelectedBg: "var(--fallback-b3,oklch(var(--b3)/var(--tw-border-opacity, 1)))",
+              },
+            },
+          }}
+        >
+          <FormItem
+            name="abi"
+            label={<div className="text-lg font-bold mb-1 text-base-content">Use the imported ABI or upload yours</div>}
+          >
+            <Select
+              options={actionSelectOptions}
+              dropdownStyle={{ backgroundColor: "var(--fallback-b1,oklch(var(--b1)/var(--tw-bg-opacity, 1)))" }}
+              className="h-12"
+              defaultActiveFirstOption={true}
+              placeholder={"Use the imported ABI"}
+              onChange={value => {
+                onABIChange(value);
+                customActionForm.setFieldValue("method", undefined);
+              }}
+            ></Select>
           </FormItem>
-        )}
+          {draggerVisible && (
+            <div className="mb-4">
+              <Dragger {...props} className="bg-base-100">
+                <p className="ant-upload-drag-icon">
+                  <InboxOutlined />
+                </p>
+                <p className="!text-base-content ant-upload-text">
+                  Click or drag file to this area to upload your ABI file
+                </p>
+                <p className="!text-base-content ant-upload-hint">
+                  Support for a single or bulk upload. Strictly prohibited from uploading company data or other banned
+                  files.
+                </p>
+              </Dragger>
+            </div>
+          )}
+
+          {abi && (
+            <FormItem
+              name="method"
+              label={<div className="text-lg font-bold mb-1 text-base-content">Contract Method</div>}
+            >
+              <Select
+                dropdownStyle={{ backgroundColor: "var(--fallback-b1,oklch(var(--b1)/var(--tw-bg-opacity, 1)))" }}
+                className="h-12"
+                options={methodOptions}
+                onChange={handleChange}
+              ></Select>
+              <div className="inline-flex gap-2">
+                <InfoCircleFilled style={{ color: "orange" }}></InfoCircleFilled>
+                <div className="text-base-content">
+                  {" "}
+                  This ABI is a standard. Please, be sure the smart contract implements the method you selected.
+                </div>
+              </div>
+            </FormItem>
+          )}
+        </ConfigProvider>
 
         {method && (
-          <FormItem label={<div className="text-lg font-bold mb-1">Method arguments</div>}>
+          <FormItem label={<div className="text-lg font-bold mb-1 text-base-content">Method arguments</div>}>
             <div>
               {abi && method && (
                 <ABIFunctionForm
@@ -209,23 +253,28 @@ const CustomActionForm = ({ field, index, onChange }: { field?: any; index?: any
           </FormItem>
         )}
         {pureCallData && (
-          <FormItem name="calldata" label={<div className="text-lg font-bold mb-1">Calldatas</div>}>
-            <Input
-              className="h-12"
+          <FormItem name="calldata" label={<div className="text-lg font-bold mb-1 text-base-content">Calldatas</div>}>
+            <input
+              className="text-base w-full h-12 rounded-xl bg-base-100 text-base-content p-4 border-2 border-base-300 focus:border-primary focus:outline-none"
               placeholder={"The data for the function arguments you wish to send when the action executes"}
-            ></Input>
+            ></input>
           </FormItem>
         )}
-        <div className="mb-4 inline-flex gap-2">
+        <div className="mb-4 inline-flex gap-2 text-base-content">
           <div>Also send Token to the target address? (this is not common)</div>
           <Switch onChange={() => setValueVisible(!valueVisible)}></Switch>
         </div>
         {valueVisible && (
-          <FormItem name="value" label={<div className="text-lg font-bold mb-1">Value</div>}>
-            <div className="mb-3">
+          <FormItem name="value" label={<div className="text-lg font-bold mb-1 text-base-content">Value</div>}>
+            <div className="mb-3 text-base-content">
               The amount of Balance you wish to send the target address (External Account or Smart Contract)
             </div>
-            <Input prefix="ETH" className="h-12"></Input>
+            <input
+              className="text-base w-full h-12 rounded-xl bg-base-100 text-base-content/70 p-4 border-2 border-base-300 focus:border-primary focus:outline-none"
+              placeholder={
+                "The amount of Balance you wish to send the target address (External Account or Smart Contract)"
+              }
+            ></input>
           </FormItem>
         )}
       </Form>

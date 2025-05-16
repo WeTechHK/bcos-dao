@@ -16,6 +16,7 @@ import {
 } from "@ant-design/icons";
 import { Button, Popover, Space, Spin, Table, message } from "antd";
 import type { NextPage } from "next";
+import { useTheme } from "next-themes";
 import { useAccount, useBalance } from "wagmi";
 import { ProposalCard } from "~~/components/ProposalCard";
 import {
@@ -62,6 +63,7 @@ const Home: NextPage = () => {
   const totoalDelegatees = useDelegatees();
   const executedProposal = useExecutedProposal();
   const { targetNetwork } = useTargetNetwork();
+  const { resolvedTheme } = useTheme();
   const blockExplorerBaseURL = targetNetwork.blockExplorers?.default.url;
   if (
     latestProposal === undefined ||
@@ -92,59 +94,71 @@ const Home: NextPage = () => {
     },
   ];
 
+  const isDarkMode = resolvedTheme === "dark";
+
   return (
     <>
       <div className="container mx-auto px-4 py-6">
         <section className="grid md:grid-cols-2 gap-6 mb-6">
-          <div className="bg-base-100 shadow-lg rounded-xl p-6">
+          <div className="bg-base-200 broder-base-300 shadow-lg rounded-xl p-6">
             <h2 className="text-xl font-semibold mb-4 text-base-content">DAO Statistics</h2>
             <div className="grid grid-cols-3 gap-4">
-              <div className="bg-blue-50 p-4 rounded-lg">
-                <div className="text-sm text-gray-800">All Proposals</div>
-                <div className="text-2xl font-bold text-blue-600">{latestProposal}</div>
+              <div className={`p-4 rounded-lg ${isDarkMode ? "bg-blue-500" : "bg-blue-50"}`}>
+                <div className="text-sm text-base-content font-bold">All Proposals</div>
+                <div className={`text-2xl font-bold ${isDarkMode ? "text-blue-900" : "text-blue-600"}`}>
+                  {latestProposal}
+                </div>
               </div>
-              <div className="bg-green-50 p-4 rounded-lg">
-                <div className="text-sm text-gray-800">Executed Proposals</div>
-                <div className="text-2xl font-bold text-green-600">{executedProposal?.length}</div>
+              <div className={`p-4 rounded-lg ${isDarkMode ? "bg-teal-500" : "bg-teal-50"}`}>
+                <div className="text-sm text-base-content font-bold">Executed Proposals</div>
+                <div className={`text-2xl font-bold ${isDarkMode ? "text-teal-900" : "text-teal-600"}`}>
+                  {executedProposal?.length}
+                </div>
               </div>
-              <div className="bg-purple-50 p-4 rounded-lg">
-                <div className="text-sm text-gray-800">Total Delegates</div>
-                <div className="text-2xl font-bold text-purple-600">{totoalDelegatees?.length}</div>
+              <div className={`p-4 rounded-lg ${isDarkMode ? "bg-violet-500" : "bg-violet-50"}`}>
+                <div className="text-sm text-base-content font-bold">Total Delegates</div>
+                <div className={`text-2xl font-bold ${isDarkMode ? "text-violet-900" : "text-violet-600"}`}>
+                  {totoalDelegatees?.length}
+                </div>
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4 mt-4">
-              <div className="bg-orange-50 p-4 rounded-lg">
-                <div className="text-sm text-gray-800">Total Governance Token Supply</div>
-                <div className="text-2xl font-bold text-orange-600">{formatToken(totalSupply).toFixed(4)} EVP</div>
+              <div className={`p-4 rounded-lg ${isDarkMode ? "bg-slate-500" : "bg-slate-50"}`}>
+                <div className="text-sm text-base-content font-bold">Total Governance Token Supply</div>
+                <div className={`text-2xl font-bold ${isDarkMode ? "text-slate-900" : "text-slate-600"}`}>
+                  {formatToken(totalSupply).toFixed(4)} EVP
+                </div>
               </div>
-              <div className="bg-rose-50 p-4 rounded-lg">
-                <div className="text-sm text-gray-800">Governance Treasury</div>
+              <div className={`p-4 rounded-lg ${isDarkMode ? "bg-rose-500" : "bg-rose-50"}`}>
+                <div className="text-sm text-base-content font-bold">Governance Treasury</div>
                 <Popover
                   title="Governance Treasury"
                   trigger="hover"
                   content={
-                    <Table dataSource={treasuryDataSource} pagination={false}>
-                      <Table.Column title="Asset" dataIndex="asset" key="token" />
-                      <Table.Column title="Balance" dataIndex="balance" key="amount" />
-                      <Table.Column
-                        title="Link"
-                        key="link"
-                        render={value => (
-                          <Link href={value.link} target="_blank" className="text-blue-600 hover:text-blue-800">
-                            Explorer more
-                          </Link>
-                        )}
-                      />
-                    </Table>
+                    <div className="bg-base-100">
+                      <Table dataSource={treasuryDataSource} pagination={false}>
+                        <Table.Column title="Asset" dataIndex="asset" key="token" />
+                        <Table.Column title="Balance" dataIndex="balance" key="amount" />
+                        <Table.Column
+                          title="Link"
+                          key="link"
+                          render={value => (
+                            <Link href={value.link} target="_blank" className="text-primary/60 hover:text-primary">
+                              Explorer more
+                            </Link>
+                          )}
+                        />
+                      </Table>
+                    </div>
                   }
                 >
-                  <div className="text-2xl font-bold text-rose-600">2 Tokens</div>
+                  <div className={`text-2xl font-bold ${isDarkMode ? "text-rose-900" : "text-rose-600"}`}>2 Tokens</div>
                 </Popover>
               </div>
             </div>
           </div>
 
-          <div className="bg-base-100 shadow-lg rounded-xl p-6">
+          <div className="bg-base-200 broder-base-300 shadow-lg rounded-xl p-6">
             <h2 className="text-xl font-semibold mb-4 text-base-content">DAO Governance Parameters</h2>
             <div className="space-y-3">
               <div className="flex justify-between border-b pb-1">
@@ -170,7 +184,7 @@ const Home: NextPage = () => {
                     <Link
                       href={blockExplorerBaseURL + "/address/" + timelock.data?.address}
                       target="_blank"
-                      className="text-blue-600 hover:text-blue-800"
+                      className="text-primary hover:text-primary/50"
                       rel="noopener noreferrer"
                     >
                       <LinkOutlined />
@@ -284,7 +298,7 @@ const Home: NextPage = () => {
         <div>
           {!loading && proposalList.length === 0 ? (
             <div className="w-full flex flex-col items-center shadow-lg">
-              <div className="w-full bg-base-100 backdrop-blur-sm rounded-xl border border-base-100 flex flex-col items-center">
+              <div className="w-full bg-base-200 broder-base-300 backdrop-blur-sm rounded-xl border border-base-100 flex flex-col items-center">
                 <div className="max-w-2xl w-full backdrop-blur-sm p-8 flex flex-col items-center">
                   {/* Empty state illustration */}
                   <div className="relative w-40 h-40 mb-6">
@@ -345,9 +359,9 @@ const Home: NextPage = () => {
             proposalList.length > 0 && (
               <>
                 <div className="flex justify-between items-center mb-6">
-                  <h2 className="text-2xl font-bold text-neutral">Proposals</h2>
+                  <h2 className="text-2xl font-bold text-base-content">Proposals</h2>
                   <Link
-                    className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition duration-300"
+                    className="bg-primary hover:bg-primary text-white px-6 py-2 rounded-lg transition duration-300"
                     href="/proposal/creation"
                   >
                     Create Proposal
@@ -372,7 +386,7 @@ const Home: NextPage = () => {
             <div className="text-center mt-8 col-span-full">
               <button
                 onClick={loadMore}
-                className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition duration-300"
+                className="px-6 py-2 border rounded-lg text-base-content hover:bg-primary/10 transition duration-300"
               >
                 Load More Proposals
               </button>
