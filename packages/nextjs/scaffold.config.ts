@@ -1,4 +1,7 @@
+import * as dotenv from "dotenv";
 import * as chains from "viem/chains";
+
+dotenv.config();
 
 export type ScaffoldConfig = {
   targetNetworks: readonly chains.Chain[];
@@ -10,6 +13,8 @@ export type ScaffoldConfig = {
 
 export const DEFAULT_ALCHEMY_API_KEY = "oKxs-03sij-U_N0iOlrSsZFr29-IqbuF";
 
+const chain_rpc = process.env.NEXT_PUBLIC_CHAIN_RPC_URL || "https://140.210.218.31:8555";
+const chain_explorer = process.env.NEXT_PUBLIC_BLOCK_EXPLORERS_URL || "http://140.210.218.31";
 const scaffoldConfig = {
   // The networks on which your DApp is live
   targetNetworks: [
@@ -22,12 +27,12 @@ const scaffoldConfig = {
         symbol: "UBT",
       },
       rpcUrls: {
-        default: { http: ["http://140.210.218.31:8555"] },
+        default: { http: [chain_rpc] },
       },
       blockExplorers: {
         default: {
           name: "POTOS Testnet Explorer",
-          url: "http://140.210.218.31/",
+          url: chain_explorer,
         },
       },
     },
