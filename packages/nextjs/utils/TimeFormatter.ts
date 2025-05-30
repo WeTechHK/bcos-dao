@@ -31,5 +31,8 @@ export const formatDuration = (seconds: number | bigint | undefined): string => 
     const unit = minutes > 1 ? "minutes" : "minute";
     parts.push(`${minutes} ${unit}`);
   }
+  if (parts.length === 0) {
+    return secondsNumber.toString() + " seconds";
+  }
   return parts.join(" ");
 };

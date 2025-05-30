@@ -31,9 +31,10 @@ interface ProposalCardProps {
 }
 
 function truncateWords(text: string, maxWords = 25) {
-  const maxLength = maxWords * 5;
+  const maxLength = maxWords * 6;
   const regex = new RegExp(`^(\\s*\\S+){${maxWords}}|.+$`, "g");
   const matched = text.match(regex);
+  console.log("matched", matched);
   if (!matched) {
     if (text.length > maxLength) {
       return text.slice(0, maxWords) + "...";
@@ -41,7 +42,7 @@ function truncateWords(text: string, maxWords = 25) {
       return text;
     }
   }
-  const result = matched[0].replace(/(\s+\S*)$/, "...");
+  const result = matched[0];
   if (result.length > maxLength) {
     return result.slice(0, maxLength) + "...";
   } else {
