@@ -57,7 +57,7 @@ const ProposalDetail: NextPage = () => {
     proposal?.startTime ? proposal.startTime : 0,
   );
   const { voters, refetchVoters } = useProposalVoters(Number(id));
-  const castVote = useCastVote(Number(id), voteOption ? voteOption : VoteType.Abstain, voteReason);
+  const castVote = useCastVote(Number(id), voteOption != null ? voteOption : VoteType.Abstain, voteReason);
   const voteSuccessThreshold = useVoteSuccessThreshold();
   const quorumNumerator = useQuorumNumerator();
   const { targetNetwork } = useTargetNetwork();
