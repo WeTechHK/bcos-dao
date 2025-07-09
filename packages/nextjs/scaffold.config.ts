@@ -13,7 +13,7 @@ export type ScaffoldConfig = {
 
 export const DEFAULT_ALCHEMY_API_KEY = "oKxs-03sij-U_N0iOlrSsZFr29-IqbuF";
 
-const chain_rpc = process.env.NEXT_PUBLIC_CHAIN_RPC_URL || "https://140.210.218.31:8555";
+const chain_rpc = process.env.NEXT_PUBLIC_CHAIN_RPC_URL || "http://140.210.218.31:8565";
 const chain_explorer = process.env.NEXT_PUBLIC_BLOCK_EXPLORERS_URL || "http://140.210.218.31";
 const scaffoldConfig = {
   // The networks on which your DApp is live
@@ -24,7 +24,7 @@ const scaffoldConfig = {
       nativeCurrency: {
         decimals: 18,
         name: "BCOS Token",
-        symbol: "UBT",
+        symbol: "POT",
       },
       rpcUrls: {
         default: { http: [chain_rpc] },

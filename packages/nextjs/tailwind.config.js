@@ -96,7 +96,7 @@ module.exports = {
     "bg-violet-400",
     "text-violet-800",
     "bg-teal-200",
-    "bg-teal-300",
+    "bg-teal-400",
     "text-teal-800",
   ],
 };

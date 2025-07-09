@@ -150,7 +150,7 @@ const ProposalCreation: NextPage = () => {
         for (let i = 0; i < values.actions.length; i++) {
           const action = values.actions[i];
           if (!action.calldata || !action.address || action.value === undefined || action.value === null) {
-            messageApi.error("Please fill in all fields for Action#" + (i + 1));
+            messageApi.info("Please fill in all fields for Action#" + (i + 1));
             form.scrollToField(["actions", i]);
             return;
           }

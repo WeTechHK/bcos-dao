@@ -4,7 +4,8 @@ import Link from "next/link";
 import { LinkOutlined } from "@ant-design/icons";
 import { codeBlockPlugin, headingsPlugin, linkPlugin, listsPlugin, quotePlugin } from "@mdxeditor/editor";
 import "@mdxeditor/editor/style.css";
-import { Popover, Space, Table } from "antd";
+import { CopyIcon } from "@radix-ui/react-icons";
+import { Button, Popover, Space, Table } from "antd";
 import { message } from "antd";
 import classNames from "classnames";
 import { useTheme } from "next-themes";
@@ -248,6 +249,9 @@ export const ProposalOverview = ({ proposal, isPreview = false }: ProposalOvervi
                       if (typeof arg === "bigint") {
                         return arg.toString();
                       }
+                      if (typeof arg === "boolean") {
+                        return arg ? "true" : "false";
+                      }
                       return arg;
                     });
                   } else {
@@ -283,7 +287,7 @@ export const ProposalOverview = ({ proposal, isPreview = false }: ProposalOvervi
                   ),
                 },
                 {
-                  title: "Details",
+                  title: "Function",
                   dataIndex: "func",
                   key: "func",
                   width: "40%",
@@ -291,7 +295,20 @@ export const ProposalOverview = ({ proposal, isPreview = false }: ProposalOvervi
                     func ? (
                       func
                     ) : record.calldata ? (
-                      <span className="font-bold text-sm"> {record.calldata} </span>
+                      <div className="flex items-center">
+                        <span className="font-bold text-sm truncate max-w-xs inline-block" title={record.calldata}>
+                          {record.calldata}
+                        </span>
+                        <Button
+                          size={"small"}
+                          type={"link"}
+                          onClick={e => {
+                            e.stopPropagation();
+                            copyToClipboard(record.calldata).then();
+                          }}
+                          icon={<CopyIcon />}
+                        ></Button>
+                      </div>
                     ) : (
                       <span className="text-sm">Cannot decode function data</span>
                     ),
@@ -300,16 +317,19 @@ export const ProposalOverview = ({ proposal, isPreview = false }: ProposalOvervi
               ]}
               expandable={{
                 columnTitle: "Function Args",
-                expandedRowRender: record => (
-                  <div className="flex flex-col">
-                    {record.functionArgs.map((arg: any, index: any) => (
-                      <div key={index} className="flex items-center">
-                        <span className="text-md font-medium mr-2">Arg {index + 1}:</span>
-                        <span className="text-md">{arg as string}</span>
-                      </div>
-                    ))}
-                  </div>
-                ),
+                expandedRowRender: record =>
+                  record.func ? (
+                    <div className="flex flex-col">
+                      {record.functionArgs.map((arg: any, index: any) => (
+                        <div key={index} className="flex items-center">
+                          <span className="text-md font-medium mr-2">Arg {index + 1}:</span>
+                          <span className="text-md">{arg as string}</span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div />
+                  ),
                 expandIcon: ({ expanded, onExpand, record }) => (
                   <span
                     className={classNames("cursor-pointer", expanded ? "text-primary" : "text-gray-900")}
