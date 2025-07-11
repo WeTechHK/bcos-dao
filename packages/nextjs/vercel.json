@@ -1,6 +1,4 @@
 {
   "installCommand": "yarn install",
-  "routes": [
-    { "src": "/(.*)", "dest": "/index.html" }
-  ]
+  "routes": [{ "src": "/(.*)", "dest": "/index.html" }]
 }
