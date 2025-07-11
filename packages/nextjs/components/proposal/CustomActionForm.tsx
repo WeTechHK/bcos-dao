@@ -3,7 +3,7 @@
 import React, { ReactElement, useEffect, useState } from "react";
 import { InboxOutlined, InfoCircleFilled } from "@ant-design/icons";
 import { Abi, AbiFunction } from "abitype";
-import { ConfigProvider, Form, Input, Select, Switch, Upload, UploadProps, message } from "antd";
+import { ConfigProvider, Form, Select, Switch, Upload, UploadProps, message } from "antd";
 import { erc20Abi, erc721Abi, erc4626Abi } from "viem";
 import { ABIFunctionForm } from "~~/components/proposal/ABIFunctionForm";
 import ERC1155 from "~~/contracts/abi/ERC1155.json";
@@ -59,26 +59,6 @@ export const actionSelectOptions = [
   },
 ];
 
-const props: UploadProps = {
-  name: "file",
-  multiple: true,
-  action: "",
-  onChange(info) {
-    const { status } = info.file;
-    if (status !== "uploading") {
-      console.log(info.file, info.fileList);
-    }
-    if (status === "done") {
-      message.success(`${info.file.name} file uploaded successfully.`).then();
-    } else if (status === "error") {
-      message.error(`${info.file.name} file upload failed.`).then();
-    }
-  },
-  onDrop(e) {
-    console.log("Dropped files", e.dataTransfer.files);
-  },
-};
-
 const CustomActionForm = ({ field, index, onChange }: { field?: any; index?: any; onChange: any }) => {
   const FormItem = Form.Item;
   const { Dragger } = Upload;
@@ -95,6 +75,7 @@ const CustomActionForm = ({ field, index, onChange }: { field?: any; index?: any
   const [method, setMethod] = useState<{ fn: AbiFunction }>();
 
   useEffect(() => {
+    console.log("abi 已更新:", abi);
     if (abi !== undefined && abi !== null) {
       const functions = abi.filter(
         (part, index, array) =>
@@ -115,6 +96,52 @@ const CustomActionForm = ({ field, index, onChange }: { field?: any; index?: any
       setMethodOptions(methodOptions);
     }
   }, [methodList]);
+
+  const props: UploadProps = {
+    name: "file",
+    action: "",
+    maxCount: 1,
+    onChange(info) {
+      const { status } = info.file;
+      if (status !== "uploading") {
+        console.log(info.file, info.fileList);
+      }
+      if (status === "done") {
+        message.success(`${info.file.name} file uploaded successfully.`).then();
+        const reader = new FileReader();
+        reader.onload = e => {
+          try {
+            const content = JSON.parse(e.target?.result as string);
+            console.log("abi content", content);
+            if (Array.isArray(content)) {
+              console.log("set abi", content);
+              setAbi(content as Abi);
+            } else if (content.abi && Array.isArray(content.abi)) {
+              setAbi(content.abi as Abi);
+            } else {
+              message.error("Invalid ABI format").then();
+            }
+          } catch (error) {
+            message.error("Failed to parse ABI file").then();
+          }
+        };
+        if (info.file.originFileObj) {
+          reader.readAsText(info.file.originFileObj);
+        } else {
+          message.error("未找到有效的文件对象").then();
+        }
+      } else if (status === "error") {
+        message.error(`${info.file.name} file upload failed.`).then();
+      }
+    },
+    onRemove() {
+      setAbi(undefined);
+      setMethodList(undefined);
+      setMethod(undefined);
+      // clear calldata input
+      customActionForm.setFieldValue("calldata", undefined);
+    },
+  };
 
   const onABIChange = (value: string) => {
     console.log(value);

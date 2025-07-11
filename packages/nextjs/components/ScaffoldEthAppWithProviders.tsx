@@ -23,7 +23,6 @@ const ScaffoldEthApp = ({ children }: { children: React.ReactNode }) => {
         <main className="relative flex flex-col flex-1 bg-base-100">{children}</main>
         <Footer />
       </div>
-      <Toaster />
     </>
   );
 };

@@ -4,16 +4,18 @@ import Link from "next/link";
 import { LinkOutlined } from "@ant-design/icons";
 import { codeBlockPlugin, headingsPlugin, linkPlugin, listsPlugin, quotePlugin } from "@mdxeditor/editor";
 import "@mdxeditor/editor/style.css";
-import { Popover, Space } from "antd";
+import { CopyIcon } from "@radix-ui/react-icons";
+import { Button, Popover, Space, Table } from "antd";
 import { message } from "antd";
 import classNames from "classnames";
 import { useTheme } from "next-themes";
-import { ClipboardIcon } from "@heroicons/react/24/outline";
+import { tryToDecodeData } from "~~/hooks/blockchain/ABIDecode";
 import { type ProposalAllInfo, decodeData } from "~~/hooks/blockchain/BCOSGovernor";
 import { useTransactionsByAddress, useTransactionsFilterByTo } from "~~/hooks/blockchain/useTransactionByAddress";
 import { useDeployedContractInfo, useTargetNetwork } from "~~/hooks/scaffold-eth";
 import { ProposalState, stateColorsClassName } from "~~/services/store/store";
 import { formatDuration, formatUTCDate } from "~~/utils/TimeFormatter";
+import { formatToken } from "~~/utils/TokenFormatter";
 import { shortenAddress } from "~~/utils/scaffold-eth/common";
 
 const MDXEditor = dynamic(() => import("@mdxeditor/editor").then(mod => mod.MDXEditor), { ssr: false });
@@ -225,63 +227,124 @@ export const ProposalOverview = ({ proposal, isPreview = false }: ProposalOvervi
         <div className="mb-8">
           <h2 className="text-xl font-bold text-base-content mb-4">Actions</h2>
           <div className="overflow-x-auto">
-            <table className="w-full divide-y divide-gray-200 table-fixed">
-              <thead className="bg-base-300">
-                <tr>
-                  <th
-                    scope="col"
-                    className="w-[10%] px-6 py-3 text-left text-xs font-medium text-base-content uppercase tracking-wider"
-                  >
-                    Type
-                  </th>
-                  <th
-                    scope="col"
-                    className="w-[20%] px-6 py-3 text-left text-xs font-medium text-base-content uppercase tracking-wider"
-                  >
-                    Address
-                  </th>
-                  <th
-                    scope="col"
-                    className="w-[10%] px-6 py-3 text-left text-xs font-medium text-base-content uppercase tracking-wider"
-                  >
-                    Value
-                  </th>
-                  <th
-                    scope="col"
-                    className="w-[60%] px-6 py-3 text-left text-xs font-medium text-base-content uppercase tracking-wider"
-                  >
-                    CallData
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {proposal.targets.map((target, index) => (
-                  <tr key={index}>
-                    <td className="px-6 py-4 text-sm text-gray-500 overflow-hidden">{""}</td>
-                    <td className="px-6 py-4 text-sm font-medium text-gray-900 overflow-hidden">
-                      {shortenAddress(target)}
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-500 overflow-hidden">
-                      {Number(proposal.values[index])}
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-500 font-mono">
+            <Table
+              dataSource={proposal.targets.map((target, index) => ({
+                key: index,
+                value: proposal.values[index],
+                address: target,
+                calldata: proposal.calldatas[index],
+                func: (() => {
+                  const decodedData = tryToDecodeData(proposal.calldatas[index] as `0x{string}`, target);
+                  if (decodedData) {
+                    console.log("decodedData", decodedData);
+                    return <div className="font-bold text-sm"> {decodedData.functionName}</div>;
+                  } else {
+                    return undefined;
+                  }
+                })(),
+                functionArgs: (() => {
+                  const decodedData = tryToDecodeData(proposal.calldatas[index] as `0x{string}`, target);
+                  if (decodedData && decodedData.args) {
+                    return decodedData.args.map(arg => {
+                      if (typeof arg === "bigint") {
+                        return arg.toString();
+                      }
+                      if (typeof arg === "boolean") {
+                        return arg ? "true" : "false";
+                      }
+                      return arg;
+                    });
+                  } else {
+                    return [];
+                  }
+                })(),
+              }))}
+              pagination={false}
+              columns={[
+                {
+                  title: "Address",
+                  dataIndex: "address",
+                  key: "address",
+                  width: "25%",
+                  render: (address: string) => (
+                    <Link
+                      href={`${blockExplorerBaseURL}/address/${address}`}
+                      className="text-md font-medium text-primary"
+                      target="_blank"
+                    >
+                      <LinkOutlined />
+                      {shortenAddress(address)}
+                    </Link>
+                  ),
+                },
+                {
+                  title: "Value",
+                  dataIndex: "value",
+                  key: "value",
+                  width: "15%",
+                  render: (value: any) => (
+                    <span className="text-md font-medium">{formatToken(value).toFixed(4)} POT</span>
+                  ),
+                },
+                {
+                  title: "Function",
+                  dataIndex: "func",
+                  key: "func",
+                  width: "40%",
+                  render: (func: any, record: any) =>
+                    func ? (
+                      func
+                    ) : record.calldata ? (
                       <div className="flex items-center">
-                        <span className="truncate" title={proposal.calldatas[index]}>
-                          {proposal.calldatas[index]}
+                        <span className="font-bold text-sm truncate max-w-xs inline-block" title={record.calldata}>
+                          {record.calldata}
                         </span>
-                        <button
-                          onClick={() => copyToClipboard(proposal.calldatas[index])}
-                          className="ml-2 p-1 hover:bg-gray-100 rounded-md flex-shrink-0"
-                          title="Copy calldata"
-                        >
-                          <ClipboardIcon className="h-4 w-4" />
-                        </button>
+                        <Button
+                          size={"small"}
+                          type={"link"}
+                          onClick={e => {
+                            e.stopPropagation();
+                            copyToClipboard(record.calldata).then();
+                          }}
+                          icon={<CopyIcon />}
+                        ></Button>
                       </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                    ) : (
+                      <span className="text-sm">Cannot decode function data</span>
+                    ),
+                },
+                Table.EXPAND_COLUMN,
+              ]}
+              expandable={{
+                columnTitle: "Function Args",
+                expandedRowRender: record =>
+                  record.func ? (
+                    <div className="flex flex-col">
+                      {record.functionArgs.map((arg: any, index: any) => (
+                        <div key={index} className="flex items-center">
+                          <span className="text-md font-medium mr-2">Arg {index + 1}:</span>
+                          <span className="text-md">{arg as string}</span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div />
+                  ),
+                expandIcon: ({ expanded, onExpand, record }) => (
+                  <span
+                    className={classNames("cursor-pointer", expanded ? "text-primary" : "text-gray-900")}
+                    onClick={e => {
+                      e.stopPropagation();
+                      onExpand(record, e);
+                    }}
+                  >
+                    {record.functionArgs.length +
+                      (record.functionArgs.length === 1 ? " Argument " : " Arguments ") +
+                      (expanded ? "▲" : "▼")}
+                  </span>
+                ),
+              }}
+            />
           </div>
         </div>
 

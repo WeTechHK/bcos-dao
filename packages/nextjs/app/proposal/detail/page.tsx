@@ -57,7 +57,7 @@ const ProposalDetail: NextPage = () => {
     proposal?.startTime ? proposal.startTime : 0,
   );
   const { voters, refetchVoters } = useProposalVoters(Number(id));
-  const castVote = useCastVote(Number(id), voteOption ? voteOption : VoteType.Abstain, voteReason);
+  const castVote = useCastVote(Number(id), voteOption != null ? voteOption : VoteType.Abstain, voteReason);
   const voteSuccessThreshold = useVoteSuccessThreshold();
   const quorumNumerator = useQuorumNumerator();
   const { targetNetwork } = useTargetNetwork();
@@ -205,8 +205,8 @@ const ProposalDetail: NextPage = () => {
 
     if (state === ProposalState.Succeeded && hasMetQuorum && hasMetThreshold) {
       return (
-        <div className="bg-base-100 rounded-xl shadow-lg p-6 mb-8">
-          <h2 className="text-xl font-bold text-neutral mb-6">Proposal Actions</h2>
+        <div className="bg-base-200 rounded-xl shadow-lg p-6 mb-8">
+          <h2 className="text-xl font-bold text-base-content mb-6">Proposal Actions</h2>
           <div className="space-y-4">
             <button
               onClick={handleQueue}
@@ -221,8 +221,8 @@ const ProposalDetail: NextPage = () => {
 
     if (Number(proposal.state) === ProposalState.Pending && isMaintainer) {
       return (
-        <div className="bg-base-100 rounded-xl shadow-lg p-6 mb-8">
-          <h2 className="text-xl font-bold text-neutral mb-6">Proposal Actions</h2>
+        <div className="bg-base-200 rounded-xl shadow-lg p-6 mb-8">
+          <h2 className="text-xl font-bold text-base-content mb-6">Proposal Actions</h2>
           <div className="space-y-4">
             <button
               onClick={handleApprove}
@@ -243,8 +243,8 @@ const ProposalDetail: NextPage = () => {
 
     if (Number(proposal.state) === ProposalState.Queued && isMaintainer) {
       return (
-        <div className="bg-base-100 rounded-xl shadow-lg p-6 mb-8">
-          <h2 className="text-xl font-bold text-neutral mb-6">Proposal Actions</h2>
+        <div className="bg-base-200 rounded-xl shadow-lg p-6 mb-8">
+          <h2 className="text-xl font-bold text-base-content mb-6">Proposal Actions</h2>
           <div className="space-y-4">
             <button
               onClick={handleExecute}
@@ -259,8 +259,8 @@ const ProposalDetail: NextPage = () => {
 
     if (Number(proposal.state) === ProposalState.Active && isMaintainer) {
       return (
-        <div className="bg-base-100 rounded-xl shadow-lg p-6 mb-8">
-          <h2 className="text-xl font-bold text-neutral mb-6">Proposal Actions</h2>
+        <div className="bg-base-200 rounded-xl shadow-lg p-6 mb-8">
+          <h2 className="text-xl font-bold text-base-content mb-6">Proposal Actions</h2>
           <div className="space-y-4">
             <button
               onClick={handleEmergencyShutdown}
@@ -283,8 +283,8 @@ const ProposalDetail: NextPage = () => {
 
     return (
       <>
-        <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
-          <h2 className="text-xl font-bold text-gray-800 mb-6">Cast Your Vote</h2>
+        <div className="bg-base-200 rounded-xl shadow-lg p-6 mb-8">
+          <h2 className="text-xl font-bold text-base-content mb-6">Cast Your Vote</h2>
           {hasVoted ? (
             <p className="mt-4 text-sm text-gray-600">You have already voted on this proposal.</p>
           ) : (
