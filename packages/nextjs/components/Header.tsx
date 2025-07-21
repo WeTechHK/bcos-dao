@@ -10,6 +10,7 @@ import dotenv from "dotenv";
 import { formatEther } from "viem";
 import { useAccount } from "wagmi";
 import { ArrowPathIcon, Bars3Icon, BookOpenIcon, BugAntIcon, HomeIcon } from "@heroicons/react/24/outline";
+import { SwitchTheme } from "~~/components/SwitchTheme";
 import { RainbowKitCustomConnectButton } from "~~/components/scaffold-eth";
 import { useIsMaintainer } from "~~/hooks/blockchain/BCOSGovernor";
 import { useBalanceOf, useDelegate, useDelegates, useSymbol, useVotePower } from "~~/hooks/blockchain/ERC20VotePower";
@@ -184,6 +185,7 @@ export const Header = () => {
               <ArrowPathIcon className="h-4 w-4" />
             </button>
           </div>
+          <SwitchTheme className={`pointer-events-auto`} />
           <RainbowKitCustomConnectButton />
         </div>
       </div>
